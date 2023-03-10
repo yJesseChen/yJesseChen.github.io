@@ -1,0 +1,27 @@
+# jemdoc: menu{MENU}{index.html}, nofooter  
+== Yuan Chen (陈 缘)
+
+~~~
+{}{img_left}{pictures/port.JPG}{alt text}{225}{265}{}
+\n
+{{<b><font size="5.0em">Yuan Chen</font></b>}} \n
+[https://math.osu.edu/ Department of Mathematics] \n
+[https://www.osu.edu/ The Ohio State University] \n
+100 Math Tower \n
+231 West 18th Avenue \n
+Columbus, OH 43210-1174 \n
+\n
+*Contact Information* \n
+Office: Math Tower 330 \n
+Email: chen.11050 \[@] osu \[.] edu 
+~~~
+
+
+== About me
+- I am currently a second year Ph.D. student of Applied and Computational Mathematics, advised by [https://people.math.osu.edu/xiu.16/ Prof. Dongbin Xiu].
+- My research interests fall in the broad areas of scientific computing and numerical analysis. Recently, I'm working on the machine learning methods for scientific computing, specifically the data-driven modeling and uncertainty quantification of physical systems governed by (stochastic) differential equations.
+- During the past few years, I'm grateful to work with mentors who have great influence on me. I am also interested in and working on discontinuous Galerkin (dG) method with [https://people.math.osu.edu/xing.205/ Prof. Yulong Xing] and Finite Element Method (FEM) with [https://math.okstate.edu/people/xzhang/ Prof. Xu Zhang] and [http://www2.latech.edu/~shou/ Prof. Songming Hou].
+- Please see my {{<a href="research.html" target="_self">Research page</a>}}, [https://scholar.google.com/citations?user=uREFJ78AAAAJ&hl=en&oi=sra Google Scholar] and [https://www.researchgate.net/profile/Yuan-Chen-90 ResearchGate] for more information about my research.
+
+== News
+- This semester, I am organizing Student Computational Math Seminar with [https://math.osu.edu/people/chen.11010 Qifan Chen]. Please see [https://u.osu.edu/studentcomputationalmathseminar/ our website] for details.

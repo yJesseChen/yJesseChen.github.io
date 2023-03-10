@@ -1,0 +1,13 @@
+Install:
+cd /Users/jesse/jemdoc
+sudo cp jemdoc /usr/local/bin/jemdoc
+chmod 755 /usr/local/bin/jemdoc
+
+Deploy:
+cd /Users/jesse/jemdoc/mysite
+jemdoc -c mysite.conf *.jemdoc
+
+Useful Link:
+https://dubisheng.com/www/index.html
+https://rui-miao.github.io/index.html
+http://www.mit.edu/~wsshin/index.html

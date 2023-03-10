@@ -1,0 +1,19 @@
+# jemdoc: menu{MENU}{research.html}, nofooter 
+= Talks
+
+=== Upcoming
+- Jul 23-27, 2023, Albuquerque Convention Center, Albuquerque, NM.\n
+*Conference*: [https://17.usnccm.org/ 17th U. S. National Congress on Computational Mechanics]
+
+=== Past
+- Oct 3, 2022, Oklahoma State University, Stillwater, OK.\n
+*Seminar talk*: Finite Element Computation using Python.
+- Oct 1-2, 2022, Oklahoma State University, Stillwater, OK.\n
+*Conference*: [https://siamcss2022.okstate.edu/ The 7th Annual Meeting of SIAM Central States Section]\n
+*Talk*: A High-Order Immersed $C^0$ Interior Penalty Method for Biharmonic Interface Problems.
+- Jul 11-15, 2022, David L. Lawrence Convention Center, Pittsburgh, PA.\n
+*Conference*: [https://www.siam.org/conferences/cm/conference/an22 2022 SIAM Annual Meeting]\n
+*Talk*: A High-Order Immersed $C^0$ Interior Penalty Method for Biharmonic Interface Problems.
+- Oct 2-3, 2021, University of Kansas, Virtually.\n
+*Conference*: [https://siamcss2021.ku.edu/ The 6th Annual Meeting of SIAM Central States Section]\n
+*Talk*: An Immersed $\mathcal{P}_2$-$\mathcal{P}_1$ Finite Element Method for Stokes Interface Problems.
