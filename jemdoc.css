@@ -396,3 +396,8 @@ table.imgtable, table.imgtable td {
 	border: none;
 	text-align: left;
 }
+
+video {
+  display: block;
+  margin: auto;
+}
