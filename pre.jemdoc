@@ -2,13 +2,16 @@
 = Talks
 
 === Upcoming
+- Oct 7-8, 2023, University of Nebraska-Lincoln, Lincoln, NE.\n
+*Conference*: [https://math.unl.edu/siam-2023 The 8th Annual Meeting of SIAM Central States Section]\n
+*Talk*: Optimal Error Estimates of Ultra-weak Discontinuous Galerkin Methods with Generalized Numerical Fluxes for Multi-dimensional Convection-Diffusion and Biharmonic Equations.
+
+=== Past
 - Jul 23-27, 2023, Albuquerque Convention Center, Albuquerque, NM.\n
 *Conference*: [https://17.usnccm.org/ 17th U. S. National Congress on Computational Mechanics]\n
 *Talk*: Data Driven Modeling of Unknown Stochastic Systems.
 - May 16, 2023, University of California San Diego, Virtually.\n
 *Seminar talk*: Learning Stochastic Dynamical System via Flow Map Operator.
-
-=== Past
 - Oct 3, 2022, Oklahoma State University, Stillwater, OK.\n
 *Seminar talk*: Finite Element Computation using Python.
 - Oct 1-2, 2022, Oklahoma State University, Stillwater, OK.\n
