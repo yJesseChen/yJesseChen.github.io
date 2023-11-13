@@ -9,16 +9,16 @@
 
 == Publications
 === Preprints
-. *_Yuan Chen_*, Dongbin Xiu. Learning Stochastic Dynamical System via Flow Map Operator, (2023+), /submitted/. \[[https://arxiv.org/abs/2305.03874 arXiv]]
+. *_Yuan Chen_*, Dongbin Xiu. Learning Stochastic Dynamical System via Flow Map Operator, (2023+), /submitted/. \[[https://arxiv.org/abs/2305.03874 *arXiv*]] \[[slides/SDEFrame_USNCCM17_Slides.pdf *Slides*]]
 . *_Yuan Chen_*, Xu Zhang. A High-order Immersed $C^0$ Interior Penalty Method for Biharmonic Interface
 Problems., (2023+), /preprint/.
 
 === Journal Publications
 . *_Yuan Chen_*, Xu Zhang. Solving Navier-Stokes Interface Problems with Fixed and Moving Interfaces on Unfitted Meshes. /Journal of Scientific Computing/, (2023+), /to appear/.
-. *_Yuan Chen_*, Yulong Xing. [https://doi.org/10.1090/mcom/3927 Optimal Error Estimates of Ultra-weak Discontinuous Galerkin Methods with Generalized Numerical Fluxes for Multi-dimensional Convection-Diffusion and Biharmonic Equations.] /Mathematics of Computation/, (2023+), /to appear/. \[[pdf/chenxing2023.pdf pdf]]
-. Victor Churchill, *_Yuan Chen_*, Zhongshu Xu, and Dongbin Xiu. [https://www.sciencedirect.com/science/article/pii/S0021999123005971?dgcid=coauthor DNN Modeling of Partial Differential Equations with Incomplete Data.] /Journal of Computational Physics/, *493* (2023), 112502. \[[pdf/churchillchenxuxiu2023.pdf pdf]]
+. *_Yuan Chen_*, Yulong Xing. [https://doi.org/10.1090/mcom/3927 Optimal Error Estimates of Ultra-weak Discontinuous Galerkin Methods with Generalized Numerical Fluxes for Multi-dimensional Convection-Diffusion and Biharmonic Equations.] /Mathematics of Computation/, (2023+), /to appear/. \[[pdf/chenxing2023.pdf *pdf*]]
+. Victor Churchill, *_Yuan Chen_*, Zhongshu Xu, and Dongbin Xiu. [https://www.sciencedirect.com/science/article/pii/S0021999123005971?dgcid=coauthor DNN Modeling of Partial Differential Equations with Incomplete Data.] /Journal of Computational Physics/, *493* (2023), 112502. \[[pdf/churchillchenxuxiu2023.pdf *pdf*]]
 . *_Yuan Chen_*, Songming Hou, and Xu Zhang. [https://www.sciencedirect.com/science/article/pii/S0898122123003073 Semi and Fully Discrete Analysis for An Immersed Finite Element Method
-for Elastodynamic Interface Problems.] /Computers and Mathematics with Applications/, *147* (2023), 92-110. \[[pdf/chenhouzhang2023.pdf pdf]]
-. *_Yuan Chen_*, Xu Zhang. [https://www.global-sci.org/intro/article_detail/ijnam/18624.html A $\mathcal{P}_2$-$\mathcal{P}_1$ Partially Penalized Immersed Finite Element Method for Stokes Interface Problem.] /International Journal of Numerical Analysis and Modeling/, *18* (2021), no. 1, 120-141. \[[pdf/2021ChenZhang.pdf pdf]]
-. *_Yuan Chen_*, Songming Hou and Xu Zhang. [https://www.sciencedirect.com/science/article/pii/S2590037420300108 A Bilinear Partially Penalized Immersed Finite Element Method for Elliptic Interface Problems with Multi-domains and Triple Junction Points.] /Results in Applied Mathematics/, *8* (2020), 100100. \[[pdf/blinear2020.pdf pdf]]
-. *_Yuan Chen_*, Songming Hou and Xu Zhang. [https://global-sci.org/intro/article_detail/aamm/13198.html An Immersed Finite Element Method for Elliptic Interface Problems with Multi-Domain and Triple Junction Points.] /Advances in Applied Mathematics and Mechanics/, *11* (2019), no. 5, 1005-1021. \[[pdf/201905081754-4107.pdf pdf]]
+for Elastodynamic Interface Problems.] /Computers and Mathematics with Applications/, *147* (2023), 92-110. \[[pdf/chenhouzhang2023.pdf *pdf*]]
+. *_Yuan Chen_*, Xu Zhang. [https://www.global-sci.org/intro/article_detail/ijnam/18624.html A $\mathcal{P}_2$-$\mathcal{P}_1$ Partially Penalized Immersed Finite Element Method for Stokes Interface Problem.] /International Journal of Numerical Analysis and Modeling/, *18* (2021), no. 1, 120-141. \[[pdf/2021ChenZhang.pdf *pdf*]]
+. *_Yuan Chen_*, Songming Hou and Xu Zhang. [https://www.sciencedirect.com/science/article/pii/S2590037420300108 A Bilinear Partially Penalized Immersed Finite Element Method for Elliptic Interface Problems with Multi-domains and Triple Junction Points.] /Results in Applied Mathematics/, *8* (2020), 100100. \[[pdf/blinear2020.pdf *pdf*]]
+. *_Yuan Chen_*, Songming Hou and Xu Zhang. [https://global-sci.org/intro/article_detail/aamm/13198.html An Immersed Finite Element Method for Elliptic Interface Problems with Multi-Domain and Triple Junction Points.] /Advances in Applied Mathematics and Mechanics/, *11* (2019), no. 5, 1005-1021. \[[pdf/201905081754-4107.pdf *pdf*]]
