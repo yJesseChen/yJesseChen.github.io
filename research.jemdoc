@@ -8,7 +8,9 @@
 - Interface problems and coupling mathematical models arising from applications
 
 == Publications
+{{<font color=black size=+0.5><i>}}Note: $^{\dagger}$ means equal contribution{{</i></font>}}
 === Preprints
+. Zhongshu Xu$^{\dagger}$, *_Yuan Chen_*$^{\dagger}$, Qifan Chen$^{\dagger}$, Dongbin Xiu. Modeling Unknown Stochastic Dynamical System via Autoencoder, (2023+), /submitted/. \[[https://arxiv.org/abs/2305.03874 *arXiv*]]
 . *_Yuan Chen_*, Dongbin Xiu. Learning Stochastic Dynamical System via Flow Map Operator, (2023+), /submitted/. \[[https://arxiv.org/abs/2305.03874 *arXiv*]] \[[slides/SDEFrame_USNCCM17_Slides.pdf *Slides*]]
 . *_Yuan Chen_*, Xu Zhang. A High-order Immersed $C^0$ Interior Penalty Method for Biharmonic Interface
 Problems., (2023+), /preprint/.
