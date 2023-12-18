@@ -10,10 +10,10 @@
 == Publications
 {{<font color=black size=+0.5><i>}}Note: $^{\dagger}$ means equal contribution{{</i></font>}}
 === Preprints
-. Zhongshu Xu$^{\dagger}$, *_Yuan Chen_*$\boldsymbol{^{\dagger}}$, Qifan Chen$^{\dagger}$, Dongbin Xiu. Modeling Unknown Stochastic Dynamical System via Autoencoder, (2023+), /submitted/. \[[https://arxiv.org/abs/2305.03874 *arXiv*]]
-. *_Yuan Chen_*, Dongbin Xiu. Learning Stochastic Dynamical System via Flow Map Operator, (2023+), /submitted/. \[[https://arxiv.org/abs/2305.03874 *arXiv*]] \[[slides/SDEFrame_USNCCM17_Slides.pdf *Slides*]]
+. Zhongshu Xu$^{\dagger}$, *_Yuan Chen_*$\boldsymbol{^{\dagger}}$, Qifan Chen$^{\dagger}$, Dongbin Xiu. Modeling Unknown Stochastic Dynamical System via Autoencoder, (2024+), /submitted/. \[[https://arxiv.org/abs/2312.10001 *arXiv*]]
+. *_Yuan Chen_*, Dongbin Xiu. Learning Stochastic Dynamical System via Flow Map Operator, (2024+), /submitted/. \[[https://arxiv.org/abs/2305.03874 *arXiv*]] \[[slides/SDEFrame_USNCCM17_Slides.pdf *Slides*]]
 . *_Yuan Chen_*, Xu Zhang. A High-order Immersed $C^0$ Interior Penalty Method for Biharmonic Interface
-Problems., (2023+), /preprint/.
+Problems., (2024+), /preprint/.
 
 === Journal Publications
 . *_Yuan Chen_*, Yulong Xing. [https://doi.org/10.1090/mcom/3927 Optimal Error Estimates of Ultra-weak Discontinuous Galerkin Methods with Generalized Numerical Fluxes for Multi-dimensional Convection-Diffusion and Biharmonic Equations.] /Mathematics of Computation/, (2024+), /to appear/. \[[pdf/chenxing2023.pdf *pdf*]]
