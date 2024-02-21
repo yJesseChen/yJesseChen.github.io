@@ -5,7 +5,7 @@
 === Double well potential
 We consider a classical double-well system:
 \(\begin{equation}
-    d x_t = (x_t-x_t^3) d t+\sigma d W_{t}
+    d x_t = (x_t-x_t^3 + V\cos(\omega t)) d t+\sigma d W_{t}
   \end{equation}
 \)
 Here $\sigma$ is the pertubation constant. The following video shows the training data up to termination time $T=1$. Note that almost no transition of states happen in this short time lag.
@@ -17,11 +17,11 @@ Here $\sigma$ is the pertubation constant. The following video shows the trainin
   </div>
 }}
 
-Upon learning the stochastic flow map, we could obtain accurate simulation up to $T=100$ and predict transition of states without observing from training data.
+Upon learning the stochastic flow map, we could obtain accurate simulation up to $T=40000$ and predict transition of states without observing from training data.
 {{
   <div class="center">
-    <video width="800" height="400" controls>
-      <source src="video/DW_test.mp4" type="video/mp4">
+    <video width="800" height="600" controls>
+      <source src="video/Stochastic_Resonance.mp4" type="video/mp4">
     </video>
   </div>
 }}
