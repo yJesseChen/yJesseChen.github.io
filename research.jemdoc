@@ -12,11 +12,11 @@
 === Preprints
 . *_Yuan Chen_*, Dongbin Xiu and Xiangxiong Zhang. On Enforcing Non-negativity in Polynomial Approximations in High Dimensions, (2024+), /submitted/. \[[https://arxiv.org/abs/2401.12415 *arXiv*]]
 . Zhongshu Xu$^{\dagger}$, *_Yuan Chen_*$\boldsymbol{^{\dagger}}$, Qifan Chen$^{\dagger}$, Dongbin Xiu. Modeling Unknown Stochastic Dynamical System via Autoencoder, (2024+), /submitted/. \[[https://arxiv.org/abs/2312.10001 *arXiv*]]
-. *_Yuan Chen_*, Dongbin Xiu. Learning Stochastic Dynamical System via Flow Map Operator, (2024+), /submitted/. \[[https://arxiv.org/abs/2305.03874 *arXiv*]] \[[slides/SDEFrame_USNCCM17_Slides.pdf *Slides*]]
 . *_Yuan Chen_*, Xu Zhang. A High-order Immersed $C^0$ Interior Penalty Method for Biharmonic Interface
 Problems., (2024+), /preprint/.
 
 === Journal Publications
+. *_Yuan Chen_*, Dongbin Xiu. Learning Stochastic Dynamical System via Flow Map Operator, /Journal of Computational Physics/, (2024), accepted. \[[https://arxiv.org/abs/2305.03874 *arXiv*]] \[[slides/SDEFrame_USNCCM17_Slides.pdf *Slides*]]
 . *_Yuan Chen_*, Yulong Xing. [https://doi.org/10.1090/mcom/3927 Optimal Error Estimates of Ultra-weak Discontinuous Galerkin Methods with Generalized Numerical Fluxes for Multi-dimensional Convection-Diffusion and Biharmonic Equations.] /Mathematics of Computation/, (2024+), /to appear/. \[[pdf/chenxing2023.pdf *pdf*]]
 . *_Yuan Chen_*, Xu Zhang. [https://link.springer.com/article/10.1007/s10915-023-02414-z Solving Navier-Stokes Interface Problems with Fixed and Moving Interfaces on Unfitted Meshes.] /Journal of Scientific Computing/, *98* (2024), 19. \[[pdf/chenzhang2024.pdf *pdf*]]
 . Victor Churchill, *_Yuan Chen_*, Zhongshu Xu, and Dongbin Xiu. [https://www.sciencedirect.com/science/article/pii/S0021999123005971?dgcid=coauthor DNN Modeling of Partial Differential Equations with Incomplete Data.] /Journal of Computational Physics/, *493* (2023), 112502. \[[pdf/churchillchenxuxiu2023.pdf *pdf*]]
