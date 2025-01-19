@@ -11,15 +11,15 @@
 {{<font color=black size=+0.5><i>}}Note: $^{\dagger}$ means equal contribution{{</i></font>}}
 === Preprints
 . Yanfang Liu, *_Yuan Chen_*, Dongbin Xiu, Guannan Zhang. A Training-Free Conditional Diffusion Model for Learning Stochastic Dynamical Systems, (2024+), /submitted/. \[[https://arxiv.org/abs/2410.03108 *arXiv*]]
-. Zhongshu Xu, *_Yuan Chen_*, Dongbin Xiu. Chebyshev Feature Neural Network for Accurate Function Approximation, (2024+), /submitted/. \[[https://arxiv.org/abs/2409.19135 *arXiv*]]
-. *_Yuan Chen_*, Dongbin Xiu. Data-driven Effective Modeling of Multiscale Stochastic Dynamical Systems, (2024+), /submitted/. \[[https://arxiv.org/abs/2408.14821 *arXiv*]]
 . *_Yuan Chen_*, Dongbin Xiu. Modeling Unknown Stochastic Dynamical System Subject to External Excitation, (2024+), /submitted/. \[[https://arxiv.org/abs/2406.15747 *arXiv*]]
-. *_Yuan Chen_*, Dongbin Xiu and Xiangxiong Zhang. On Enforcing Non-negativity in Polynomial Approximations in High Dimensions, (2024+), /submitted/. \[[https://arxiv.org/abs/2401.12415 *arXiv*]]
 . *_Yuan Chen_*, Xu Zhang. A High-order Immersed $C^0$ Interior Penalty Method for Biharmonic Interface
 Problems., (2024+), /preprint/.
 
 === Journal Publications
-. Zhongshu Xu$^{\dagger}$, *_Yuan Chen_*$\boldsymbol{^{\dagger}}$, Qifan Chen$^{\dagger}$, Dongbin Xiu. Modeling Unknown Stochastic Dynamical System via Autoencoder, /Journal of Machine Learning for Modeling and Computing/, *5* (2024), 87-112. \[[pdf/2024XuChenChenXiu.pdf *pdf*]] \[[https://arxiv.org/abs/2312.10001 *arXiv*]]
+. *_Yuan Chen_*, Dongbin Xiu and Xiangxiong Zhang. On Enforcing Non-negativity in Polynomial Approximations in High Dimensions, /SIAM Journal on Scientific Computing/, in press, (2025). \[[https://arxiv.org/abs/2401.12415 *arXiv*]]
+. Zhongshu Xu, *_Yuan Chen_*, Dongbin Xiu. [https://www.dl.begellhouse.com/journals/558048804a15188a,forthcoming,56536.html Chebyshev Feature Neural Network for Accurate Function Approximation], /Journal of Machine Learning for Modeling and Computing/, *5* (2025), 1-14. \[[pdf/2025XuChenXiu.pdf *pdf*]] \[[https://arxiv.org/abs/2408.14821 *arXiv*]]
+. *_Yuan Chen_*, Dongbin Xiu. [https://www.aimsciences.org/article/doi/10.3934/ammc.2024018 Data-driven Effective Modeling of Multiscale Stochastic Dynamical Systems], /Applied Mathematics for Modern Challenges/, *2* (2024), 348-364. \[[pdf/2024ChenXiu_b.pdf *pdf*]] \[[https://arxiv.org/abs/2408.14821 *arXiv*]]
+. Zhongshu Xu$^{\dagger}$, *_Yuan Chen_*$\boldsymbol{^{\dagger}}$, Qifan Chen$^{\dagger}$, Dongbin Xiu. [https://www.dl.begellhouse.com/journals/558048804a15188a,7dd2ba1c3481309f,1fa59aa90d1bc10a.html Modeling Unknown Stochastic Dynamical System via Autoencoder], /Journal of Machine Learning for Modeling and Computing/, *5* (2024), 87-112. \[[pdf/2024XuChenChenXiu.pdf *pdf*]] \[[https://arxiv.org/abs/2312.10001 *arXiv*]]
 . *_Yuan Chen_*, Dongbin Xiu. [https://www.sciencedirect.com/science/article/pii/S002199912400233X Learning Stochastic Dynamical System via Flow Map Operator], /Journal of Computational Physics/, *508* (2024), 112984. \[[pdf/2024ChenXiu.pdf *pdf*]] \[[slides/SDEFrame_USNCCM17_Slides.pdf *Slides*]]
 . *_Yuan Chen_*, Yulong Xing. [https://doi.org/10.1090/mcom/3927 Optimal Error Estimates of Ultra-weak Discontinuous Galerkin Methods with Generalized Numerical Fluxes for Multi-dimensional Convection-Diffusion and Biharmonic Equations.] /Mathematics of Computation/, *93* (2024), 2135-2183. \[[pdf/chenxing2023.pdf *pdf*]]
 . *_Yuan Chen_*, Xu Zhang. [https://link.springer.com/article/10.1007/s10915-023-02414-z Solving Navier-Stokes Interface Problems with Fixed and Moving Interfaces on Unfitted Meshes.] /Journal of Scientific Computing/, *98* (2024), 19. \[[pdf/chenzhang2024.pdf *pdf*]]
