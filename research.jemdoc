@@ -2,10 +2,10 @@
 = Research
 
 == Research Interests
-- Data-driven modeling of systems driven by (stochastic) differential equations
-- Numerical simulation of stochastic differential equations and rare events
-- Finite Element Method, discontinuous Galerkin method, Virtual Element Method
-- Interface problems and coupling mathematical models arising from applications
+- Data-driven discovery of systems driven by (stochastic) differential equations
+- Modelling of complex stochastic dynamics in compuational chemistry and biology
+- Generative model and its applications in high dimensional sampling, inverse problems
+- Analysis and design of numerical algorithms for Partial Differential Equations, Finite Element Method, discontinuous Galerkin method
 
 == Publications
 {{<font color=black size=+0.5><i>}}Note: $^{\dagger}$ means equal contribution{{</i></font>}}
