@@ -10,13 +10,13 @@
 == Publications
 {{<font color=black size=+0.5><i>}}Note: $^{\dagger}$ means equal contribution{{</i></font>}}
 === Preprints
-. Yanfang Liu, *_Yuan Chen_*, Dongbin Xiu, Guannan Zhang. A Training-Free Conditional Diffusion Model for Learning Stochastic Dynamical Systems, (2024+), /submitted/. \[[https://arxiv.org/abs/2410.03108 *arXiv*]]
 . *_Yuan Chen_*, Dongbin Xiu. Modeling Unknown Stochastic Dynamical System Subject to External Excitation, (2024+), /submitted/. \[[https://arxiv.org/abs/2406.15747 *arXiv*]]
 . *_Yuan Chen_*, Xu Zhang. A High-order Immersed $C^0$ Interior Penalty Method for Biharmonic Interface
 Problems., (2024+), /preprint/.
 
 === Journal Publications
-. *_Yuan Chen_*, Dongbin Xiu and Xiangxiong Zhang. On Enforcing Non-negativity in Polynomial Approximations in High Dimensions, /SIAM Journal on Scientific Computing/, in press, (2025). \[[https://arxiv.org/abs/2401.12415 *arXiv*]]
+. Yanfang Liu, *_Yuan Chen_*, Dongbin Xiu, Guannan Zhang. A Training-Free Conditional Diffusion Model for Learning Stochastic Dynamical Systems, /SIAM Journal on Scientific Computing/, (2025), in press.  \[[https://arxiv.org/abs/2410.03108 *arXiv*]]
+. *_Yuan Chen_*, Dongbin Xiu and Xiangxiong Zhang. On Enforcing Non-negativity in Polynomial Approximations in High Dimensions, /SIAM Journal on Scientific Computing/, *47* (2025), no. 2, A866-A888. \[[pdf/2025ChenXiuZhang.pdf *pdf*]] \[[https://arxiv.org/abs/2401.12415 *arXiv*]]
 . Zhongshu Xu, *_Yuan Chen_*, Dongbin Xiu. [https://www.dl.begellhouse.com/journals/558048804a15188a,forthcoming,56536.html Chebyshev Feature Neural Network for Accurate Function Approximation], /Journal of Machine Learning for Modeling and Computing/, *5* (2025), 1-14. \[[pdf/2025XuChenXiu.pdf *pdf*]] \[[https://arxiv.org/abs/2408.14821 *arXiv*]]
 . *_Yuan Chen_*, Dongbin Xiu. [https://www.aimsciences.org/article/doi/10.3934/ammc.2024018 Data-driven Effective Modeling of Multiscale Stochastic Dynamical Systems], /Applied Mathematics for Modern Challenges/, *2* (2024), 348-364. \[[pdf/2024ChenXiu_b.pdf *pdf*]] \[[https://arxiv.org/abs/2408.14821 *arXiv*]]
 . Zhongshu Xu$^{\dagger}$, *_Yuan Chen_*$\boldsymbol{^{\dagger}}$, Qifan Chen$^{\dagger}$, Dongbin Xiu. [https://www.dl.begellhouse.com/journals/558048804a15188a,7dd2ba1c3481309f,1fa59aa90d1bc10a.html Modeling Unknown Stochastic Dynamical System via Autoencoder], /Journal of Machine Learning for Modeling and Computing/, *5* (2024), 87-112. \[[pdf/2024XuChenChenXiu.pdf *pdf*]] \[[https://arxiv.org/abs/2312.10001 *arXiv*]]
