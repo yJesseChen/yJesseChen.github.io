@@ -753,7 +753,7 @@ function renderRQDesc(raw) {
   html = html.replace(/@\[\[(paper|scientist)\|([^|]+)\|([^\]]+)\]\]/g, (_, type, id, label) => {
     const clickFn = type==='paper' ? `jumpToPaper('${id}',event)` : `jumpToScientist('${id}',event)`;
     const icon = type==='paper' ? '📄' : '🔬';
-    return `<span class="mention-chip" data-type="${type}" data-id="${id}" onclick="${clickFn}" style="cursor:pointer">${icon}&nbsp;${label}</span>`;
+    return `<span class="mention-chip" data-type="${type}" data-id="${id}" onclick="${clickFn}" style="cursor:pointer">${label}</span>`;
   });
   // Display math $$...$$ first
   html = html.replace(/\$\$([^$]+)\$\$/g, (_, math) => `<span class="rq-math-block" data-math="${math.replace(/"/g,'&quot;')}"></span>`);
@@ -957,10 +957,9 @@ function renderRQ() {
             ${papers.map(p => {
               const link = linkOf(p);
               return `<div class="rq-ref-link" onclick="jumpToPaper('${p.id}',event)">
-                <span class="rq-ref-icon">📄</span>
                 <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.title)}</span>
                 ${p.year?`<span style="font-size:0.6rem;color:var(--text-muted);flex-shrink:0">${p.year}</span>`:''}
-                ${link?`<a href="${esc(link)}" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);font-size:0.7rem;flex-shrink:0;text-decoration:none">🔗</a>`:''}
+                ${link?`<a href="${esc(link)}" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);font-size:0.65rem;flex-shrink:0;text-decoration:underline dotted">link</a>`:''}
               </div>`;
             }).join('')}
           </div>
@@ -969,10 +968,9 @@ function renderRQ() {
           <div class="field-label">Related Scientists</div>
           <div class="rq-ref-list">
             ${scis.map(s => `<div class="rq-ref-link" onclick="jumpToScientist('${s.id}',event)">
-              <span class="rq-ref-icon">🔬</span>
               <span style="flex:1">${esc(s.name)}</span>
               ${s.affil?`<span style="font-size:0.6rem;color:var(--text-muted)">${esc(s.affil)}</span>`:''}
-              ${s.scholarUrl?`<a href="${esc(s.scholarUrl)}" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);font-size:0.7rem;flex-shrink:0;text-decoration:none">🎓</a>`:''}
+              ${s.scholarUrl?`<a href="${esc(s.scholarUrl)}" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);font-size:0.65rem;flex-shrink:0;text-decoration:underline dotted">scholar</a>`:''}
             </div>`).join('')}
           </div>
         </div>` : ''}
