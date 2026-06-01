@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Research Records</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
@@ -250,6 +253,87 @@
   .star { font-size: 1rem; cursor: pointer; color: #ccc; transition: color 0.1s; }
   .star.lit { color: var(--accent2); }
 
+  /* ── Research Question cards ── */
+  .rq-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    cursor: pointer; user-select: none;
+  }
+  .rq-card:hover { border-color: #b0b8cc; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+  .rq-card.expanded { border-color: var(--accent); }
+  .rq-question {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem; font-weight: 600; line-height: 1.4;
+    color: var(--text); margin-bottom: 6px;
+  }
+  .rq-desc-preview {
+    font-size: 0.70rem; color: var(--text-muted);
+    line-height: 1.65; margin-bottom: 8px;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .rq-expanded {
+    margin-top: 14px; padding-top: 14px;
+    border-top: 1px solid var(--border);
+    display: none; flex-direction: column; gap: 12px;
+    user-select: text;
+  }
+  .rq-expanded.open { display: flex; }
+  .rq-ref-list { display: flex; flex-direction: column; gap: 6px; }
+  .rq-ref-link {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px; border-radius: 6px;
+    background: var(--surface2); border: 1px solid var(--border);
+    font-size: 0.68rem; color: var(--accent);
+    text-decoration: none; transition: border-color 0.12s;
+    cursor: pointer;
+  }
+  .rq-ref-link:hover { border-color: var(--accent); background: rgba(58,123,213,0.05); }
+
+  /* ── @ mention chips ── */
+  .mention-chip {
+    display: inline;
+    background: rgba(58,123,213,0.10);
+    color: var(--accent);
+    border-bottom: 2px dotted var(--accent);
+    border-radius: 3px;
+    padding: 0 3px;
+    font-size: 0.70rem;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+  }
+  .mention-chip[data-type="scientist"] {
+    background: rgba(107,126,163,0.10);
+    color: #5a6a8a;
+    border-bottom-color: #5a6a8a;
+  }
+  .mention-chip:hover { opacity: 0.8; }
+
+  .rq-desc-editor[data-placeholder]:empty:before {
+    content: attr(data-placeholder);
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+  .rq-desc-editor:focus { border-color: var(--accent); }
+
+  .mention-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; cursor: pointer; font-size: 0.70rem;
+    transition: background 0.1s;
+  }
+  .mention-item:hover, .mention-item.active { background: var(--surface2); }
+  .mention-item-icon { font-size: 0.8rem; flex-shrink: 0; }
+  .mention-item-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .mention-item-title { font-size: 0.70rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mention-item-sub { font-size: 0.59rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mention-item-year { font-size: 0.60rem; color: var(--text-muted); flex-shrink: 0; }
+
+  /* RQ description display */
+  .rq-desc-display { font-size: 0.70rem; color: var(--text-muted); line-height: 1.7; word-break: break-word; }
+  .rq-desc-display .mention-chip { font-size: 0.70rem; }
+
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #c5cad8; border-radius: 4px; }
@@ -296,13 +380,15 @@
     <span class="user-badge" id="userBadge"></span>
     <button class="btn btn-ghost" onclick="openCatModal()">+ Category</button>
     <button class="btn btn-ghost" id="btnAddScientist" style="display:none" onclick="openSciModal()">+ Scientist</button>
+    <button class="btn btn-ghost" id="btnAddRQ" style="display:none" onclick="openRQModal()">+ Research Question</button>
     <button class="btn btn-primary" id="btnAddPaper" onclick="openAddModal()">+ Add Paper</button>
     <button class="btn btn-ghost" onclick="doLogout()" title="Sign out" style="font-size:0.65rem">↩ Out</button>
   </div>
 </header>
 
 <div class="app">
-  <aside class="sidebar">
+  <!-- Papers sidebar -->
+  <aside class="sidebar" id="sidebarPapers">
     <div class="sidebar-label">All Papers</div>
     <div class="cat-item active" id="catAll" onclick="setCat('all')">
       <span class="cat-dot" style="background:#6b748e"></span>
@@ -322,25 +408,34 @@
       <span class="cat-count" id="countRead">0</span>
     </div>
     <div class="sidebar-divider"></div>
-    <div class="sidebar-label">Source Type</div>
-    <div class="type-item active" id="typeAll" onclick="setType('all')">
-      <span class="type-badge" style="background:rgba(110,130,165,0.08);color:#6e82a5">ALL</span> All Types
-    </div>
-    <div class="type-item" id="typeArxiv" onclick="setType('arxiv')">
-      <span class="type-badge badge-arxiv">arXiv</span> arXiv Preprints
-    </div>
-    <div class="type-item" id="typeConf" onclick="setType('conf')">
-      <span class="type-badge badge-conf">CONF</span> Conference
-    </div>
-    <div class="type-item" id="typeJournal" onclick="setType('journal')">
-      <span class="type-badge badge-journal">JRNL</span> Journal
-    </div>
-    <div class="type-item" id="typeOther" onclick="setType('other')">
-      <span class="type-badge badge-other">OTH</span> Other
-    </div>
-    <div class="sidebar-divider"></div>
     <div class="sidebar-label">Categories</div>
     <div id="catList"></div>
+  </aside>
+
+  <!-- Scientists sidebar -->
+  <aside class="sidebar" id="sidebarScientists" style="display:none">
+    <div class="sidebar-label">All Scientists</div>
+    <div class="cat-item active" id="sciCatAll" onclick="setSciCat('all')">
+      <span class="cat-dot" style="background:#6b748e"></span>
+      <span class="cat-name">All Scientists</span>
+      <span class="cat-count" id="countSciAll">0</span>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-label">By Category</div>
+    <div id="sciCatList"></div>
+  </aside>
+
+  <!-- Research Questions sidebar -->
+  <aside class="sidebar" id="sidebarRQ" style="display:none">
+    <div class="sidebar-label">All Questions</div>
+    <div class="cat-item active" id="rqCatAll" onclick="setRQCat('all')">
+      <span class="cat-dot" style="background:#6b748e"></span>
+      <span class="cat-name">All Questions</span>
+      <span class="cat-count" id="countRQAll">0</span>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-label">By Category</div>
+    <div id="rqCatList"></div>
   </aside>
 
   <main>
@@ -350,6 +445,9 @@
       </button>
       <button class="global-tab" id="tabScientists" onclick="switchSection('scientists')">
         <span>🔬</span> Scientists <span class="tab-count" id="tabCountScientists">0</span>
+      </button>
+      <button class="global-tab" id="tabRQ" onclick="switchSection('rq')">
+        <span>💡</span> Research Questions <span class="tab-count" id="tabCountRQ">0</span>
       </button>
     </div>
 
@@ -379,6 +477,15 @@
         <span class="view-label" id="sciCountLabel">0 scientists</span>
       </div>
       <div class="scientist-list" id="scientistList"></div>
+    </div>
+
+    <!-- Research Questions -->
+    <div class="section" id="sectionRQ">
+      <div class="toolbar">
+        <input class="search-box" id="rqSearchBox" placeholder="Search research questions…" oninput="renderRQ()">
+        <span class="view-label" id="rqCountLabel">0 questions</span>
+      </div>
+      <div class="paper-list" id="rqList"></div>
     </div>
   </main>
 </div>
@@ -497,6 +604,53 @@
   </div>
 </div>
 
+<!-- Research Question Modal -->
+<div class="modal-overlay" id="rqModal">
+  <div class="modal">
+    <div class="modal-header">💡 <span id="rqModalTitle">Add Research Question</span></div>
+    <div class="form-group">
+      <label class="form-label">Question *</label>
+      <textarea class="form-textarea" id="rqQuestion" placeholder="State your research question…" style="min-height:80px"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description / Context</label>
+      <div class="rq-desc-editor-wrap" style="position:relative">
+        <div class="form-textarea rq-desc-editor" id="rqDesc" contenteditable="true"
+          style="min-height:100px;font-family:'DM Mono',monospace;font-size:0.72rem;line-height:1.7;outline:none;word-break:break-word"
+          data-placeholder="Background, motivation, current thinking… Type @ to cite a paper or scientist"
+          oninput="onRQDescInput(event)" onkeydown="onRQDescKeydown(event)"></div>
+        <!-- @ mention dropdown -->
+        <div id="rqMentionDrop" style="display:none;position:absolute;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.14);max-height:220px;overflow-y:auto;"></div>
+      </div>
+      <div class="form-hint">Type <b>@</b> to cite a paper or scientist — they appear as clickable links.</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Categories <span style="font-size:0.55rem;color:var(--text-muted)">(select multiple)</span></label>
+      <div id="rqCatPills" style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 0;min-height:28px;"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Related Papers</label>
+      <div id="rqPaperList" style="display:flex;flex-direction:column;gap:6px;max-height:150px;overflow-y:auto;"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Related Scientists</label>
+      <div id="rqSciList" style="display:flex;flex-direction:column;gap:6px;max-height:120px;overflow-y:auto;"></div>
+    </div>
+    <div class="form-group">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <label class="form-label" style="margin:0">Progress Updates</label>
+        <button class="btn btn-ghost" style="font-size:0.65rem;padding:4px 10px" onclick="addProgressEntry()">+ Add Update</button>
+      </div>
+      <div id="rqProgressList" style="display:flex;flex-direction:column;gap:8px;"></div>
+      <div class="form-hint">Log incremental progress, notes, and findings over time.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('rqModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRQ()">Save Question</button>
+    </div>
+  </div>
+</div>
+
 <!-- Category Modal -->
 <div class="modal-overlay" id="catModal">
   <div class="modal">
@@ -520,7 +674,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const COLORS = ['#c47d2a','#a8682a','#b8943a','#c4a040','#7a8c3a',
                 '#4a8c8c','#3a7a9c','#7a5a9c','#9c5a7a','#6b7ea3'];
 
-let state = { categories: [], papers: [], scientists: [], activeCat: 'all', activeType: 'all', activeSection: 'papers' };
+let state = { categories: [], papers: [], scientists: [], questions: [], activeCat: 'all', activeType: 'all', activeSciCat: 'all', activeRQCat: 'all', activeSection: 'papers' };
 let currentUserId = null;
 
 // UI prefs stay in localStorage (not data)
@@ -528,10 +682,12 @@ function loadPrefs() {
   const p = JSON.parse(localStorage.getItem('rrPrefs') || '{}');
   state.activeCat    = p.activeCat    || 'all';
   state.activeType   = p.activeType   || 'all';
+  state.activeSciCat = p.activeSciCat || 'all';
+  state.activeRQCat  = p.activeRQCat  || 'all';
   state.activeSection= p.activeSection|| 'papers';
 }
 function savePrefs() {
-  localStorage.setItem('rrPrefs', JSON.stringify({ activeCat: state.activeCat, activeType: state.activeType, activeSection: state.activeSection }));
+  localStorage.setItem('rrPrefs', JSON.stringify({ activeCat: state.activeCat, activeType: state.activeType, activeSciCat: state.activeSciCat, activeRQCat: state.activeRQCat, activeSection: state.activeSection }));
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
@@ -559,6 +715,438 @@ async function doLogout() {
 document.getElementById('loginPassword').addEventListener('keydown', e => {
   if (e.key === 'Enter') doLogin();
 });
+
+// ── Research Questions ────────────────────────────────────────────────────────
+let editingRQId = null;
+
+// Storage format: raw text with @[[paper|id|Label]] or @[[scientist|id|Label]]
+// Editor shows chips for mentions, raw text for LaTeX ($...$  $$...$$)
+// Display renders both chips as links AND LaTeX via KaTeX
+
+// Convert raw stored text → editor HTML (chips for mentions, plain text for rest)
+function rqRawToEditorHTML(raw) {
+  return raw.replace(/@\[\[(paper|scientist)\|([^|]+)\|([^\]]+)\]\]/g, (_, type, id, label) => {
+    return `<span class="mention-chip" contenteditable="false" data-type="${esc(type)}" data-id="${esc(id)}" data-label="${esc(label)}">` +
+      (type==='paper'?'📄':'🔬') + ' ' + esc(label) + '</span>';
+  });
+}
+
+// Extract raw text from editor (converting chips back to @[[...]] markers)
+function rqEditorToRaw(editorEl) {
+  const clone = editorEl.cloneNode(true);
+  clone.querySelectorAll('.mention-chip').forEach(chip => {
+    const type = chip.dataset.type, id = chip.dataset.id, label = chip.dataset.label;
+    chip.replaceWith(`@[[${type}|${id}|${label}]]`);
+  });
+  // Preserve line breaks
+  clone.querySelectorAll('div, p, br').forEach(el => {
+    if (el.tagName === 'BR') el.replaceWith('\n');
+    else { el.insertAdjacentText('beforebegin', '\n'); }
+  });
+  return clone.textContent.trim();
+}
+
+function renderRQDesc(raw) {
+  if (!raw) return '';
+  let html = esc(raw);
+  // Mentions — restore from escaped form
+  html = html.replace(/@\[\[(paper|scientist)\|([^|]+)\|([^\]]+)\]\]/g, (_, type, id, label) => {
+    const clickFn = type==='paper' ? `jumpToPaper('${id}',event)` : `jumpToScientist('${id}',event)`;
+    const icon = type==='paper' ? '📄' : '🔬';
+    return `<span class="mention-chip" data-type="${type}" data-id="${id}" onclick="${clickFn}" style="cursor:pointer">${icon}&nbsp;${label}</span>`;
+  });
+  // Display math $$...$$ first
+  html = html.replace(/\$\$([^$]+)\$\$/g, (_, math) => `<span class="rq-math-block" data-math="${math.replace(/"/g,'&quot;')}"></span>`);
+  // Inline math $...$
+  html = html.replace(/\$([^$\n]+)\$/g, (_, math) => `<span class="rq-math-inline" data-math="${math.replace(/"/g,'&quot;')}"></span>`);
+  // Line breaks
+  html = html.replace(/\n/g, '<br>');
+  return html;
+}
+
+// After inserting renderRQDesc HTML into DOM, run KaTeX on math spans
+function renderKaTeX(container) {
+  if (typeof katex === 'undefined') return;
+  container.querySelectorAll('.rq-math-inline').forEach(el => {
+    try { katex.render(el.dataset.math, el, {throwOnError:false, displayMode:false}); }
+    catch(e) { el.textContent = el.dataset.math; }
+  });
+  container.querySelectorAll('.rq-math-block').forEach(el => {
+    try { katex.render(el.dataset.math, el, {throwOnError:false, displayMode:true}); }
+    catch(e) { el.textContent = el.dataset.math; }
+  });
+}
+
+// ── @ Mention picker ──────────────────────────────────────────────────────────
+let mentionQuery = '', mentionActive = false, mentionIndex = 0, mentionItems = [];
+
+function onRQDescInput(e) {
+  const ed = document.getElementById('rqDesc');
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+  // Get text before cursor in current text node
+  const node = range.startContainer;
+  if (node.nodeType !== Node.TEXT_NODE) { closeMentionDrop(); return; }
+  const textBefore = node.textContent.slice(0, range.startOffset);
+  const atIdx = textBefore.lastIndexOf('@');
+  if (atIdx === -1) { closeMentionDrop(); return; }
+  mentionQuery = textBefore.slice(atIdx + 1).toLowerCase();
+  mentionActive = true;
+  buildMentionItems(mentionQuery);
+  if (mentionItems.length) showMentionDrop(ed, range);
+  else closeMentionDrop();
+}
+
+function onRQDescKeydown(e) {
+  if (!mentionActive) return;
+  if (e.key === 'ArrowDown') { e.preventDefault(); mentionIndex = Math.min(mentionIndex+1, mentionItems.length-1); updateMentionActive(); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); mentionIndex = Math.max(mentionIndex-1, 0); updateMentionActive(); }
+  else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); insertMention(mentionItems[mentionIndex]); }
+  else if (e.key === 'Escape') { closeMentionDrop(); }
+}
+
+function buildMentionItems(q) {
+  mentionItems = [];
+  const papers = state.papers.filter(p => p.title.toLowerCase().includes(q) || (p.authors||'').toLowerCase().includes(q)).slice(0, 5);
+  const scis   = state.scientists.filter(s => s.name.toLowerCase().includes(q)).slice(0, 4);
+  papers.forEach(p => mentionItems.push({type:'paper',    id:p.id, label:p.title, sub:p.year||''}));
+  scis.forEach  (s => mentionItems.push({type:'scientist',id:s.id, label:s.name,  sub:s.affil||''}));
+  mentionIndex = 0;
+}
+
+function showMentionDrop(ed, range) {
+  const drop = document.getElementById('rqMentionDrop');
+  const rect = range.getBoundingClientRect();
+  const edRect = ed.getBoundingClientRect();
+  // Position below cursor, clamped to editor width
+  const leftRaw = rect.left - edRect.left;
+  const dropWidth = 320;
+  const maxLeft = edRect.width - dropWidth;
+  drop.style.top   = (rect.bottom - edRect.top + 4) + 'px';
+  drop.style.left  = Math.max(0, Math.min(leftRaw, maxLeft)) + 'px';
+  drop.style.width = dropWidth + 'px';
+  drop.style.display = '';
+  drop.innerHTML = mentionItems.map((item, i) => {
+    const isPaper = item.type === 'paper';
+    return `<div class="mention-item ${i===mentionIndex?'active':''}" onmousedown="event.preventDefault();insertMentionAt(${i})">
+      <span class="mention-item-icon">${isPaper?'📄':'🔬'}</span>
+      <span class="mention-item-main">
+        <span class="mention-item-title">${esc(item.label)}</span>
+        ${!isPaper && item.sub ? `<span class="mention-item-sub">${esc(item.sub)}</span>` : ''}
+      </span>
+      ${isPaper && item.sub ? `<span class="mention-item-year">${esc(item.sub)}</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function updateMentionActive() {
+  document.querySelectorAll('#rqMentionDrop .mention-item').forEach((el,i) => el.classList.toggle('active', i===mentionIndex));
+}
+
+function insertMentionAt(idx) { insertMention(mentionItems[idx]); }
+
+function insertMention(item) {
+  if (!item) return;
+  const ed = document.getElementById('rqDesc');
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+  const node = range.startContainer;
+  if (node.nodeType !== Node.TEXT_NODE) return;
+  const textBefore = node.textContent.slice(0, range.startOffset);
+  const atIdx = textBefore.lastIndexOf('@');
+  // Delete from @ to cursor
+  const delRange = document.createRange();
+  delRange.setStart(node, atIdx);
+  delRange.setEnd(node, range.startOffset);
+  delRange.deleteContents();
+  // Insert chip
+  const chip = document.createElement('span');
+  chip.className = 'mention-chip';
+  chip.contentEditable = 'false';
+  chip.dataset.type = item.type;
+  chip.dataset.id   = item.id;
+  chip.dataset.label = item.label;
+  chip.textContent = (item.type==='paper'?'📄':'🔬') + ' ' + item.label;
+  // Insert chip then a space
+  const afterRange = document.createRange();
+  afterRange.setStart(node, atIdx);
+  afterRange.collapse(true);
+  afterRange.insertNode(chip);
+  // Move cursor after chip
+  const space = document.createTextNode('\u00A0');
+  chip.insertAdjacentElement('afterend', document.createElement('span')).remove();
+  chip.after(space);
+  const cur = document.createRange();
+  cur.setStartAfter(space); cur.collapse(true);
+  sel.removeAllRanges(); sel.addRange(cur);
+  closeMentionDrop();
+}
+
+function closeMentionDrop() {
+  mentionActive = false;
+  document.getElementById('rqMentionDrop').style.display = 'none';
+}
+
+// Close mention drop when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('#rqMentionDrop') && !e.target.closest('#rqDesc')) closeMentionDrop();
+});
+
+function renderRQSidebar() {
+  if (!document.getElementById('countRQAll')) return;
+  document.getElementById('countRQAll').textContent = state.questions.length;
+  document.getElementById('rqCatAll').classList.toggle('active', (state.activeRQCat||'all')==='all');
+  document.getElementById('rqCatList').innerHTML = state.categories.map(c => {
+    const cnt = state.questions.filter(q=>(q.catIds||[]).includes(c.id)).length;
+    if (!cnt) return '';
+    return `<div class="cat-item ${state.activeRQCat===c.id?'active':''}" onclick="setRQCat('${c.id}')">
+      <span class="cat-dot" style="background:${c.color}"></span>
+      <span class="cat-name">${esc(c.name)}</span>
+      <span class="cat-count">${cnt}</span>
+    </div>`;
+  }).join('');
+}
+
+function setRQCat(id) {
+  state.activeRQCat = id; savePrefs();
+  renderRQSidebar(); renderRQ();
+}
+
+function renderRQ() {
+  const q = (document.getElementById('rqSearchBox').value||'').toLowerCase();
+  let questions = state.questions.slice();
+  if ((state.activeRQCat||'all') !== 'all') questions = questions.filter(rq=>(rq.catIds||[]).includes(state.activeRQCat));
+  if (q) questions = questions.filter(rq=>rq.question.toLowerCase().includes(q)||(rq.desc||'').toLowerCase().includes(q));
+  questions.reverse();
+
+  document.getElementById('rqCountLabel').textContent = `${questions.length} question${questions.length!==1?'s':''}`;
+  const list = document.getElementById('rqList');
+  if (!questions.length) {
+    list.innerHTML = `<div class="empty-state"><div class="big">💡</div>${q?'No questions match.':'No research questions yet.<br>Click <b>+ Research Question</b> to add one.'}</div>`;
+    return;
+  }
+
+  list.innerHTML = questions.map(rq => {
+    const cats     = (rq.catIds||[]).map(id=>state.categories.find(c=>c.id===id)).filter(Boolean);
+    const papers   = (rq.paperIds||[]).map(id=>state.papers.find(p=>p.id===id)).filter(Boolean);
+    const scis     = (rq.sciIds||[]).map(id=>state.scientists.find(s=>s.id===id)).filter(Boolean);
+    const isExp    = state.expandedRQ === rq.id;
+    return `<div class="rq-card${isExp?' expanded':''}" id="rqcard-${rq.id}" onclick="toggleRQ('${rq.id}',event)">
+      <div class="card-top">
+        <div class="card-main">
+          <div class="rq-question">${esc(rq.question)}</div>
+          <div class="card-tags">
+            ${cats.map(c=>`<span class="tag" style="background:${c.color}18;color:${c.color}">${esc(c.name)}</span>`).join('')}
+            ${papers.length?`<span class="tag" style="background:rgba(58,123,213,0.08);color:#3a7bd5">📄 ${papers.length} paper${papers.length>1?'s':''}</span>`:''}
+            ${scis.length  ?`<span class="tag" style="background:rgba(107,126,163,0.1);color:#6b7ea3">🔬 ${scis.length} scientist${scis.length>1?'s':''}</span>`:''}
+            ${(rq.progress||[]).length?`<span class="tag" style="background:rgba(42,171,106,0.08);color:#2aab6a">📝 ${rq.progress.length} update${rq.progress.length>1?'s':''}</span>`:''}
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="icon-btn" onclick="editRQ('${rq.id}',event)">&#9998;</button>
+          <button class="icon-btn delete" onclick="deleteRQ('${rq.id}',event)">&#10005;</button>
+        </div>
+      </div>
+      <div class="rq-expanded${isExp?' open':''}" id="rqexp-${rq.id}">
+        ${rq.desc ? `<div><div class="field-label">Description</div><div class="rq-desc-display">${renderRQDesc(rq.desc)}</div></div>` : ''}
+        ${papers.length ? `<div>
+          <div class="field-label">Related Papers</div>
+          <div class="rq-ref-list">
+            ${papers.map(p => {
+              const link = linkOf(p);
+              return `<div class="rq-ref-link" onclick="jumpToPaper('${p.id}',event)">
+                <span class="rq-ref-icon">📄</span>
+                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.title)}</span>
+                ${p.year?`<span style="font-size:0.6rem;color:var(--text-muted);flex-shrink:0">${p.year}</span>`:''}
+                ${link?`<a href="${esc(link)}" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);font-size:0.7rem;flex-shrink:0;text-decoration:none">🔗</a>`:''}
+              </div>`;
+            }).join('')}
+          </div>
+        </div>` : ''}
+        ${scis.length ? `<div>
+          <div class="field-label">Related Scientists</div>
+          <div class="rq-ref-list">
+            ${scis.map(s => `<div class="rq-ref-link" onclick="jumpToScientist('${s.id}',event)">
+              <span class="rq-ref-icon">🔬</span>
+              <span style="flex:1">${esc(s.name)}</span>
+              ${s.affil?`<span style="font-size:0.6rem;color:var(--text-muted)">${esc(s.affil)}</span>`:''}
+              ${s.scholarUrl?`<a href="${esc(s.scholarUrl)}" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);font-size:0.7rem;flex-shrink:0;text-decoration:none">🎓</a>`:''}
+            </div>`).join('')}
+          </div>
+        </div>` : ''}
+        ${(rq.progress||[]).length ? `<div>
+          <div class="field-label">Progress</div>
+          <div class="rq-ref-list">
+            ${(rq.progress||[]).map(pg => `
+              <div style="padding:8px 10px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);">
+                <div style="font-size:0.60rem;color:var(--text-muted);margin-bottom:3px">📝 ${esc(pg.date)}</div>
+                <div style="font-size:0.70rem;color:var(--text);line-height:1.6;white-space:pre-wrap">${esc(pg.text)}</div>
+              </div>`).join('')}
+          </div>
+        </div>` : ''}
+        <div class="card-meta"><span>Added ${rq.added}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+  // Render LaTeX in all visible RQ cards
+  setTimeout(() => renderKaTeX(list), 50);
+}
+
+function toggleRQ(id, e) {
+  if (e.target.closest('a, button')) return;
+  state.expandedRQ = state.expandedRQ === id ? null : id;
+  renderRQ();
+}
+
+function jumpToScientist(sciId, e) {
+  e.stopPropagation();
+  switchSection('scientists');
+  setTimeout(()=>{
+    const el = document.getElementById(`sci-${sciId}`);
+    if (el) { el.scrollIntoView({behavior:'smooth',block:'center'}); el.classList.add('expanded'); document.getElementById(`sciexp-${sciId}`)?.classList.add('open'); }
+  }, 80);
+}
+
+async function deleteRQ(id, e) {
+  e.stopPropagation();
+  const rq = state.questions.find(x=>x.id===id);
+  if (!rq || !confirm(`Delete this research question?`)) return;
+  state.questions = state.questions.filter(x=>x.id!==id);
+  await dbDeleteRQ(id);
+  renderRQ(); renderRQSidebar(); updateTabCounts();
+  toast('Question removed.');
+}
+
+function openRQModal() {
+  editingRQId = null;
+  document.getElementById('rqModalTitle').textContent = 'Add Research Question';
+  document.getElementById('rqQuestion').value = '';
+  const ed = document.getElementById('rqDesc'); ed.innerHTML = ''; ed.dataset.raw = '';
+  renderRQCatPills([]);
+  renderRQPaperChecks([]);
+  renderRQSciChecks([]);
+  renderProgressEntries([]);
+  document.getElementById('rqModal').classList.add('open');
+  setTimeout(()=>document.getElementById('rqQuestion').focus(), 60);
+}
+
+function editRQ(id, e) {
+  e.stopPropagation();
+  const rq = state.questions.find(x=>x.id===id); if (!rq) return;
+  editingRQId = id;
+  document.getElementById('rqModalTitle').textContent = 'Edit Research Question';
+  document.getElementById('rqQuestion').value = rq.question;
+  const ed = document.getElementById('rqDesc');
+  // desc is stored as raw text with @[[type|id|label]] markers
+  ed.innerHTML = rqRawToEditorHTML(rq.desc || '');
+  ed.dataset.raw = rq.desc || '';
+  renderRQCatPills(rq.catIds||[]);
+  renderRQPaperChecks(rq.paperIds||[]);
+  renderRQSciChecks(rq.sciIds||[]);
+  renderProgressEntries(rq.progress||[]);
+  document.getElementById('rqModal').classList.add('open');
+}
+
+function renderRQCatPills(selectedIds) {
+  const c = document.getElementById('rqCatPills');
+  if (!state.categories.length) { c.innerHTML=`<span style="font-size:0.65rem;color:var(--text-muted)">No categories yet.</span>`; return; }
+  c.innerHTML = state.categories.map(cat => {
+    const checked = selectedIds.includes(cat.id);
+    return `<label class="cat-check-pill ${checked?'checked':''}" style="background:${cat.color}18;color:${cat.color};border-color:${checked?cat.color:'transparent'}" onclick="toggleCatPill(this,'${cat.id}','${cat.color}')">
+      <input type="checkbox" value="${cat.id}" ${checked?'checked':''}>${esc(cat.name)}</label>`;
+  }).join('');
+}
+
+function renderRQPaperChecks(selectedIds) {
+  const c = document.getElementById('rqPaperList');
+  if (!state.papers.length) { c.innerHTML=`<div style="font-size:0.65rem;color:var(--text-muted)">No papers yet.</div>`; return; }
+  c.innerHTML = state.papers.slice().reverse().map(p=>`
+    <label style="display:flex;align-items:flex-start;gap:8px;padding:6px 8px;border-radius:5px;background:var(--surface2);cursor:pointer;border:1px solid var(--border)">
+      <input type="checkbox" value="${p.id}" ${selectedIds.includes(p.id)?'checked':''} style="accent-color:var(--accent);margin-top:3px;flex-shrink:0">
+      <span class="sci-paper-badge ${TYPE_CLASS[p.type]}" style="font-size:0.54rem;padding:2px 5px;margin-top:1px">${TYPE_BADGE[p.type]}</span>
+      <span style="flex:1;min-width:0">
+        <span style="display:block;font-size:0.68rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.title)}</span>
+        ${p.authors?`<span style="display:block;font-size:0.60rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px">${esc(p.authors)}</span>`:''}
+      </span>
+      ${p.year?`<span style="font-size:0.6rem;color:var(--text-muted);flex-shrink:0;padding-top:2px">${p.year}</span>`:''}
+    </label>`).join('');
+}
+
+function renderRQSciChecks(selectedIds) {
+  const c = document.getElementById('rqSciList');
+  if (!state.scientists.length) { c.innerHTML=`<div style="font-size:0.65rem;color:var(--text-muted)">No scientists yet.</div>`; return; }
+  c.innerHTML = state.scientists.map(s=>`
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:5px;background:var(--surface2);cursor:pointer;border:1px solid var(--border)">
+      <input type="checkbox" value="${s.id}" ${selectedIds.includes(s.id)?'checked':''} style="accent-color:var(--accent);flex-shrink:0">
+      <span style="flex:1;min-width:0">
+        <span style="display:block;font-size:0.68rem;font-weight:500">${esc(s.name)}</span>
+        ${s.affil?`<span style="display:block;font-size:0.60rem;color:var(--text-muted)">${esc(s.affil)}</span>`:''}
+      </span>
+    </label>`).join('');
+}
+
+function renderProgressEntries(entries) {
+  const container = document.getElementById('rqProgressList');
+  container.innerHTML = '';
+  entries.forEach(pg => addProgressEntryDOM(pg.date, pg.text));
+}
+
+function addProgressEntry() {
+  addProgressEntryDOM('', '');
+}
+
+function addProgressEntryDOM(date, text) {
+  const container = document.getElementById('rqProgressList');
+  const today = new Date().toISOString().slice(0,10);
+  const div = document.createElement('div');
+  div.style.cssText = 'display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;';
+  div.innerHTML = `
+    <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+      <input type="date" value="${date||today}" style="font-family:'DM Mono',monospace;font-size:0.65rem;background:transparent;border:none;color:var(--text-muted);outline:none;cursor:pointer">
+      <textarea placeholder="Describe your progress, findings, or next steps…" style="font-family:'DM Mono',monospace;font-size:0.70rem;background:transparent;border:none;outline:none;resize:none;min-height:50px;color:var(--text);line-height:1.6">${esc(text||'')}</textarea>
+    </div>
+    <button onclick="this.closest('div[style]').remove()" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:0.75rem;padding:2px;flex-shrink:0" title="Remove">✕</button>`;
+  container.appendChild(div);
+}
+
+function collectProgressEntries() {
+  const container = document.getElementById('rqProgressList');
+  const entries = [];
+  container.querySelectorAll('div[style]').forEach(div => {
+    const date = div.querySelector('input[type=date]')?.value || '';
+    const text = div.querySelector('textarea')?.value.trim() || '';
+    if (text) entries.push({ date, text });
+  });
+  return entries;
+}
+
+async function saveRQ() {
+  const question = document.getElementById('rqQuestion').value.trim();
+  if (!question) { toast('Question is required.'); return; }
+  const catBoxes = [...document.getElementById('rqCatPills').querySelectorAll('input[type=checkbox]:checked')];
+  const papBoxes = [...document.getElementById('rqPaperList').querySelectorAll('input[type=checkbox]:checked')];
+  const sciBoxes = [...document.getElementById('rqSciList').querySelectorAll('input[type=checkbox]:checked')];
+  // Extract raw text (with @markers) from contenteditable
+  const rawDesc = rqEditorToRaw(document.getElementById('rqDesc'));
+  const progress = collectProgressEntries();
+  const rq = {
+    id:       editingRQId || uid(),
+    question,
+    desc:     rawDesc,
+    catIds:   catBoxes.map(cb=>cb.value),
+    paperIds: papBoxes.map(cb=>cb.value),
+    sciIds:   sciBoxes.map(cb=>cb.value),
+    progress,
+    added:    editingRQId ? state.questions.find(q=>q.id===editingRQId)?.added : new Date().toLocaleDateString(),
+  };
+  if (editingRQId) state.questions[state.questions.findIndex(q=>q.id===editingRQId)] = rq;
+  else             state.questions.push(rq);
+  await dbSaveRQ(rq);
+  closeModal('rqModal'); renderRQ(); renderRQSidebar(); updateTabCounts();
+  toast(editingRQId ? 'Question updated.' : 'Question added!');
+}
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 async function bootApp(user) {
@@ -592,14 +1180,41 @@ function showLoading(on) {
 
 // ── Load all data from Supabase ───────────────────────────────────────────────
 async function loadAllData() {
-  const [cats, papers, scientists] = await Promise.all([
-    sb.from('categories').select('*').order('created_at'),
+  const [cats, papers, scientists, questions] = await Promise.all([
+    sb.from('categories').select('*').order('name'),
     sb.from('papers').select('*').order('created_at'),
     sb.from('scientists').select('*').order('created_at'),
+    sb.from('questions').select('*').order('created_at'),
   ]);
   state.categories = (cats.data || []).map(dbCatToLocal);
   state.papers     = (papers.data || []).map(dbPaperToLocal);
   state.scientists = (scientists.data || []).map(dbSciToLocal);
+  state.questions  = (questions.data || []).map(dbRQToLocal);
+}
+
+function dbRQToLocal(r) {
+  return {
+    id: r.id, question: r.question, desc: r.description || '',
+    catIds: r.cat_ids || [], paperIds: r.paper_ids || [],
+    sciIds: r.sci_ids || [], progress: r.progress || [],
+    added: r.added || '',
+  };
+}
+function localRQToDB(q) {
+  return {
+    id: q.id, user_id: currentUserId,
+    question: q.question, description: q.desc,
+    cat_ids: q.catIds, paper_ids: q.paperIds,
+    sci_ids: q.sciIds, progress: q.progress || [],
+    added: q.added,
+  };
+}
+async function dbSaveRQ(q) {
+  const { error } = await sb.from('questions').upsert(localRQToDB(q));
+  if (error) { toast('Save error: ' + error.message); console.error(error); }
+}
+async function dbDeleteRQ(id) {
+  await sb.from('questions').delete().eq('id', id);
 }
 
 // ── DB ↔ local field mapping ─────────────────────────────────────────────────
@@ -772,10 +1387,6 @@ function toTitleCase(str) {
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 function renderSidebar() {
-  ['all','arxiv','conf','journal','other'].forEach(t => {
-    const el = document.getElementById(t==='all'?'typeAll':'type'+t.charAt(0).toUpperCase()+t.slice(1));
-    if (el) el.classList.toggle('active', state.activeType===t);
-  });
   document.getElementById('countAll').textContent = state.papers.length;
   document.getElementById('catAll').classList.toggle('active', state.activeCat==='all');
   const unread = state.papers.filter(p=>p.readStatus!=='read').length;
@@ -795,8 +1406,27 @@ function renderSidebar() {
   }).join('');
 }
 
+function renderSciSidebar() {
+  if (!document.getElementById('countSciAll')) return;
+  document.getElementById('countSciAll').textContent = state.scientists.length;
+  document.getElementById('sciCatAll').classList.toggle('active', (state.activeSciCat||'all')==='all');
+  document.getElementById('sciCatList').innerHTML = state.categories.map(c => {
+    const cnt = state.scientists.filter(s=>(s.catIds||[]).includes(c.id)).length;
+    if (!cnt) return '';
+    return `<div class="cat-item ${state.activeSciCat===c.id?'active':''}" onclick="setSciCat('${c.id}')">
+      <span class="cat-dot" style="background:${c.color}"></span>
+      <span class="cat-name">${esc(c.name)}</span>
+      <span class="cat-count">${cnt}</span>
+    </div>`;
+  }).join('');
+}
+
+function setSciCat(id) {
+  state.activeSciCat = id; savePrefs();
+  renderSciSidebar(); renderScientists();
+}
+
 function setCat(id)  { state.activeCat  = id; savePrefs(); renderSidebar(); renderPapers(); }
-function setType(t)  { state.activeType = t;  savePrefs(); renderSidebar(); renderPapers(); }
 
 async function deleteCat(id, e) {
   e.stopPropagation();
@@ -817,15 +1447,23 @@ function switchSection(sec) {
   state.activeSection = sec; savePrefs();
   document.getElementById('sectionPapers').classList.toggle('active', sec==='papers');
   document.getElementById('sectionScientists').classList.toggle('active', sec==='scientists');
+  document.getElementById('sectionRQ').classList.toggle('active', sec==='rq');
   document.getElementById('tabPapers').classList.toggle('active', sec==='papers');
   document.getElementById('tabScientists').classList.toggle('active', sec==='scientists');
+  document.getElementById('tabRQ').classList.toggle('active', sec==='rq');
   document.getElementById('btnAddPaper').style.display     = sec==='papers'     ? '' : 'none';
   document.getElementById('btnAddScientist').style.display = sec==='scientists' ? '' : 'none';
-  if (sec==='scientists') renderScientists();
+  document.getElementById('btnAddRQ').style.display        = sec==='rq'         ? '' : 'none';
+  document.getElementById('sidebarPapers').style.display     = sec==='papers'     ? '' : 'none';
+  document.getElementById('sidebarScientists').style.display = sec==='scientists' ? '' : 'none';
+  document.getElementById('sidebarRQ').style.display         = sec==='rq'         ? '' : 'none';
+  if (sec==='scientists') { renderScientists(); renderSciSidebar(); }
+  if (sec==='rq')         { renderRQ(); renderRQSidebar(); }
 }
 function updateTabCounts() {
   document.getElementById('tabCountPapers').textContent     = state.papers.length;
   document.getElementById('tabCountScientists').textContent = state.scientists.length;
+  document.getElementById('tabCountRQ').textContent         = state.questions.length;
 }
 
 // ── Render papers ─────────────────────────────────────────────────────────────
@@ -836,7 +1474,6 @@ function renderPapers() {
   if (state.activeCat==='read')        papers = papers.filter(p=>p.readStatus==='read');
   else if (state.activeCat==='unread') papers = papers.filter(p=>p.readStatus!=='read');
   else if (state.activeCat!=='all')    papers = papers.filter(p=>p.catId===state.activeCat);
-  if (state.activeType!=='all') papers = papers.filter(p=>p.type===state.activeType);
   if (q) papers = papers.filter(p=>p.title.toLowerCase().includes(q)||(p.authors||'').toLowerCase().includes(q)||venueOf(p).toLowerCase().includes(q));
   if (sort==='recent') papers.reverse();
   else if (sort==='year')  papers.sort((a,b)=>(b.year||0)-(a.year||0));
@@ -1098,6 +1735,7 @@ let editingSciId = null, currentPhotoData = null;
 function renderScientists() {
   const q = (document.getElementById('sciSearchBox').value||'').toLowerCase();
   let scientists = state.scientists.slice();
+  if ((state.activeSciCat||'all') !== 'all') scientists = scientists.filter(s=>(s.catIds||[]).includes(state.activeSciCat));
   if (q) scientists = scientists.filter(s=>s.name.toLowerCase().includes(q)||(s.affil||'').toLowerCase().includes(q));
   document.getElementById('sciCountLabel').textContent = `${scientists.length} scientist${scientists.length!==1?'s':''}`;
   const list = document.getElementById('scientistList');
@@ -1158,7 +1796,7 @@ function toggleSci(id, e) {
 
 function jumpToPaper(paperId, e) {
   e.stopPropagation();
-  switchSection('papers'); state.activeCat='all'; state.activeType='all';
+  switchSection('papers'); state.activeCat='all';
   renderSidebar(); renderPapers();
   setTimeout(()=>{
     const el=document.getElementById(`card-${paperId}`);
