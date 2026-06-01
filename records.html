@@ -639,7 +639,7 @@
     <div class="form-group">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <label class="form-label" style="margin:0">Progress Updates</label>
-        <button class="btn btn-ghost" style="font-size:0.65rem;padding:4px 10px" onclick="addProgressEntry()">+ Add Update</button>
+        <button type="button" class="btn btn-ghost" style="font-size:0.65rem;padding:4px 10px" onclick="addProgressEntry()">+ Add Update</button>
       </div>
       <div id="rqProgressList" style="display:flex;flex-direction:column;gap:8px;"></div>
       <div class="form-hint">Log incremental progress, notes, and findings over time.</div>
@@ -1101,20 +1101,34 @@ function addProgressEntryDOM(date, text) {
   const container = document.getElementById('rqProgressList');
   const today = new Date().toISOString().slice(0,10);
   const div = document.createElement('div');
+  div.className = 'progress-entry';
   div.style.cssText = 'display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;';
-  div.innerHTML = `
-    <div style="flex:1;display:flex;flex-direction:column;gap:6px">
-      <input type="date" value="${date||today}" style="font-family:'DM Mono',monospace;font-size:0.65rem;background:transparent;border:none;color:var(--text-muted);outline:none;cursor:pointer">
-      <textarea placeholder="Describe your progress, findings, or next steps…" style="font-family:'DM Mono',monospace;font-size:0.70rem;background:transparent;border:none;outline:none;resize:none;min-height:50px;color:var(--text);line-height:1.6">${esc(text||'')}</textarea>
-    </div>
-    <button onclick="this.closest('div[style]').remove()" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:0.75rem;padding:2px;flex-shrink:0" title="Remove">✕</button>`;
+  const inner = document.createElement('div');
+  inner.style.cssText = 'flex:1;display:flex;flex-direction:column;gap:6px';
+  const dateInput = document.createElement('input');
+  dateInput.type = 'date';
+  dateInput.value = date || today;
+  dateInput.style.cssText = "font-family:'DM Mono',monospace;font-size:0.65rem;background:transparent;border:none;color:var(--text-muted);outline:none;cursor:pointer";
+  const textarea = document.createElement('textarea');
+  textarea.placeholder = 'Describe your progress, findings, or next steps…';
+  textarea.style.cssText = "font-family:'DM Mono',monospace;font-size:0.70rem;background:transparent;border:none;outline:none;resize:none;min-height:50px;color:var(--text);line-height:1.6";
+  textarea.value = text || '';
+  inner.appendChild(dateInput);
+  inner.appendChild(textarea);
+  const delBtn = document.createElement('button');
+  delBtn.textContent = '✕';
+  delBtn.title = 'Remove';
+  delBtn.style.cssText = 'background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:0.75rem;padding:2px;flex-shrink:0';
+  delBtn.onclick = () => div.remove();
+  div.appendChild(inner);
+  div.appendChild(delBtn);
   container.appendChild(div);
 }
 
 function collectProgressEntries() {
-  const container = document.getElementById('rqProgressList');
   const entries = [];
-  container.querySelectorAll('div[style]').forEach(div => {
+  const container = document.getElementById('rqProgressList');
+  container.querySelectorAll('.progress-entry').forEach(div => {
     const date = div.querySelector('input[type=date]')?.value || '';
     const text = div.querySelector('textarea')?.value.trim() || '';
     if (text) entries.push({ date, text });
@@ -1123,6 +1137,8 @@ function collectProgressEntries() {
 }
 
 async function saveRQ() {
+  if (saveRQ._saving) return; saveRQ._saving = true;
+  try {
   const question = document.getElementById('rqQuestion').value.trim();
   if (!question) { toast('Question is required.'); return; }
   const catBoxes = [...document.getElementById('rqCatPills').querySelectorAll('input[type=checkbox]:checked')];
@@ -1146,6 +1162,7 @@ async function saveRQ() {
   await dbSaveRQ(rq);
   closeModal('rqModal'); renderRQ(); renderRQSidebar(); updateTabCounts();
   toast(editingRQId ? 'Question updated.' : 'Question added!');
+  } finally { saveRQ._saving = false; }
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
