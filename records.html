@@ -264,7 +264,7 @@
   .rq-card.expanded { border-color: var(--accent); }
   .rq-question {
     font-family: 'Playfair Display', serif;
-    font-size: 1rem; font-weight: 600; line-height: 1.4;
+    font-size: 1.15rem; font-weight: 600; line-height: 1.4;
     color: var(--text); margin-bottom: 6px;
   }
   .rq-desc-preview {
@@ -276,7 +276,7 @@
   .rq-expanded {
     margin-top: 14px; padding-top: 14px;
     border-top: 1px solid var(--border);
-    display: none; flex-direction: column; gap: 12px;
+    display: none; flex-direction: column; gap: 14px;
     user-select: text;
   }
   .rq-expanded.open { display: flex; }
@@ -331,8 +331,8 @@
   .mention-item-year { font-size: 0.60rem; color: var(--text-muted); flex-shrink: 0; }
 
   /* RQ description display */
-  .rq-desc-display { font-size: 0.70rem; color: var(--text-muted); line-height: 1.7; word-break: break-word; }
-  .rq-desc-display .mention-chip { font-size: 0.70rem; }
+  .rq-desc-display { font-size: 0.85rem; color: var(--text-muted); line-height: 1.8; word-break: break-word; }
+  .rq-desc-display .mention-chip { font-size: 0.85rem; }
 
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -950,7 +950,7 @@ function renderRQ() {
         </div>
       </div>
       <div class="rq-expanded${isExp?' open':''}" id="rqexp-${rq.id}">
-        ${rq.desc ? `<div><div class="field-label">Description</div><div class="rq-desc-display">${renderRQDesc(rq.desc)}</div></div>` : ''}
+        ${rq.desc ? `<div><div class="field-label" style="font-size:0.72rem">Description</div><div class="rq-desc-display">${renderRQDesc(rq.desc)}</div></div>` : ''}
         ${papers.length ? `<div>
           <div class="field-label">Related Papers</div>
           <div class="rq-ref-list">
