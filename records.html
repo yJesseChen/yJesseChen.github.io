@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Records</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #f4f6fb; --surface: #ffffff; --surface2: #eef1f8;
+    --border: #d8dde8; --accent: #3a7bd5; --accent2: #e07b3a;
+    --text: #1a1f2e; --text-muted: #6b748e; --danger: #d94f4f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Mono', monospace; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* ── Login screen ── */
+  #loginScreen {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; background: var(--bg);
+  }
+  .login-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 40px 36px; width: 380px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.10);
+  }
+  .login-title { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 700; margin-bottom: 6px; }
+  .login-title span { color: var(--accent); }
+  .login-sub { font-size: 0.68rem; color: var(--text-muted); margin-bottom: 28px; }
+  .login-group { margin-bottom: 16px; }
+  .login-label { display: block; font-size: 0.63rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; }
+  .login-input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px;
+    font-family: 'DM Mono', monospace; font-size: 0.75rem;
+    color: var(--text); outline: none; transition: border-color 0.15s;
+  }
+  .login-input:focus { border-color: var(--accent); }
+  .login-btn {
+    width: 100%; background: var(--accent); color: #fff;
+    border: none; border-radius: 8px; padding: 11px;
+    font-family: 'DM Mono', monospace; font-size: 0.75rem;
+    font-weight: 500; cursor: pointer; margin-top: 8px;
+    transition: filter 0.15s;
+  }
+  .login-btn:hover { filter: brightness(1.1); }
+  .login-btn:disabled { opacity: 0.6; cursor: default; }
+  .login-error { font-size: 0.68rem; color: var(--danger); margin-top: 10px; min-height: 18px; }
+
+  /* ── App shell (hidden until login) ── */
+  #appShell { display: none; flex-direction: column; flex: 1; }
+
+  /* ── Header ── */
+  header {
+    padding: 22px 40px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 16px;
+    background: var(--surface); position: sticky; top: 0; z-index: 100;
+  }
+  header h1 { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; }
+  header h1 span { color: var(--accent); }
+  .header-meta { font-size: 0.68rem; color: var(--text-muted); letter-spacing: 0.06em; }
+  .header-actions { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+  .user-badge { font-size: 0.65rem; color: var(--text-muted); }
+
+  /* ── Buttons ── */
+  .btn { font-family: 'DM Mono', monospace; font-size: 0.72rem; letter-spacing: 0.04em; padding: 8px 16px; border-radius: 6px; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: #fff; font-weight: 500; border-color: var(--accent); }
+  .btn-primary:hover { filter: brightness(1.1); }
+  .btn-ghost { background: transparent; color: var(--text-muted); border-color: var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--text-muted); }
+
+  /* ── Layout ── */
+  .app { display: flex; flex: 1; overflow: hidden; height: calc(100vh - 69px); }
+
+  /* ── Sidebar ── */
+  .sidebar { width: 230px; min-width: 230px; background: var(--surface); border-right: 1px solid var(--border); padding: 18px 0; overflow-y: auto; display: flex; flex-direction: column; }
+  .sidebar-label { font-size: 0.59rem; letter-spacing: 0.14em; color: var(--text-muted); text-transform: uppercase; padding: 10px 20px 4px; }
+  .cat-item { display: flex; align-items: center; gap: 8px; padding: 8px 20px; cursor: pointer; font-size: 0.72rem; color: var(--text-muted); border-left: 2px solid transparent; transition: all 0.12s; user-select: none; }
+  .cat-item:hover { color: var(--text); background: var(--surface2); }
+  .cat-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(58,123,213,0.06); }
+  .cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .cat-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cat-count { margin-left: auto; font-size: 0.59rem; background: var(--surface2); padding: 1px 6px; border-radius: 10px; color: var(--text-muted); }
+  .cat-del-btn { display: none; background: transparent; border: none; color: var(--text-muted); font-size: 0.6rem; cursor: pointer; padding: 2px 4px; border-radius: 4px; transition: color 0.12s; }
+  .cat-item:hover .cat-del-btn { display: block; }
+  .cat-del-btn:hover { color: var(--danger); }
+  .sidebar-divider { height: 1px; background: var(--border); margin: 10px 0; }
+  .type-item { display: flex; align-items: center; gap: 8px; padding: 7px 20px; cursor: pointer; font-size: 0.70rem; color: var(--text-muted); transition: all 0.12s; user-select: none; border-left: 2px solid transparent; }
+  .type-item:hover { color: var(--text); background: var(--surface2); }
+  .type-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(58,123,213,0.06); }
+  .type-badge { font-size: 0.58rem; padding: 1px 6px; border-radius: 4px; font-weight: 500; }
+  .badge-arxiv   { background: rgba(40,90,180,0.12);   color: #285ab4; }
+  .badge-conf    { background: rgba(65,120,200,0.12);  color: #4178c8; }
+  .badge-journal { background: rgba(90,148,210,0.12);  color: #5a94d2; }
+  .badge-other   { background: rgba(110,130,165,0.12); color: #6e82a5; }
+
+  /* ── Global Nav ── */
+  .global-nav { display: flex; gap: 0; border-bottom: 2px solid var(--border); background: var(--surface); padding: 0 28px; }
+  .global-tab { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 600; padding: 14px 26px; cursor: pointer; color: var(--text-muted); background: transparent; border: none; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.14s; display: flex; align-items: center; gap: 7px; }
+  .global-tab:hover { color: var(--text); }
+  .global-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-count { font-family: 'DM Mono', monospace; font-size: 0.62rem; background: var(--surface2); color: var(--text-muted); padding: 1px 7px; border-radius: 10px; font-weight: 400; }
+  .global-tab.active .tab-count { background: rgba(58,123,213,0.1); color: var(--accent); }
+
+  /* ── Main sections ── */
+  main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .section { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+  .section.active { display: flex; }
+  .toolbar { padding: 12px 28px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; background: var(--surface); }
+  .search-box { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 14px; font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--text); outline: none; transition: border-color 0.15s; }
+  .search-box:focus { border-color: var(--accent); }
+  .search-box::placeholder { color: var(--text-muted); }
+  .sort-select { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--text-muted); outline: none; cursor: pointer; }
+  .view-label { font-size: 0.68rem; color: var(--text-muted); white-space: nowrap; }
+
+  /* ── Paper list ── */
+  .paper-list { flex: 1; overflow-y: auto; padding: 20px 28px; display: flex; flex-direction: column; gap: 12px; }
+  .empty-state { margin: auto; text-align: center; color: var(--text-muted); font-size: 0.75rem; line-height: 2.2; }
+  .empty-state .big { font-size: 2.5rem; margin-bottom: 8px; }
+
+  /* ── Paper card ── */
+  .paper-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; transition: border-color 0.15s, box-shadow 0.15s; position: relative; cursor: pointer; user-select: none; --pill-rgb: 107,126,163; }
+  .paper-card:hover { border-color: #b0b8cc; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+  .paper-card.expanded { border-color: var(--accent); }
+  .paper-card.status-unread { border-color: #e05555; border-width: 3px; box-shadow: 0 0 0 2px rgba(224,85,85,0.15), 0 4px 20px rgba(224,85,85,0.12); --pill-rgb: 224,85,85; }
+  .paper-card.status-unread:hover { border-color: #c93f3f; box-shadow: 0 0 0 2px rgba(224,85,85,0.22), 0 6px 24px rgba(224,85,85,0.18); }
+  .paper-card.status-read { border-color: #2aab6a; border-width: 3px; box-shadow: 0 0 0 2px rgba(42,171,106,0.15), 0 4px 20px rgba(42,171,106,0.12); --pill-rgb: 42,171,106; }
+  .paper-card.status-read:hover { border-color: #1e8f58; box-shadow: 0 0 0 2px rgba(42,171,106,0.22), 0 6px 24px rgba(42,171,106,0.18); }
+  .card-top { display: flex; align-items: flex-start; gap: 10px; }
+  .source-badge { font-size: 0.58rem; letter-spacing: 0.06em; font-weight: 500; padding: 3px 8px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; margin-top: 3px; }
+  .card-main { flex: 1; min-width: 0; }
+  .paper-title { font-family: 'Playfair Display', serif; font-size: 0.97rem; font-weight: 600; line-height: 1.4; color: var(--text); margin-bottom: 3px; display: flex; align-items: baseline; flex-wrap: wrap; gap: 7px; }
+  .paper-title-text { flex-shrink: 1; min-width: 0; }
+  .label-pill { font-family: 'DM Mono', monospace; font-size: 0.58rem; font-weight: 500; letter-spacing: 0.05em; padding: 2px 8px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; vertical-align: middle; line-height: 1.6; background: rgba(var(--pill-rgb), 0.10); color: rgb(var(--pill-rgb)); border: 1px solid rgba(var(--pill-rgb), 0.28); }
+  .paper-authors { font-size: 0.66rem; color: var(--text-muted); margin-bottom: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tag { font-size: 0.59rem; padding: 2px 8px; border-radius: 20px; font-weight: 500; letter-spacing: 0.04em; }
+  .tag-venue { background: rgba(107,116,142,0.10); color: var(--text-muted); font-style: italic; }
+  .tag-year { background: rgba(107,116,142,0.10); color: var(--text-muted); }
+  .tag-rating { background: rgba(224,123,58,0.12); color: var(--accent2); }
+  .card-actions { display: flex; gap: 6px; margin-left: auto; flex-shrink: 0; align-items: center; }
+  .icon-btn { background: transparent; border: 1px solid var(--border); color: var(--text-muted); width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; transition: all 0.12s; }
+  .icon-btn:hover { color: var(--text); border-color: var(--text-muted); }
+  .icon-btn.delete:hover { color: var(--danger); border-color: var(--danger); }
+  .icon-btn.link-btn { width: 70px; height: 28px; font-size: 0.85rem; background: rgba(58,123,213,0.08); color: var(--accent); border-color: rgba(58,123,213,0.35); text-decoration: none; border-radius: 6px; }
+  .icon-btn.link-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .icon-btn.link-btn.disabled { opacity: 0.22; cursor: default; pointer-events: none; }
+  .card-expanded { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); display: none; flex-direction: column; gap: 12px; user-select: text; }
+  .card-expanded.open { display: flex; }
+  .field-label { font-size: 0.59rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px; }
+  .abstract-text { font-size: 0.70rem; color: var(--text-muted); line-height: 1.7; }
+  .comment-preview { display: flex; align-items: flex-start; gap: 8px; margin-top: 10px; background: rgba(107,116,142,0.07); border-left: 3px solid #b0b8cc; border-radius: 0 6px 6px 0; padding: 7px 11px; user-select: text; }
+  .comment-preview-icon { font-size: 0.75rem; flex-shrink: 0; margin-top: 1px; opacity: 0.7; }
+  .comment-preview-text { font-size: 0.70rem; color: var(--text); line-height: 1.55; font-style: italic; word-break: break-word; }
+  .comment-preview-text b, .comment-preview-text strong { font-weight: 700; }
+  .comment-preview-text i, .comment-preview-text em { font-style: italic; }
+  .comment-preview-text u { text-decoration: underline; }
+  .comment-preview-text s { text-decoration: line-through; }
+  .comment-preview-text code { font-family: 'DM Mono', monospace; font-size: 0.68rem; background: rgba(107,116,142,0.12); border-radius: 3px; padding: 1px 5px; font-style: normal; }
+  .comment-preview-text ul, .comment-preview-text ol { padding-left: 1.2em; margin: 2px 0; }
+  .comment-preview-text li { margin: 1px 0; }
+
+  /* comment editor */
+  .comment-editor-wrap { border-radius: 6px; overflow: hidden; }
+  .comment-editor-wrap:focus-within .comment-toolbar,
+  .comment-editor-wrap:focus-within .comment-box { border-color: var(--accent); }
+  .comment-toolbar { display: flex; gap: 2px; align-items: center; background: var(--surface2); border: 1px solid var(--border); border-bottom: none; border-radius: 6px 6px 0 0; padding: 4px 6px; }
+  .tb-btn { background: transparent; border: 1px solid transparent; border-radius: 4px; cursor: pointer; width: 24px; height: 24px; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: all 0.12s; font-family: serif; line-height: 1; }
+  .tb-btn:hover { background: var(--border); color: var(--text); }
+  .tb-btn.active { background: rgba(58,123,213,0.12); color: var(--accent); border-color: rgba(58,123,213,0.2); }
+  .tb-sep { width: 1px; height: 16px; background: var(--border); margin: 0 3px; flex-shrink: 0; }
+  .comment-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 0 0 6px 6px; padding: 9px 12px; font-family: 'DM Mono', monospace; font-size: 0.71rem; color: var(--text); outline: none; width: 100%; min-height: 64px; transition: border-color 0.15s; line-height: 1.6; word-break: break-word; }
+  .comment-box:focus { border-color: var(--accent); }
+  .comment-box b, .comment-box strong { font-weight: 700; }
+  .comment-box i, .comment-box em { font-style: italic; }
+  .comment-box u { text-decoration: underline; }
+  .comment-box s { text-decoration: line-through; }
+  .comment-box code { font-family: 'DM Mono', monospace; font-size: 0.68rem; background: rgba(107,116,142,0.12); border-radius: 3px; padding: 1px 5px; }
+  .comment-box ul, .comment-box ol { padding-left: 1.2em; margin: 2px 0; }
+  .comment-box li { margin: 1px 0; }
+
+  .card-meta { font-size: 0.62rem; color: var(--text-muted); display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+  .paper-link { color: var(--accent); text-decoration: none; font-size: 0.63rem; }
+  .paper-link:hover { text-decoration: underline; }
+  .read-toggle { display: inline-flex; align-items: center; gap: 6px; font-family: 'DM Mono', monospace; font-size: 0.68rem; padding: 5px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--text-muted); transition: all 0.15s; user-select: none; }
+  .read-toggle:hover { border-color: var(--text-muted); color: var(--text); }
+  .read-toggle.mark-read:hover   { background: rgba(42,171,106,0.1); border-color: #2aab6a; color: #2aab6a; }
+  .read-toggle.mark-unread:hover { background: rgba(224,85,85,0.1);  border-color: #e05555; color: #e05555; }
+  .read-toggle .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── Scientist cards ── */
+  .scientist-list { flex: 1; overflow-y: auto; padding: 20px 28px; display: flex; flex-direction: column; gap: 12px; }
+  .scientist-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; transition: border-color 0.15s, box-shadow 0.15s; cursor: pointer; user-select: none; }
+  .scientist-card:hover { border-color: #b0b8cc; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+  .scientist-card.expanded { border-color: var(--accent); }
+  .sci-top { display: flex; align-items: flex-start; gap: 12px; }
+  .sci-avatar { width: 44px; height: 44px; border-radius: 50%; background: rgba(58,123,213,0.15); border: 2px solid rgba(58,123,213,0.3); color: #3a7bd5; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; flex-shrink: 0; font-family: 'Playfair Display', serif; font-weight: 600; overflow: hidden; }
+  .sci-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+  .sci-main { flex: 1; min-width: 0; }
+  .sci-name { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+  .sci-affil { font-size: 0.66rem; color: var(--text-muted); margin-bottom: 7px; }
+  .sci-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .sci-expanded { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); display: none; flex-direction: column; gap: 12px; }
+  .sci-expanded.open { display: flex; }
+  .sci-papers-list { display: flex; flex-direction: column; gap: 6px; }
+  .sci-paper-link { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 6px; background: var(--surface2); border: 1px solid var(--border); font-size: 0.68rem; color: var(--text); text-decoration: none; transition: border-color 0.12s, box-shadow 0.12s; cursor: pointer; }
+  .sci-paper-link:hover { border-color: var(--accent); color: var(--accent); }
+  .sci-paper-link.status-read   { border-color: rgba(42,171,106,0.5);  background: rgba(42,171,106,0.04);  box-shadow: 0 0 0 1px rgba(42,171,106,0.15); }
+  .sci-paper-link.status-unread { border-color: rgba(224,85,85,0.5);   background: rgba(224,85,85,0.04);   box-shadow: 0 0 0 1px rgba(224,85,85,0.15); }
+  .sci-paper-badge { font-size: 0.56rem; padding: 1px 6px; border-radius: 3px; flex-shrink: 0; }
+  .sci-paper-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sci-meta { font-size: 0.62rem; color: var(--text-muted); display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+  .cat-check-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; cursor: pointer; font-size: 0.65rem; font-weight: 500; transition: all 0.12s; border: 1.5px solid transparent; user-select: none; }
+  .cat-check-pill input { display: none; }
+  .cat-check-pill.checked { opacity: 1; }
+  .cat-check-pill:not(.checked) { opacity: 0.4; filter: grayscale(0.3); }
+  .photo-upload-area { width: 72px; height: 72px; border-radius: 50%; border: 2px dashed var(--border); background: var(--surface2); display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; flex-shrink: 0; transition: border-color 0.15s; position: relative; }
+  .photo-upload-area:hover { border-color: var(--accent); }
+  .photo-upload-area img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+  .photo-upload-area input[type=file] { display: none; }
+  .photo-remove-btn { display: none; position: absolute; bottom: 1px; right: 1px; background: var(--danger); color: #fff; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 0.55rem; cursor: pointer; align-items: center; justify-content: center; line-height: 1; }
+  .photo-upload-area:hover .photo-remove-btn.visible { display: flex; }
+
+  /* ── Modal ── */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(30,35,60,0.45); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 26px 26px 22px; width: 560px; max-width: calc(100vw - 40px); max-height: 88vh; overflow-y: auto; box-shadow: 0 20px 64px rgba(0,0,0,0.18); animation: fadeUp 0.18s ease; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  .modal-header { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+  .form-row { display: flex; gap: 12px; }
+  .form-row .form-group { flex: 1; }
+  .form-group { margin-bottom: 14px; }
+  .form-label { display: block; font-size: 0.63rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; }
+  .form-input, .form-textarea, .form-select { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 11px; font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--text); outline: none; transition: border-color 0.15s; }
+  .form-input:focus, .form-textarea:focus, .form-select:focus { border-color: var(--accent); }
+  .form-textarea { resize: vertical; min-height: 80px; }
+  .form-hint { font-size: 0.59rem; color: var(--text-muted); margin-top: 3px; }
+  .type-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+  .type-tab { flex: 1; font-family: 'DM Mono', monospace; font-size: 0.68rem; padding: 7px 10px; text-align: center; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; color: var(--text-muted); background: transparent; transition: all 0.14s; }
+  .type-tab:hover { color: var(--text); border-color: var(--text-muted); }
+  .type-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .source-fields { display: none; }
+  .source-fields.visible { display: block; }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .color-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+  .color-swatch { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.12s; }
+  .color-swatch:hover, .color-swatch.selected { transform: scale(1.2); border-color: #555; }
+  .rating-stars { display: flex; gap: 4px; }
+  .star { font-size: 1rem; cursor: pointer; color: #ccc; transition: color 0.1s; }
+  .star.lit { color: var(--accent2); }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #c5cad8; border-radius: 4px; }
+
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--border); padding: 9px 16px; border-radius: 8px; font-size: 0.71rem; color: var(--text); z-index: 999; animation: toastIn 0.2s ease; box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
+  @keyframes toastIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ── Loading spinner ── */
+  .loading-bar { position: fixed; top: 0; left: 0; width: 100%; height: 3px; background: var(--accent); z-index: 9999; animation: loadingPulse 1s ease-in-out infinite; }
+  @keyframes loadingPulse { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
+
+  /* ── Migration panel ── */
+  .migrate-banner { background: rgba(58,123,213,0.08); border: 1px solid rgba(58,123,213,0.25); border-radius: 8px; padding: 12px 16px; margin: 16px 28px 0; font-size: 0.70rem; display: flex; align-items: center; gap: 12px; }
+  .migrate-banner b { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-title">Research <span>Records</span></div>
+    <div class="login-sub">// Yuan Chen · private access only</div>
+    <div class="login-group">
+      <label class="login-label">Email</label>
+      <input class="login-input" id="loginEmail" type="email" placeholder="your@email.com" autocomplete="email">
+    </div>
+    <div class="login-group">
+      <label class="login-label">Password</label>
+      <input class="login-input" id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">Sign In</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- App Shell -->
+<div id="appShell">
+
+<header>
+  <h1>Research <span>Records</span></h1>
+  <span class="header-meta">// personal research library</span>
+  <div class="header-actions">
+    <span class="user-badge" id="userBadge"></span>
+    <button class="btn btn-ghost" onclick="openCatModal()">+ Category</button>
+    <button class="btn btn-ghost" id="btnAddScientist" style="display:none" onclick="openSciModal()">+ Scientist</button>
+    <button class="btn btn-primary" id="btnAddPaper" onclick="openAddModal()">+ Add Paper</button>
+    <button class="btn btn-ghost" onclick="doLogout()" title="Sign out" style="font-size:0.65rem">↩ Out</button>
+  </div>
+</header>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-label">All Papers</div>
+    <div class="cat-item active" id="catAll" onclick="setCat('all')">
+      <span class="cat-dot" style="background:#6b748e"></span>
+      <span class="cat-name">All Papers</span>
+      <span class="cat-count" id="countAll">0</span>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-label">Read Status</div>
+    <div class="cat-item" id="statusUnread" onclick="setCat('unread')">
+      <span class="cat-dot" style="background:#e05555"></span>
+      <span class="cat-name">Unread</span>
+      <span class="cat-count" id="countUnread">0</span>
+    </div>
+    <div class="cat-item" id="statusRead" onclick="setCat('read')">
+      <span class="cat-dot" style="background:#2aab6a"></span>
+      <span class="cat-name">Read</span>
+      <span class="cat-count" id="countRead">0</span>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-label">Source Type</div>
+    <div class="type-item active" id="typeAll" onclick="setType('all')">
+      <span class="type-badge" style="background:rgba(110,130,165,0.08);color:#6e82a5">ALL</span> All Types
+    </div>
+    <div class="type-item" id="typeArxiv" onclick="setType('arxiv')">
+      <span class="type-badge badge-arxiv">arXiv</span> arXiv Preprints
+    </div>
+    <div class="type-item" id="typeConf" onclick="setType('conf')">
+      <span class="type-badge badge-conf">CONF</span> Conference
+    </div>
+    <div class="type-item" id="typeJournal" onclick="setType('journal')">
+      <span class="type-badge badge-journal">JRNL</span> Journal
+    </div>
+    <div class="type-item" id="typeOther" onclick="setType('other')">
+      <span class="type-badge badge-other">OTH</span> Other
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-label">Categories</div>
+    <div id="catList"></div>
+  </aside>
+
+  <main>
+    <div class="global-nav">
+      <button class="global-tab active" id="tabPapers" onclick="switchSection('papers')">
+        <span>📄</span> Papers <span class="tab-count" id="tabCountPapers">0</span>
+      </button>
+      <button class="global-tab" id="tabScientists" onclick="switchSection('scientists')">
+        <span>🔬</span> Scientists <span class="tab-count" id="tabCountScientists">0</span>
+      </button>
+    </div>
+
+    <!-- Papers -->
+    <div class="section active" id="sectionPapers">
+      <div id="migrateBanner" style="display:none" class="migrate-banner">
+        📦 <span>Found local backup data. <b onclick="runMigration()" style="cursor:pointer;text-decoration:underline">Click here to import it into Supabase</b> (one-time only).</span>
+        <button class="btn btn-ghost" style="margin-left:auto;font-size:0.6rem;padding:4px 10px" onclick="dismissMigrate()">Dismiss</button>
+      </div>
+      <div class="toolbar">
+        <input class="search-box" id="searchBox" placeholder="Search titles, authors, venues…" oninput="renderPapers()">
+        <select class="sort-select" id="sortSelect" onchange="renderPapers()">
+          <option value="recent">Recent first</option>
+          <option value="year">Year ↓</option>
+          <option value="title">Title A–Z</option>
+          <option value="rating">Rating ↓</option>
+        </select>
+        <span class="view-label" id="countLabel">0 papers</span>
+      </div>
+      <div class="paper-list" id="paperList"></div>
+    </div>
+
+    <!-- Scientists -->
+    <div class="section" id="sectionScientists">
+      <div class="toolbar">
+        <input class="search-box" id="sciSearchBox" placeholder="Search scientists, affiliations…" oninput="renderScientists()">
+        <span class="view-label" id="sciCountLabel">0 scientists</span>
+      </div>
+      <div class="scientist-list" id="scientistList"></div>
+    </div>
+  </main>
+</div>
+
+</div><!-- end appShell -->
+
+<!-- Paper Modal -->
+<div class="modal-overlay" id="paperModal">
+  <div class="modal">
+    <div class="modal-header">📄 <span id="modalTitle">Add Paper</span></div>
+    <div class="type-tabs">
+      <button class="type-tab active" data-type="arxiv"   onclick="switchType(this)">arXiv</button>
+      <button class="type-tab"        data-type="conf"    onclick="switchType(this)">Conference</button>
+      <button class="type-tab"        data-type="journal" onclick="switchType(this)">Journal</button>
+      <button class="type-tab"        data-type="other"   onclick="switchType(this)">Other</button>
+    </div>
+    <div class="source-fields visible" id="sf-arxiv">
+      <div class="form-group">
+        <label class="form-label">arXiv ID *</label>
+        <input class="form-input" id="fArxivId" placeholder="e.g. 2301.12345">
+        <div class="form-hint">Link: arxiv.org/abs/&lt;ID&gt;</div>
+      </div>
+    </div>
+    <div class="source-fields" id="sf-conf">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Conference *</label><input class="form-input" id="fConfName" placeholder="e.g. NeurIPS 2024"></div>
+        <div class="form-group" style="max-width:110px"><label class="form-label">Pages</label><input class="form-input" id="fConfPages" placeholder="pp. 1–10"></div>
+      </div>
+      <div class="form-group"><label class="form-label">DOI / URL</label><input class="form-input" id="fConfDoi" placeholder="https://doi.org/…"></div>
+    </div>
+    <div class="source-fields" id="sf-journal">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Journal Name *</label><input class="form-input" id="fJournalName" placeholder="e.g. Nature, TPAMI"></div>
+        <div class="form-group" style="max-width:160px"><label class="form-label">Vol / Issue</label><input class="form-input" id="fJournalVol" placeholder="Vol 12, No 3"></div>
+      </div>
+      <div class="form-group"><label class="form-label">DOI / URL</label><input class="form-input" id="fJournalDoi" placeholder="https://doi.org/…"></div>
+    </div>
+    <div class="source-fields" id="sf-other">
+      <div class="form-group"><label class="form-label">Source / Venue</label><input class="form-input" id="fOtherVenue" placeholder="e.g. Thesis, Tech report"></div>
+      <div class="form-group"><label class="form-label">URL</label><input class="form-input" id="fOtherUrl" placeholder="https://…"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Title *</label><input class="form-input" id="fTitle" placeholder="Full paper title"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Reading Time <span style="font-size:0.55rem;color:var(--text-muted)">(optional)</span></label><input class="form-input" id="fReadingTime" placeholder="e.g. 20 min"></div>
+      <div class="form-group"><label class="form-label">Feature <span style="font-size:0.55rem;color:var(--text-muted)">(optional)</span></label><input class="form-input" id="fFeature" placeholder="e.g. Survey"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Paper Link (URL)</label><input class="form-input" id="fUrl" placeholder="https://…" type="url"><div class="form-hint">Overrides auto-generated link.</div></div>
+    <div class="form-group"><label class="form-label">Authors</label><input class="form-input" id="fAuthors" placeholder="Author A, Author B, …"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Year</label><input class="form-input" id="fYear" placeholder="2024" type="number" min="1900" max="2099"></div>
+      <div class="form-group"><label class="form-label">Category</label><select class="form-select" id="fCat"></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Abstract / Notes</label><textarea class="form-textarea" id="fAbstract" placeholder="Paste abstract or key findings…"></textarea></div>
+    <div class="form-group">
+      <label class="form-label">Personal Comment</label>
+      <div class="comment-editor-wrap">
+        <div class="comment-toolbar" onmousedown="event.preventDefault()">
+          <button class="tb-btn" title="Bold" onclick="fmt('bold')"><b>B</b></button>
+          <button class="tb-btn" title="Italic" onclick="fmt('italic')"><i>I</i></button>
+          <button class="tb-btn" title="Underline" onclick="fmt('underline')"><u>U</u></button>
+          <button class="tb-btn" title="Strikethrough" onclick="fmt('strikeThrough')"><s>S</s></button>
+          <div class="tb-sep"></div>
+          <button class="tb-btn" title="Inline code" onclick="fmtCode()" style="font-family:monospace;font-size:0.7rem">{ }</button>
+          <div class="tb-sep"></div>
+          <button class="tb-btn" title="Bullet list" onclick="fmt('insertUnorderedList')">•—</button>
+          <button class="tb-btn" title="Numbered list" onclick="fmt('insertOrderedList')">1—</button>
+          <div class="tb-sep"></div>
+          <button class="tb-btn" title="Clear formatting" onclick="fmt('removeFormat')" style="font-size:0.6rem;font-family:sans-serif">✕</button>
+        </div>
+        <div class="comment-box" id="fComment" contenteditable="true" style="min-height:80px" onkeyup="updateToolbar(this)" onmouseup="updateToolbar(this)"></div>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Rating</label><div class="rating-stars" id="fRatingStars"><span class="star" data-v="1">★</span><span class="star" data-v="2">★</span><span class="star" data-v="3">★</span><span class="star" data-v="4">★</span><span class="star" data-v="5">★</span></div></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('paperModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePaper()">Save Paper</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scientist Modal -->
+<div class="modal-overlay" id="sciModal">
+  <div class="modal">
+    <div class="modal-header">🔬 <span id="sciModalTitle">Add Scientist</span></div>
+    <div class="form-row" style="align-items:flex-end;gap:16px">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+        <span class="form-label" style="align-self:flex-start">Photo</span>
+        <div class="photo-upload-area" id="photoUploadArea" onclick="document.getElementById('sfPhotoInput').click()" title="Click to upload photo">
+          <span style="font-size:1.6rem;color:var(--text-muted)" id="photoPlaceholder">👤</span>
+          <img id="sfPhotoPreview" style="display:none">
+          <input type="file" id="sfPhotoInput" accept="image/*" onchange="handlePhotoUpload(event)">
+          <button class="photo-remove-btn" id="photoRemoveBtn" onclick="removePhoto(event)" title="Remove photo">✕</button>
+        </div>
+        <span style="font-size:0.58rem;color:var(--text-muted)">Click to upload</span>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:12px">
+        <div class="form-group" style="margin:0"><label class="form-label">Full Name *</label><input class="form-input" id="sfName" placeholder="e.g. Alan Turing"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">Initials <span style="font-size:0.55rem;color:var(--text-muted)">(shown if no photo)</span></label><input class="form-input" id="sfInitials" placeholder="AT" maxlength="3"></div>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Affiliation</label><input class="form-input" id="sfAffil" placeholder="e.g. MIT, DeepMind"></div>
+    <div class="form-group">
+      <label class="form-label">Categories <span style="font-size:0.55rem;color:var(--text-muted)">(select multiple)</span></label>
+      <div id="sfCatList" style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 0;min-height:28px;"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Google Scholar URL</label><input class="form-input" id="sfScholar" placeholder="https://scholar.google.com/citations?user=…" type="url"></div>
+    <div class="form-group">
+      <label class="form-label">Related Papers</label>
+      <div id="sfPaperList" style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="sfNotes" placeholder="Research focus, notable contributions…"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('sciModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveScientist()">Save Scientist</button>
+    </div>
+  </div>
+</div>
+
+<!-- Category Modal -->
+<div class="modal-overlay" id="catModal">
+  <div class="modal">
+    <div class="modal-header">🗂 Add Category</div>
+    <div class="form-group"><label class="form-label">Name *</label><input class="form-input" id="cName" placeholder="e.g. SDE Learning"></div>
+    <div class="form-group"><label class="form-label">Color</label><div class="color-picker" id="colorPicker"></div></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('catModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCat()">Save Category</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Supabase ──────────────────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://rjjbkirszclastordadg.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_msURjqy94YUuqg-sKBVD_Q_HlYj1gAD';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── State (in-memory, loaded from Supabase) ───────────────────────────────────
+const COLORS = ['#c47d2a','#a8682a','#b8943a','#c4a040','#7a8c3a',
+                '#4a8c8c','#3a7a9c','#7a5a9c','#9c5a7a','#6b7ea3'];
+
+let state = { categories: [], papers: [], scientists: [], activeCat: 'all', activeType: 'all', activeSection: 'papers' };
+let currentUserId = null;
+
+// UI prefs stay in localStorage (not data)
+function loadPrefs() {
+  const p = JSON.parse(localStorage.getItem('rrPrefs') || '{}');
+  state.activeCat    = p.activeCat    || 'all';
+  state.activeType   = p.activeType   || 'all';
+  state.activeSection= p.activeSection|| 'papers';
+}
+function savePrefs() {
+  localStorage.setItem('rrPrefs', JSON.stringify({ activeCat: state.activeCat, activeType: state.activeType, activeSection: state.activeSection }));
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const email    = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const btn      = document.getElementById('loginBtn');
+  const errEl    = document.getElementById('loginError');
+  errEl.textContent = '';
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) {
+    errEl.textContent = error.message;
+    btn.disabled = false; btn.textContent = 'Sign In';
+  } else {
+    await bootApp(data.user);
+  }
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  location.reload();
+}
+
+document.getElementById('loginPassword').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+async function bootApp(user) {
+  currentUserId = user.id;
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appShell').style.display = 'flex';
+  document.getElementById('userBadge').textContent = user.email;
+  loadPrefs();
+  showLoading(true);
+  await loadAllData();
+  showLoading(false);
+  checkMigration();
+  renderSidebar();
+  renderPapers();
+  updateTabCounts();
+  switchSection(state.activeSection);
+}
+
+// Check if existing session
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) await bootApp(session.user);
+})();
+
+// ── Loading ───────────────────────────────────────────────────────────────────
+function showLoading(on) {
+  let bar = document.getElementById('loadingBar');
+  if (on) { if (!bar) { bar = document.createElement('div'); bar.id='loadingBar'; bar.className='loading-bar'; document.body.prepend(bar); } }
+  else { if (bar) bar.remove(); }
+}
+
+// ── Load all data from Supabase ───────────────────────────────────────────────
+async function loadAllData() {
+  const [cats, papers, scientists] = await Promise.all([
+    sb.from('categories').select('*').order('created_at'),
+    sb.from('papers').select('*').order('created_at'),
+    sb.from('scientists').select('*').order('created_at'),
+  ]);
+  state.categories = (cats.data || []).map(dbCatToLocal);
+  state.papers     = (papers.data || []).map(dbPaperToLocal);
+  state.scientists = (scientists.data || []).map(dbSciToLocal);
+}
+
+// ── DB ↔ local field mapping ─────────────────────────────────────────────────
+function dbCatToLocal(r) {
+  return { id: r.id, name: r.name, color: r.color };
+}
+function localCatToDB(c) {
+  return { id: c.id, name: c.name, color: c.color, user_id: currentUserId };
+}
+
+function dbPaperToLocal(r) {
+  return {
+    id: r.id, type: r.type, title: r.title, authors: r.authors || '',
+    year: r.year || '', catId: r.cat_id || null,
+    abstract: r.abstract || '', comment: r.comment || '',
+    url: r.url || '', rating: r.rating || 0,
+    readStatus: r.read_status || 'unread',
+    arxivId: r.arxiv_id || '', confName: r.conf_name || '',
+    confPages: r.conf_pages || '', confDoi: r.conf_doi || '',
+    journalName: r.journal_name || '', journalVol: r.journal_vol || '',
+    journalDoi: r.journal_doi || '', otherVenue: r.other_venue || '',
+    otherUrl: r.other_url || '', readingTime: r.reading_time || '',
+    feature: r.feature || '', added: r.added || '',
+  };
+}
+function localPaperToDB(p) {
+  return {
+    id: p.id, user_id: currentUserId, type: p.type, title: p.title,
+    authors: p.authors, year: p.year, cat_id: p.catId,
+    abstract: p.abstract, comment: p.comment, url: p.url,
+    rating: p.rating, read_status: p.readStatus,
+    arxiv_id: p.arxivId, conf_name: p.confName,
+    conf_pages: p.confPages, conf_doi: p.confDoi,
+    journal_name: p.journalName, journal_vol: p.journalVol,
+    journal_doi: p.journalDoi, other_venue: p.otherVenue,
+    other_url: p.otherUrl, reading_time: p.readingTime,
+    feature: p.feature, added: p.added,
+  };
+}
+
+function dbSciToLocal(r) {
+  return {
+    id: r.id, name: r.name, initials: r.initials || '',
+    photo: r.photo || null, affil: r.affil || '',
+    catIds: r.cat_ids || [], scholarUrl: r.scholar_url || '',
+    notes: r.notes || '', paperIds: r.paper_ids || [],
+    added: r.added || '',
+  };
+}
+function localSciToDB(s) {
+  return {
+    id: s.id, user_id: currentUserId, name: s.name,
+    initials: s.initials, photo: s.photo, affil: s.affil,
+    cat_ids: s.catIds, scholar_url: s.scholarUrl,
+    notes: s.notes, paper_ids: s.paperIds, added: s.added,
+  };
+}
+
+// ── Save helpers (Supabase upsert/delete) ─────────────────────────────────────
+async function dbSaveCat(cat) {
+  const { error } = await sb.from('categories').upsert(localCatToDB(cat));
+  if (error) { toast('Save error: ' + error.message); console.error(error); }
+}
+async function dbDeleteCat(id) {
+  await sb.from('categories').delete().eq('id', id);
+}
+async function dbSavePaper(paper) {
+  const { error } = await sb.from('papers').upsert(localPaperToDB(paper));
+  if (error) { toast('Save error: ' + error.message); console.error(error); }
+}
+async function dbDeletePaper(id) {
+  await sb.from('papers').delete().eq('id', id);
+}
+async function dbSaveSci(sci) {
+  const { error } = await sb.from('scientists').upsert(localSciToDB(sci));
+  if (error) { toast('Save error: ' + error.message); console.error(error); }
+}
+async function dbDeleteSci(id) {
+  await sb.from('scientists').delete().eq('id', id);
+}
+
+// ── Migration from localStorage ───────────────────────────────────────────────
+function checkMigration() {
+  const old = localStorage.getItem('paperRecords2');
+  if (!old) return;
+  try {
+    const d = JSON.parse(old);
+    if ((d.papers && d.papers.length) || (d.categories && d.categories.length)) {
+      document.getElementById('migrateBanner').style.display = 'flex';
+    }
+  } catch(e) {}
+}
+
+async function runMigration() {
+  const old = localStorage.getItem('paperRecords2');
+  if (!old) return;
+  const d = JSON.parse(old);
+  showLoading(true);
+  toast('Importing your data…');
+  try {
+    // Categories
+    for (const c of (d.categories || [])) {
+      if (!state.categories.find(x => x.id === c.id)) {
+        await sb.from('categories').upsert(localCatToDB(c));
+        state.categories.push(c);
+      }
+    }
+    // Papers
+    for (const p of (d.papers || [])) {
+      if (!state.papers.find(x => x.id === p.id)) {
+        await sb.from('papers').upsert(localPaperToDB(p));
+        state.papers.push(p);
+      }
+    }
+    // Scientists
+    for (const s of (d.scientists || [])) {
+      if (!state.scientists.find(x => x.id === s.id)) {
+        // normalize catIds
+        if (!s.catIds && s.catId) s.catIds = [s.catId];
+        if (!s.catIds) s.catIds = [];
+        await sb.from('scientists').upsert(localSciToDB(s));
+        state.scientists.push(s);
+      }
+    }
+    localStorage.removeItem('paperRecords2');
+    document.getElementById('migrateBanner').style.display = 'none';
+    renderSidebar(); renderPapers(); renderScientists(); updateTabCounts();
+    toast('✓ All data imported successfully!');
+  } catch(e) {
+    toast('Import error: ' + e.message);
+    console.error(e);
+  }
+  showLoading(false);
+}
+
+function dismissMigrate() {
+  document.getElementById('migrateBanner').style.display = 'none';
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+let editingId = null, formRating = 0, formType = 'arxiv';
+
+const TYPE_CLASS = { arxiv:'badge-arxiv', conf:'badge-conf', journal:'badge-journal', other:'badge-other' };
+const TYPE_BADGE = { arxiv:'arXiv', conf:'CONF', journal:'JRNL', other:'OTH' };
+
+function venueOf(p) {
+  if (p.type === 'arxiv')   return p.arxivId   ? `arXiv:${p.arxivId}` : 'arXiv';
+  if (p.type === 'conf')    return p.confName   || 'Conference';
+  if (p.type === 'journal') return p.journalName|| 'Journal';
+  return p.otherVenue || 'Other';
+}
+function linkOf(p) {
+  if (p.url) return p.url;
+  if (p.type === 'arxiv' && p.arxivId)      return `https://arxiv.org/abs/${encodeURIComponent(p.arxivId)}`;
+  if (p.type === 'conf'   && p.confDoi)     return p.confDoi.startsWith('http') ? p.confDoi : `https://doi.org/${p.confDoi}`;
+  if (p.type === 'journal'&& p.journalDoi)  return p.journalDoi.startsWith('http') ? p.journalDoi : `https://doi.org/${p.journalDoi}`;
+  if (p.type === 'other'  && p.otherUrl)    return p.otherUrl;
+  return null;
+}
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function toast(msg) {
+  const t = document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(),2600);
+}
+function toTitleCase(str) {
+  const small = new Set(['a','an','the','and','but','or','nor','for','so','yet','at','by','in','of','on','to','up','as','is','it']);
+  return str.trim().replace(/\s+/g,' ').split(' ').map((w,i)=>{ const l=w.toLowerCase(); return (i!==0&&small.has(l))?l:l.charAt(0).toUpperCase()+l.slice(1); }).join(' ');
+}
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+function renderSidebar() {
+  ['all','arxiv','conf','journal','other'].forEach(t => {
+    const el = document.getElementById(t==='all'?'typeAll':'type'+t.charAt(0).toUpperCase()+t.slice(1));
+    if (el) el.classList.toggle('active', state.activeType===t);
+  });
+  document.getElementById('countAll').textContent = state.papers.length;
+  document.getElementById('catAll').classList.toggle('active', state.activeCat==='all');
+  const unread = state.papers.filter(p=>p.readStatus!=='read').length;
+  const read   = state.papers.filter(p=>p.readStatus==='read').length;
+  document.getElementById('countUnread').textContent = unread;
+  document.getElementById('countRead').textContent   = read;
+  document.getElementById('statusUnread').classList.toggle('active', state.activeCat==='unread');
+  document.getElementById('statusRead').classList.toggle('active',   state.activeCat==='read');
+  document.getElementById('catList').innerHTML = state.categories.map(c => {
+    const cnt = state.papers.filter(p=>p.catId===c.id).length;
+    return `<div class="cat-item ${state.activeCat===c.id?'active':''}" onclick="setCat('${c.id}')">
+      <span class="cat-dot" style="background:${c.color}"></span>
+      <span class="cat-name">${esc(c.name)}</span>
+      <span class="cat-count">${cnt}</span>
+      <button class="cat-del-btn" onclick="deleteCat('${c.id}',event)">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function setCat(id)  { state.activeCat  = id; savePrefs(); renderSidebar(); renderPapers(); }
+function setType(t)  { state.activeType = t;  savePrefs(); renderSidebar(); renderPapers(); }
+
+async function deleteCat(id, e) {
+  e.stopPropagation();
+  const cat = state.categories.find(c=>c.id===id);
+  if (!cat) return;
+  const cnt = state.papers.filter(p=>p.catId===id).length;
+  if (!confirm(cnt>0?`Delete "${cat.name}"? ${cnt} paper(s) will become uncategorized.`:`Delete "${cat.name}"?`)) return;
+  state.categories = state.categories.filter(c=>c.id!==id);
+  state.papers.forEach(p=>{ if(p.catId===id) p.catId=null; });
+  if (state.activeCat===id) state.activeCat='all';
+  await dbDeleteCat(id);
+  renderSidebar(); renderPapers();
+  toast(`Category "${cat.name}" deleted.`);
+}
+
+// ── Section switching ─────────────────────────────────────────────────────────
+function switchSection(sec) {
+  state.activeSection = sec; savePrefs();
+  document.getElementById('sectionPapers').classList.toggle('active', sec==='papers');
+  document.getElementById('sectionScientists').classList.toggle('active', sec==='scientists');
+  document.getElementById('tabPapers').classList.toggle('active', sec==='papers');
+  document.getElementById('tabScientists').classList.toggle('active', sec==='scientists');
+  document.getElementById('btnAddPaper').style.display     = sec==='papers'     ? '' : 'none';
+  document.getElementById('btnAddScientist').style.display = sec==='scientists' ? '' : 'none';
+  if (sec==='scientists') renderScientists();
+}
+function updateTabCounts() {
+  document.getElementById('tabCountPapers').textContent     = state.papers.length;
+  document.getElementById('tabCountScientists').textContent = state.scientists.length;
+}
+
+// ── Render papers ─────────────────────────────────────────────────────────────
+function renderPapers() {
+  const q    = document.getElementById('searchBox').value.toLowerCase();
+  const sort = document.getElementById('sortSelect').value;
+  let papers = state.papers.slice();
+  if (state.activeCat==='read')        papers = papers.filter(p=>p.readStatus==='read');
+  else if (state.activeCat==='unread') papers = papers.filter(p=>p.readStatus!=='read');
+  else if (state.activeCat!=='all')    papers = papers.filter(p=>p.catId===state.activeCat);
+  if (state.activeType!=='all') papers = papers.filter(p=>p.type===state.activeType);
+  if (q) papers = papers.filter(p=>p.title.toLowerCase().includes(q)||(p.authors||'').toLowerCase().includes(q)||venueOf(p).toLowerCase().includes(q));
+  if (sort==='recent') papers.reverse();
+  else if (sort==='year')  papers.sort((a,b)=>(b.year||0)-(a.year||0));
+  else if (sort==='title') papers.sort((a,b)=>a.title.localeCompare(b.title));
+  else if (sort==='rating')papers.sort((a,b)=>(b.rating||0)-(a.rating||0));
+  document.getElementById('countLabel').textContent = `${papers.length} paper${papers.length!==1?'s':''}`;
+  const list = document.getElementById('paperList');
+  if (!papers.length) { list.innerHTML=`<div class="empty-state"><div class="big">📚</div>${q?'No papers match.':'No papers yet.<br>Click <b>+ Add Paper</b> to get started.'}</div>`; return; }
+  list.innerHTML = papers.map(p => {
+    const cat   = state.categories.find(c=>c.id===p.catId);
+    const stars = p.rating ? '★'.repeat(p.rating)+'☆'.repeat(5-p.rating) : '';
+    const venue = venueOf(p);
+    const link  = linkOf(p);
+    const volInfo = p.type==='journal'&&p.journalVol?` · ${p.journalVol}`:'';
+    const pages   = p.type==='conf'   &&p.confPages ?` · ${p.confPages}`:'';
+    return `<div class="paper-card${p.readStatus?' status-'+p.readStatus:''}" id="card-${p.id}" onclick="toggleCard('${p.id}',event)">
+      <div class="card-top">
+        <span class="source-badge ${TYPE_CLASS[p.type]}">${TYPE_BADGE[p.type]}</span>
+        <div class="card-main">
+          <div class="paper-title">
+            <span class="paper-title-text">${esc(p.title)}</span>
+            ${p.readingTime?`<span class="label-pill">⏱ ${esc(p.readingTime)}</span>`:''}
+            ${p.feature    ?`<span class="label-pill">★ ${esc(p.feature)}</span>`:''}
+          </div>
+          <div class="paper-authors">${esc(p.authors||'—')}</div>
+          <div class="card-tags">
+            <span class="tag tag-venue">${esc(venue)}${esc(volInfo||pages)}</span>
+            ${p.year?`<span class="tag tag-year">${p.year}</span>`:''}
+            ${cat?`<span class="tag" style="background:${cat.color}18;color:${cat.color}">${esc(cat.name)}</span>`:''}
+            ${p.rating?`<span class="tag tag-rating">${stars}</span>`:''}
+          </div>
+        </div>
+        <div class="card-actions">
+          ${link?`<a class="icon-btn link-btn" href="${esc(link)}" target="_blank" onclick="event.stopPropagation()">&#128279;</a>`:`<span class="icon-btn link-btn disabled">&#128279;</span>`}
+          <button class="icon-btn" onclick="editPaper('${p.id}',event)">&#9998;</button>
+          <button class="icon-btn delete" onclick="deletePaper('${p.id}',event)">&#10005;</button>
+        </div>
+      </div>
+      ${p.comment?`<div class="comment-preview"><span class="comment-preview-icon">💬</span><span class="comment-preview-text">${p.comment}</span></div>`:''}
+      <div class="card-expanded" id="exp-${p.id}">
+        ${p.abstract?`<div><div class="field-label">Abstract / Notes</div><div class="abstract-text">${esc(p.abstract)}</div></div>`:''}
+        <div>
+          <div class="field-label">Personal Comment</div>
+          <div class="comment-editor-wrap">
+            <div class="comment-toolbar" onmousedown="event.preventDefault()">
+              <button class="tb-btn" title="Bold" onclick="fmt('bold')"><b>B</b></button>
+              <button class="tb-btn" title="Italic" onclick="fmt('italic')"><i>I</i></button>
+              <button class="tb-btn" title="Underline" onclick="fmt('underline')"><u>U</u></button>
+              <button class="tb-btn" title="Strikethrough" onclick="fmt('strikeThrough')"><s>S</s></button>
+              <div class="tb-sep"></div>
+              <button class="tb-btn" title="Inline code" onclick="fmtCode()" style="font-family:monospace;font-size:0.7rem">{ }</button>
+              <div class="tb-sep"></div>
+              <button class="tb-btn" title="Bullet list" onclick="fmt('insertUnorderedList')">•—</button>
+              <button class="tb-btn" title="Numbered list" onclick="fmt('insertOrderedList')">1—</button>
+              <div class="tb-sep"></div>
+              <button class="tb-btn" title="Clear formatting" onclick="fmt('removeFormat')" style="font-size:0.6rem;font-family:sans-serif">✕</button>
+            </div>
+            <div class="comment-box" id="cbox-${p.id}" contenteditable="true" data-pid="${p.id}"
+              onblur="saveComment('${p.id}',this)"
+              onkeyup="updateToolbar(this)" onmouseup="updateToolbar(this)"
+              onclick="event.stopPropagation()"
+            >${p.comment||''}</div>
+          </div>
+        </div>
+        <div class="card-meta">
+          ${p.readStatus==='read'
+            ?`<button class="read-toggle mark-unread" onclick="toggleRead('${p.id}',event)"><span class="dot" style="background:#2aab6a"></span> Mark as Unread</button>`
+            :`<button class="read-toggle mark-read"   onclick="toggleRead('${p.id}',event)"><span class="dot" style="background:#e05555"></span> Mark as Read</button>`}
+          ${link?`<a class="paper-link" href="${esc(link)}" target="_blank">🔗 ${esc(link.length>55?link.slice(0,52)+'…':link)}</a>`:''}
+          <span>Added ${p.added}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleCard(id, e) {
+  if (e.target.closest('a, button, textarea, [contenteditable]')) return;
+  document.getElementById(`exp-${id}`)?.classList.toggle('open');
+  document.getElementById(`card-${id}`)?.classList.toggle('expanded');
+}
+
+async function saveComment(id, el) {
+  const p = state.papers.find(x=>x.id===id);
+  if (!p) return;
+  p.comment = el.innerHTML.trim();
+  await dbSavePaper(p);
+  renderPapers();
+}
+
+async function toggleRead(id, e) {
+  e.stopPropagation();
+  const p = state.papers.find(x=>x.id===id);
+  if (!p) return;
+  p.readStatus = p.readStatus==='read' ? 'unread' : 'read';
+  await dbSavePaper(p);
+  renderSidebar(); renderPapers();
+}
+
+async function deletePaper(id, e) {
+  e.stopPropagation();
+  if (!confirm('Delete this paper?')) return;
+  state.papers = state.papers.filter(p=>p.id!==id);
+  await dbDeletePaper(id);
+  renderSidebar(); renderPapers(); updateTabCounts();
+  toast('Paper removed.');
+}
+
+// ── Paper modal ───────────────────────────────────────────────────────────────
+function openAddModal() {
+  editingId=null; formRating=0; formType='arxiv';
+  document.getElementById('modalTitle').textContent='Add Paper';
+  clearForm(); activateTab('arxiv'); populateCatSelect(); updateStars(0);
+  document.getElementById('paperModal').classList.add('open');
+  setTimeout(()=>document.getElementById('fArxivId').focus(),60);
+}
+function editPaper(id, e) {
+  e.stopPropagation();
+  const p = state.papers.find(x=>x.id===id); if (!p) return;
+  editingId=id; formRating=p.rating||0; formType=p.type||'arxiv';
+  document.getElementById('modalTitle').textContent='Edit Paper';
+  clearForm(); activateTab(formType);
+  document.getElementById('fTitle').value      = p.title;
+  document.getElementById('fReadingTime').value= p.readingTime||'';
+  document.getElementById('fFeature').value    = p.feature||'';
+  document.getElementById('fUrl').value        = p.url||'';
+  document.getElementById('fAuthors').value    = p.authors||'';
+  document.getElementById('fYear').value       = p.year||'';
+  document.getElementById('fAbstract').value   = p.abstract||'';
+  const fc = document.getElementById('fComment'); if (fc) fc.innerHTML = p.comment||'';
+  if (formType==='arxiv')   document.getElementById('fArxivId').value    = p.arxivId||'';
+  if (formType==='conf')  { document.getElementById('fConfName').value   = p.confName||'';
+                             document.getElementById('fConfPages').value  = p.confPages||'';
+                             document.getElementById('fConfDoi').value    = p.confDoi||''; }
+  if (formType==='journal'){document.getElementById('fJournalName').value = p.journalName||'';
+                             document.getElementById('fJournalVol').value  = p.journalVol||'';
+                             document.getElementById('fJournalDoi').value  = p.journalDoi||'';}
+  if (formType==='other') { document.getElementById('fOtherVenue').value  = p.otherVenue||'';
+                             document.getElementById('fOtherUrl').value    = p.otherUrl||'';}
+  populateCatSelect(p.catId); updateStars(formRating);
+  document.getElementById('paperModal').classList.add('open');
+}
+function activateTab(type) {
+  document.querySelectorAll('.type-tab').forEach(t=>t.classList.toggle('active',t.dataset.type===type));
+  document.querySelectorAll('.source-fields').forEach(f=>f.classList.remove('visible'));
+  document.getElementById(`sf-${type}`).classList.add('visible');
+}
+function clearForm() {
+  ['fArxivId','fTitle','fReadingTime','fFeature','fAuthors','fYear','fAbstract','fUrl',
+   'fConfName','fConfPages','fConfDoi','fJournalName','fJournalVol','fJournalDoi','fOtherVenue','fOtherUrl']
+  .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const fc=document.getElementById('fComment'); if(fc) fc.innerHTML='';
+}
+function populateCatSelect(selected) {
+  document.getElementById('fCat').innerHTML =
+    `<option value="">— No category —</option>` +
+    state.categories.map(c=>`<option value="${c.id}" ${c.id===selected?'selected':''}>${esc(c.name)}</option>`).join('');
+}
+function switchType(btn) {
+  formType=btn.dataset.type; activateTab(formType);
+}
+
+async function savePaper() {
+  const title = document.getElementById('fTitle').value.trim();
+  if (!title) { toast('Title is required.'); return; }
+  if (formType==='arxiv'  &&!document.getElementById('fArxivId').value.trim())   { toast('arXiv ID required.'); return; }
+  if (formType==='conf'   &&!document.getElementById('fConfName').value.trim())   { toast('Conference name required.'); return; }
+  if (formType==='journal'&&!document.getElementById('fJournalName').value.trim()){ toast('Journal name required.'); return; }
+  const paper = {
+    id:          editingId||uid(),
+    type:        formType,
+    title:       toTitleCase(title),
+    readingTime: document.getElementById('fReadingTime').value.trim(),
+    feature:     document.getElementById('fFeature').value.trim(),
+    authors:     toTitleCase(document.getElementById('fAuthors').value.trim()),
+    year:        document.getElementById('fYear').value.trim(),
+    catId:       document.getElementById('fCat').value||null,
+    abstract:    document.getElementById('fAbstract').value.trim(),
+    comment:     (document.getElementById('fComment').innerHTML||'').trim(),
+    url:         document.getElementById('fUrl').value.trim(),
+    rating:      formRating,
+    readStatus:  editingId ? (state.papers.find(p=>p.id===editingId)?.readStatus||'unread') : 'unread',
+    added:       editingId ? state.papers.find(p=>p.id===editingId)?.added : new Date().toLocaleDateString(),
+    arxivId:     formType==='arxiv'   ? document.getElementById('fArxivId').value.trim()    : '',
+    confName:    formType==='conf'    ? toTitleCase(document.getElementById('fConfName').value.trim())    : '',
+    confPages:   formType==='conf'    ? document.getElementById('fConfPages').value.trim()   : '',
+    confDoi:     formType==='conf'    ? document.getElementById('fConfDoi').value.trim()     : '',
+    journalName: formType==='journal' ? document.getElementById('fJournalName').value.trim() : '',
+    journalVol:  formType==='journal' ? document.getElementById('fJournalVol').value.trim()  : '',
+    journalDoi:  formType==='journal' ? document.getElementById('fJournalDoi').value.trim()  : '',
+    otherVenue:  formType==='other'   ? toTitleCase(document.getElementById('fOtherVenue').value.trim())  : '',
+    otherUrl:    formType==='other'   ? document.getElementById('fOtherUrl').value.trim()    : '',
+  };
+  if (editingId) state.papers[state.papers.findIndex(p=>p.id===editingId)] = paper;
+  else           state.papers.push(paper);
+  await dbSavePaper(paper);
+  closeModal('paperModal'); renderSidebar(); renderPapers(); updateTabCounts();
+  toast(editingId?'Paper updated.':'Paper added!');
+}
+
+// ── Stars ─────────────────────────────────────────────────────────────────────
+document.getElementById('fRatingStars').addEventListener('click', e => {
+  if (!e.target.classList.contains('star')) return;
+  const v=+e.target.dataset.v; formRating=formRating===v?0:v; updateStars(formRating);
+});
+function updateStars(n) {
+  document.querySelectorAll('#fRatingStars .star').forEach(s=>s.classList.toggle('lit',+s.dataset.v<=n));
+}
+
+// ── Rich text ─────────────────────────────────────────────────────────────────
+function fmt(cmd) { document.execCommand(cmd, false, null); }
+function fmtCode() {
+  const sel=window.getSelection(); if(!sel.rangeCount||sel.isCollapsed) return;
+  const range=sel.getRangeAt(0); const code=document.createElement('code');
+  code.appendChild(range.extractContents()); range.insertNode(code);
+  sel.removeAllRanges(); const r2=document.createRange(); r2.selectNode(code); sel.addRange(r2);
+}
+function updateToolbar(el) {
+  const wrap=el.closest('.comment-editor-wrap'); if(!wrap) return;
+  wrap.querySelectorAll('.tb-btn').forEach(btn=>{
+    const t=btn.getAttribute('title')||'';
+    if      (t.startsWith('Bold'))         btn.classList.toggle('active',document.queryCommandState('bold'));
+    else if (t.startsWith('Italic'))       btn.classList.toggle('active',document.queryCommandState('italic'));
+    else if (t.startsWith('Underline'))    btn.classList.toggle('active',document.queryCommandState('underline'));
+    else if (t.startsWith('Strikethrough'))btn.classList.toggle('active',document.queryCommandState('strikeThrough'));
+    else if (t.startsWith('Bullet'))       btn.classList.toggle('active',document.queryCommandState('insertUnorderedList'));
+    else if (t.startsWith('Numbered'))     btn.classList.toggle('active',document.queryCommandState('insertOrderedList'));
+  });
+}
+
+// ── Category modal ────────────────────────────────────────────────────────────
+let selectedColor = COLORS[0];
+function openCatModal() {
+  document.getElementById('cName').value=''; selectedColor=COLORS[0];
+  document.getElementById('colorPicker').innerHTML = COLORS.map((c,i)=>
+    `<div class="color-swatch ${i===0?'selected':''}" style="background:${c}" onclick="pickColor(this,'${c}')"></div>`
+  ).join('');
+  document.getElementById('catModal').classList.add('open');
+  setTimeout(()=>document.getElementById('cName').focus(),60);
+}
+function pickColor(el,color) {
+  selectedColor=color;
+  document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected');
+}
+async function saveCat() {
+  const name = document.getElementById('cName').value.trim();
+  if (!name) { toast('Category name required.'); return; }
+  const cat = { id:uid(), name, color:selectedColor };
+  state.categories.push(cat);
+  await dbSaveCat(cat);
+  closeModal('catModal'); renderSidebar();
+  toast(`Category "${name}" created.`);
+}
+
+// ── Scientists ────────────────────────────────────────────────────────────────
+let editingSciId = null, currentPhotoData = null;
+
+function renderScientists() {
+  const q = (document.getElementById('sciSearchBox').value||'').toLowerCase();
+  let scientists = state.scientists.slice();
+  if (q) scientists = scientists.filter(s=>s.name.toLowerCase().includes(q)||(s.affil||'').toLowerCase().includes(q));
+  document.getElementById('sciCountLabel').textContent = `${scientists.length} scientist${scientists.length!==1?'s':''}`;
+  const list = document.getElementById('scientistList');
+  if (!scientists.length) { list.innerHTML=`<div class="empty-state"><div class="big">🔬</div>${q?'No scientists match.':'No scientists yet.<br>Click <b>+ Scientist</b> to add one.'}</div>`; return; }
+  list.innerHTML = scientists.map(s => {
+    const catIds  = s.catIds||(s.catId?[s.catId]:[]);
+    const cats    = catIds.map(id=>state.categories.find(c=>c.id===id)).filter(Boolean);
+    const first   = cats[0];
+    const initials= s.initials||s.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const avatarContent = s.photo ? `<img src="${s.photo}">` : esc(initials);
+    const avatarStyle   = s.photo ? 'background:transparent;border-color:rgba(58,123,213,0.2)' : 'background:rgba(58,123,213,0.15);border-color:rgba(58,123,213,0.3);color:#3a7bd5';
+    const relPapers = state.papers.filter(p=>s.paperIds&&s.paperIds.includes(p.id));
+    const isExp = state.expandedSci===s.id;
+    return `<div class="scientist-card${isExp?' expanded':''}" id="sci-${s.id}" onclick="toggleSci('${s.id}',event)">
+      <div class="sci-top">
+        <div class="sci-avatar" style="${avatarStyle}">${avatarContent}</div>
+        <div class="sci-main">
+          <div class="sci-name">${esc(s.name)}</div>
+          ${s.affil?`<div class="sci-affil">${esc(s.affil)}</div>`:''}
+          <div class="sci-tags">
+            ${cats.map(c=>`<span class="tag" style="background:${c.color}18;color:${c.color}">${esc(c.name)}</span>`).join('')}
+            ${relPapers.length?`<span class="tag" style="background:rgba(107,126,163,0.1);color:#6b7ea3">${relPapers.length} paper${relPapers.length>1?'s':''}</span>`:''}
+          </div>
+        </div>
+        <div class="card-actions">
+          ${s.scholarUrl?`<a class="icon-btn link-btn" href="${esc(s.scholarUrl)}" target="_blank" onclick="event.stopPropagation()">&#127891;</a>`:`<span class="icon-btn link-btn disabled">&#127891;</span>`}
+          <button class="icon-btn" onclick="editScientist('${s.id}',event)">&#9998;</button>
+          <button class="icon-btn delete" onclick="deleteScientist('${s.id}',event)">&#10005;</button>
+        </div>
+      </div>
+      <div class="sci-expanded${isExp?' open':''}" id="sciexp-${s.id}">
+        ${s.notes?`<div><div class="field-label">Notes</div><div class="sci-notes" style="font-size:0.70rem;color:var(--text-muted);line-height:1.7">${esc(s.notes)}</div></div>`:''}
+        ${relPapers.length?`<div><div class="field-label">Related Papers</div><div class="sci-papers-list">
+          ${relPapers.map(p=>{
+            const pLink=linkOf(p);
+            return `<div class="sci-paper-link${p.readStatus?' status-'+p.readStatus:''}" onclick="jumpToPaper('${p.id}',event)">
+              <span class="sci-paper-badge ${TYPE_CLASS[p.type]}">${TYPE_BADGE[p.type]}</span>
+              <div style="flex:1;min-width:0">
+                <div class="sci-paper-title" style="font-size:0.68rem;color:var(--text)">${esc(p.title)}</div>
+                ${p.authors?`<div style="font-size:0.60rem;color:var(--text-muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.authors)}</div>`:''}
+              </div>
+              ${p.year?`<span style="font-size:0.6rem;color:var(--text-muted);flex-shrink:0">${p.year}</span>`:''}
+              ${pLink?`<a href="${esc(pLink)}" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);font-size:0.7rem;flex-shrink:0;text-decoration:none">🔗</a>`:''}
+            </div>`;
+          }).join('')}
+        </div></div>`:''}
+        <div class="sci-meta"><span>Added ${s.added}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleSci(id, e) {
+  if (e.target.closest('a, button')) return;
+  state.expandedSci = state.expandedSci===id ? null : id;
+  renderScientists();
+}
+
+function jumpToPaper(paperId, e) {
+  e.stopPropagation();
+  switchSection('papers'); state.activeCat='all'; state.activeType='all';
+  renderSidebar(); renderPapers();
+  setTimeout(()=>{
+    const el=document.getElementById(`card-${paperId}`);
+    if (el) { el.scrollIntoView({behavior:'smooth',block:'center'}); el.classList.add('expanded'); document.getElementById(`exp-${paperId}`)?.classList.add('open'); }
+  }, 80);
+}
+
+async function deleteScientist(id, e) {
+  e.stopPropagation();
+  const s = state.scientists.find(x=>x.id===id);
+  if (!s||!confirm(`Delete "${s.name}"?`)) return;
+  state.scientists = state.scientists.filter(x=>x.id!==id);
+  await dbDeleteSci(id);
+  renderScientists(); updateTabCounts();
+  toast('Scientist removed.');
+}
+
+function openSciModal() {
+  editingSciId=null; currentPhotoData=null;
+  document.getElementById('sciModalTitle').textContent='Add Scientist';
+  ['sfName','sfInitials','sfAffil','sfScholar','sfNotes'].forEach(id=>document.getElementById(id).value='');
+  clearPhotoPreview(); renderSciCatPills([]); renderSciPaperCheckboxes([]);
+  document.getElementById('sciModal').classList.add('open');
+  setTimeout(()=>document.getElementById('sfName').focus(),60);
+}
+
+function editScientist(id, e) {
+  e.stopPropagation();
+  const s = state.scientists.find(x=>x.id===id); if(!s) return;
+  editingSciId=id;
+  document.getElementById('sciModalTitle').textContent='Edit Scientist';
+  document.getElementById('sfName').value    = s.name;
+  document.getElementById('sfInitials').value= s.initials||'';
+  document.getElementById('sfAffil').value   = s.affil||'';
+  document.getElementById('sfScholar').value = s.scholarUrl||'';
+  document.getElementById('sfNotes').value   = s.notes||'';
+  if (s.photo) setPhotoPreview(s.photo); else clearPhotoPreview();
+  const catIds = s.catIds||(s.catId?[s.catId]:[]);
+  renderSciCatPills(catIds); renderSciPaperCheckboxes(s.paperIds||[]);
+  document.getElementById('sciModal').classList.add('open');
+}
+
+function renderSciCatPills(selectedIds) {
+  const c = document.getElementById('sfCatList');
+  if (!state.categories.length) { c.innerHTML=`<span style="font-size:0.65rem;color:var(--text-muted)">No categories yet.</span>`; return; }
+  c.innerHTML = state.categories.map(cat => {
+    const checked = selectedIds.includes(cat.id);
+    return `<label class="cat-check-pill ${checked?'checked':''}" style="background:${cat.color}18;color:${cat.color};border-color:${checked?cat.color:'transparent'}" onclick="toggleCatPill(this,'${cat.id}','${cat.color}')">
+      <input type="checkbox" value="${cat.id}" ${checked?'checked':''}>${esc(cat.name)}</label>`;
+  }).join('');
+}
+function toggleCatPill(label, catId, color) {
+  const cb=label.querySelector('input'); cb.checked=!cb.checked;
+  label.classList.toggle('checked',cb.checked); label.style.borderColor=cb.checked?color:'transparent';
+}
+
+function renderSciPaperCheckboxes(selectedIds) {
+  const c = document.getElementById('sfPaperList');
+  if (!state.papers.length) { c.innerHTML=`<div style="font-size:0.65rem;color:var(--text-muted)">No papers yet.</div>`; return; }
+  c.innerHTML = state.papers.slice().reverse().map(p=>`
+    <label style="display:flex;align-items:flex-start;gap:8px;padding:6px 8px;border-radius:5px;background:var(--surface2);cursor:pointer;border:1px solid var(--border)">
+      <input type="checkbox" value="${p.id}" ${selectedIds.includes(p.id)?'checked':''} style="accent-color:var(--accent);margin-top:3px;flex-shrink:0">
+      <span class="sci-paper-badge ${TYPE_CLASS[p.type]}" style="font-size:0.54rem;padding:2px 5px;margin-top:1px">${TYPE_BADGE[p.type]}</span>
+      <span style="flex:1;min-width:0">
+        <span style="display:block;font-size:0.68rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.title)}</span>
+        ${p.authors?`<span style="display:block;font-size:0.60rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px">${esc(p.authors)}</span>`:''}
+      </span>
+      ${p.year?`<span style="font-size:0.6rem;color:var(--text-muted);flex-shrink:0;padding-top:2px">${p.year}</span>`:''}
+    </label>`).join('');
+}
+
+function handlePhotoUpload(e) {
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>setPhotoPreview(ev.target.result);
+  reader.readAsDataURL(file);
+}
+function setPhotoPreview(dataUrl) {
+  currentPhotoData=dataUrl;
+  document.getElementById('sfPhotoPreview').src=dataUrl;
+  document.getElementById('sfPhotoPreview').style.display='';
+  document.getElementById('photoPlaceholder').style.display='none';
+  document.getElementById('photoRemoveBtn').classList.add('visible');
+}
+function clearPhotoPreview() {
+  currentPhotoData=null;
+  document.getElementById('sfPhotoPreview').style.display='none';
+  document.getElementById('sfPhotoPreview').src='';
+  document.getElementById('photoPlaceholder').style.display='';
+  document.getElementById('photoRemoveBtn').classList.remove('visible');
+  document.getElementById('sfPhotoInput').value='';
+}
+function removePhoto(e) { e.stopPropagation(); clearPhotoPreview(); }
+
+async function saveScientist() {
+  const name = toTitleCase(document.getElementById('sfName').value.trim());
+  if (!name) { toast('Name is required.'); return; }
+  const checkedPapers = [...document.getElementById('sfPaperList').querySelectorAll('input[type=checkbox]:checked')];
+  const checkedCats   = [...document.getElementById('sfCatList').querySelectorAll('input[type=checkbox]:checked')];
+  const scientist = {
+    id:         editingSciId||uid(),
+    name,
+    initials:   document.getElementById('sfInitials').value.trim().toUpperCase(),
+    photo:      currentPhotoData||(editingSciId?state.scientists.find(s=>s.id===editingSciId)?.photo:null)||null,
+    affil:      document.getElementById('sfAffil').value.trim(),
+    catIds:     checkedCats.map(cb=>cb.value),
+    scholarUrl: document.getElementById('sfScholar').value.trim(),
+    notes:      document.getElementById('sfNotes').value.trim(),
+    paperIds:   checkedPapers.map(cb=>cb.value),
+    added:      editingSciId?state.scientists.find(s=>s.id===editingSciId)?.added:new Date().toLocaleDateString(),
+  };
+  if (editingSciId) state.scientists[state.scientists.findIndex(s=>s.id===editingSciId)]=scientist;
+  else              state.scientists.push(scientist);
+  await dbSaveSci(scientist);
+  closeModal('sciModal'); renderScientists(); updateTabCounts();
+  toast(editingSciId?'Scientist updated.':'Scientist added!');
+}
+
+// ── Modal utils ───────────────────────────────────────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open')); });
+</script>
+</body>
+</html>
