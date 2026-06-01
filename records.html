@@ -979,9 +979,12 @@ function renderRQ() {
         ${(rq.progress||[]).length ? `<div>
           <div class="field-label">Progress</div>
           <div class="rq-ref-list">
-            ${(rq.progress||[]).map(pg => `
-              <div style="padding:8px 10px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);">
-                <div style="font-size:0.60rem;color:var(--text-muted);margin-bottom:3px">📝 ${esc(pg.date)}</div>
+            ${(rq.progress||[]).map((pg, i) => `
+              <div style="padding:8px 10px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);position:relative;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+                  <span style="font-size:0.60rem;color:var(--text-muted)">📝 ${esc(pg.date)}</span>
+                  <button onclick="deleteProgressEntry('${rq.id}',${i},event)" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:0.65rem;padding:1px 4px;border-radius:3px;line-height:1" title="Delete update">✕</button>
+                </div>
                 <div style="font-size:0.70rem;color:var(--text);line-height:1.6;white-space:pre-wrap">${esc(pg.text)}</div>
               </div>`).join('')}
           </div>
@@ -992,6 +995,15 @@ function renderRQ() {
   }).join('');
   // Render LaTeX in all visible RQ cards
   setTimeout(() => renderKaTeX(list), 50);
+}
+
+async function deleteProgressEntry(rqId, index, e) {
+  e.stopPropagation();
+  const rq = state.questions.find(q => q.id === rqId);
+  if (!rq) return;
+  rq.progress = (rq.progress || []).filter((_, i) => i !== index);
+  await dbSaveRQ(rq);
+  renderRQ(); renderRQSidebar(); updateTabCounts();
 }
 
 function toggleRQ(id, e) {
