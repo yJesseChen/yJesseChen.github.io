@@ -808,8 +808,8 @@ function onRQDescKeydown(e) {
 
 function buildMentionItems(q) {
   mentionItems = [];
-  const papers = state.papers.filter(p => p.title.toLowerCase().includes(q) || (p.authors||'').toLowerCase().includes(q)).slice(0, 5);
-  const scis   = state.scientists.filter(s => s.name.toLowerCase().includes(q)).slice(0, 4);
+  const papers = state.papers.filter(p => p.title.toLowerCase().includes(q) || (p.authors||'').toLowerCase().includes(q)).slice(0, 20);
+  const scis   = state.scientists.filter(s => s.name.toLowerCase().includes(q)).slice(0, 10);
   papers.forEach(p => mentionItems.push({type:'paper',    id:p.id, label:p.title, sub:p.year||''}));
   scis.forEach  (s => mentionItems.push({type:'scientist',id:s.id, label:s.name,  sub:s.affil||''}));
   mentionIndex = 0;
