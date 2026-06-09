@@ -318,6 +318,15 @@
     transition: background 0.1s;
   }
   .mention-item:hover, .mention-item.active { background: var(--surface2); }
+  .mention-group-label {
+    position: sticky; top: 0; z-index: 1;
+    padding: 7px 12px 4px;
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 0.56rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
   .mention-item-icon { font-size: 0.8rem; flex-shrink: 0; }
   .mention-item-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
   .mention-item-title { font-size: 0.70rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -957,7 +966,7 @@ function renderKaTeX(container) {
 let mentionQuery = '', mentionActive = false, mentionIndex = 0, mentionItems = [];
 let activeMentionDropId = 'rqMentionDrop';
 
-function onMentionInput(e, dropId) {
+function onMentionInput(e, dropId, opts = {}) {
   activeMentionDropId = dropId;
   const ed = e.target;
   const sel = window.getSelection();
@@ -970,7 +979,7 @@ function onMentionInput(e, dropId) {
   if (atIdx === -1) { closeMentionDrop(); return; }
   mentionQuery = textBefore.slice(atIdx + 1).toLowerCase();
   mentionActive = true;
-  buildMentionItems(mentionQuery);
+  buildMentionItems(mentionQuery, opts);
   if (mentionItems.length) showMentionDrop(ed, range, dropId);
   else closeMentionDrop();
 }
@@ -988,46 +997,75 @@ function onMentionKeydown(e, dropId) {
   else if (e.key === 'Escape') { closeMentionDrop(); }
 }
 
-function buildMentionItems(q) {
+function buildMentionItems(q, opts = {}) {
   mentionItems = [];
-  const limit = q ? 20 : 15;
-  const papers = state.papers.filter(p => p.title.toLowerCase().includes(q) || (p.authors||'').toLowerCase().includes(q)).slice(0, limit);
+  const priority = opts.priority || ['paper', 'scientist', 'rq', 'note'];
+  const fullTypes = opts.fullTypes || [];
+  // Always show all types regardless of query length
+  const papers = state.papers.filter(p => p.title.toLowerCase().includes(q) || (p.authors||'').toLowerCase().includes(q)).slice(0, q ? 20 : 8);
   const scis   = state.scientists.filter(s => s.name.toLowerCase().includes(q)).slice(0, q ? 10 : 5);
-  const rqs    = state.questions.filter(r => r.question.toLowerCase().includes(q)).slice(0, q ? 5 : 5);
-  const notes  = (state.notes||[]).filter(n => n.title.toLowerCase().includes(q)).slice(0, q ? 5 : 5);
-  papers.forEach(p => mentionItems.push({type:'paper',    id:p.id, label:p.title,    sub:p.year||'',   icon:'📄'}));
-  scis.forEach  (s => mentionItems.push({type:'scientist',id:s.id, label:s.name,     sub:s.affil||'',  icon:'🔬'}));
-  rqs.forEach   (r => mentionItems.push({type:'rq',       id:r.id, label:r.question, sub:'',           icon:'💡'}));
-  notes.forEach (n => mentionItems.push({type:'note',     id:n.id, label:n.title,    sub:'',           icon:'📎'}));
+  let rqs      = (state.questions||[]).filter(r => r.question.toLowerCase().includes(q));
+  let notes    = (state.notes||[]).filter(n => n.title.toLowerCase().includes(q));
+  if (!fullTypes.includes('rq')) rqs = rqs.slice(0, q ? 20 : 12);
+  if (!fullTypes.includes('note')) notes = notes.slice(0, q ? 20 : 12);
+  const byType = {
+    paper: papers.map(p => ({type:'paper', id:p.id, label:p.title, sub:p.year||'', icon:'📄'})),
+    scientist: scis.map(s => ({type:'scientist', id:s.id, label:s.name, sub:s.affil||'', icon:'🔬'})),
+    rq: rqs.map(r => ({type:'rq', id:r.id, label:r.question, sub:'', icon:'💡'})),
+    note: notes.map(n => ({type:'note', id:n.id, label:n.title, sub:'', icon:'📎'})),
+  };
+  priority.forEach(type => mentionItems.push(...(byType[type] || [])));
   mentionIndex = 0;
 }
 
 function showMentionDrop(ed, range, dropId) {
-  // Move drop to body so it isn't clipped by overflow:hidden parents
   let drop = document.getElementById(dropId);
   if (!drop) return;
-  if (drop.parentElement !== document.body) {
-    drop._origParent = drop.parentElement;
-    document.body.appendChild(drop);
-  }
+  drop.classList.add('mention-drop');
+  if (drop.parentElement !== document.body) document.body.appendChild(drop);
+
   const rect = range.getBoundingClientRect();
-  const dropWidth = 360;
+  const dropWidth = Math.min(360, window.innerWidth - 16);
   const maxLeft = window.innerWidth - dropWidth - 8;
-  drop.style.position = 'fixed';
-  drop.style.top   = (rect.bottom + 4) + 'px';
-  drop.style.left  = Math.max(8, Math.min(rect.left, maxLeft)) + 'px';
-  drop.style.width = dropWidth + 'px';
+  const footer = document.querySelector('.modal.open .modal-footer');
+  const footerTop = footer ? footer.getBoundingClientRect().top : window.innerHeight;
+  const lowerBound = Math.min(window.innerHeight, footerTop) - 12;
+  const spaceBelow = lowerBound - rect.bottom - 8;
+  const spaceAbove = rect.top - 8;
+  const useBelow = spaceBelow >= 150 || spaceBelow >= spaceAbove;
+  const availableSpace = useBelow ? spaceBelow : spaceAbove;
+  const maxDropH = Math.max(60, Math.min(availableSpace - 8, window.innerHeight * 0.58));
+
+  drop.style.position    = 'fixed';
+  drop.style.width       = dropWidth + 'px';
+  drop.style.left        = Math.max(8, Math.min(rect.left, maxLeft)) + 'px';
+  drop.style.zIndex      = '9999';
+  drop.style.maxHeight   = maxDropH + 'px';
+  drop.style.overflowY   = 'scroll';
+  drop.style.overscrollBehavior = 'contain';
+  drop.style.webkitOverflowScrolling = 'touch';
+  drop.style.paddingBottom = '22px';
+  // Flip above if more space above
+  if (useBelow) {
+    drop.style.top    = (rect.bottom + 4) + 'px';
+    drop.style.bottom = '';
+  } else {
+    drop.style.bottom = (window.innerHeight - rect.top + 4) + 'px';
+    drop.style.top    = '';
+  }
   drop.style.display = '';
 
+  drop.addEventListener('touchmove', e => e.stopPropagation(), { passive: true });
+
   const groups = [
-    { type:'paper',     items: mentionItems.filter(x=>x.type==='paper') },
-    { type:'scientist', items: mentionItems.filter(x=>x.type==='scientist') },
-    { type:'rq',        items: mentionItems.filter(x=>x.type==='rq') },
-    { type:'note',      items: mentionItems.filter(x=>x.type==='note') },
-  ].filter(g => g.items.length > 0);
+    { type:'rq',        label:'Research Ideas', items: mentionItems.filter(x=>x.type==='rq') },
+    { type:'note',      label:'Notes',          items: mentionItems.filter(x=>x.type==='note') },
+    { type:'paper',     label:'Papers',         items: mentionItems.filter(x=>x.type==='paper') },
+    { type:'scientist', label:'Scientists',     items: mentionItems.filter(x=>x.type==='scientist') },
+  ].sort((a,b) => mentionItems.findIndex(x=>x.type===a.type) - mentionItems.findIndex(x=>x.type===b.type)).filter(g => g.items.length > 0);
 
   let globalIdx = 0;
-  drop.innerHTML = groups.map(g => g.items.map(item => {
+  drop.innerHTML = groups.map(g => `<div class="mention-group-label">${g.label}</div>` + g.items.map(item => {
     const i = globalIdx++;
     const hasSub  = item.type==='scientist' && item.sub;
     const hasYear = item.type==='paper'      && item.sub;
@@ -1039,7 +1077,7 @@ function showMentionDrop(ed, range, dropId) {
       </span>
       ${hasYear ? `<span class="mention-item-year">${esc(item.sub)}</span>` : ''}
     </div>`;
-  }).join('')).join('');
+  }).join('')).join('') + '<div style="height:24px"></div>';
 }
 
 function updateMentionActive(dropId) {
@@ -1084,11 +1122,11 @@ function insertMention(item) {
 
 function closeMentionDrop() {
   mentionActive = false;
-  document.querySelectorAll('[id$="MentionDrop"],[id^="cmbox-drop-"],[id^="nfMentionDrop"],[id^="sfMentionDrop"],[id^="rqMentionDrop"],[id^="fCommentMentionDrop"]').forEach(d => d.style.display = 'none');
+  document.querySelectorAll('.mention-drop,[id$="MentionDrop"],[id^="cmbox-drop-"],[id^="nfMentionDrop"],[id^="sfMentionDrop"],[id^="rqMentionDrop"],[id^="fCommentMentionDrop"],[id^="pg-"][id$="-drop"]').forEach(d => d.style.display = 'none');
 }
 
 document.addEventListener('click', e => {
-  if (!e.target.closest('[id$="MentionDrop"]') && !e.target.closest('.rq-desc-editor')) closeMentionDrop();
+  if (!e.target.closest('.mention-drop,[id$="MentionDrop"],[id^="pg-"][id$="-drop"]') && !e.target.closest('.rq-desc-editor')) closeMentionDrop();
 });
 
 async function openNoteMentionPDF(noteId, e) {
@@ -1212,7 +1250,7 @@ function renderRQ() {
                   <span style="font-size:0.60rem;color:var(--text-muted)">📝 ${esc(pg.date)}</span>
                   <button onclick="deleteProgressEntry('${rq.id}',${i},event)" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:0.65rem;padding:1px 4px;border-radius:3px;line-height:1" title="Delete update">✕</button>
                 </div>
-                <div style="font-size:0.70rem;color:var(--text);line-height:1.6;white-space:pre-wrap">${esc(pg.text)}</div>
+                <div style="font-size:0.70rem;color:var(--text);line-height:1.6;">${renderRQDesc(pg.text)}</div>
               </div>`).join('')}
           </div>
         </div>` : ''}
@@ -1357,26 +1395,44 @@ function addProgressEntry() {
 function addProgressEntryDOM(date, text) {
   const container = document.getElementById('rqProgressList');
   const today = new Date().toISOString().slice(0,10);
+  const entryId = 'pg-' + uid();
   const div = document.createElement('div');
   div.className = 'progress-entry';
   div.style.cssText = 'display:flex;gap:8px;align-items:flex-start;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;';
+
   const inner = document.createElement('div');
-  inner.style.cssText = 'flex:1;display:flex;flex-direction:column;gap:6px';
+  inner.style.cssText = 'flex:1;display:flex;flex-direction:column;gap:6px;position:relative';
+
   const dateInput = document.createElement('input');
   dateInput.type = 'date';
   dateInput.value = date || today;
   dateInput.style.cssText = "font-family:'DM Mono',monospace;font-size:0.65rem;background:transparent;border:none;color:var(--text-muted);outline:none;cursor:pointer";
-  const textarea = document.createElement('textarea');
-  textarea.placeholder = 'Describe your progress, findings, or next steps…';
-  textarea.style.cssText = "font-family:'DM Mono',monospace;font-size:0.70rem;background:transparent;border:none;outline:none;resize:none;min-height:50px;color:var(--text);line-height:1.6";
-  textarea.value = text || '';
+
+  const dropId = entryId + '-drop';
+  const editor = document.createElement('div');
+  editor.className = 'rq-desc-editor';
+  editor.contentEditable = 'true';
+  editor.dataset.placeholder = 'Describe your progress… Type @ to cite a paper or note';
+  editor.style.cssText = "font-family:'DM Mono',monospace;font-size:0.70rem;background:transparent;border:none;outline:none;min-height:50px;color:var(--text);line-height:1.6;word-break:break-word";
+  if (text) editor.innerHTML = rqRawToEditorHTML(text);
+  editor.addEventListener('input', ev => onMentionInput(ev, dropId, { priority: ['rq', 'note', 'paper', 'scientist'], fullTypes: ['rq', 'note'] }));
+  editor.addEventListener('keydown', ev => onMentionKeydown(ev, dropId));
+
+  const drop = document.createElement('div');
+  drop.id = dropId;
+  drop.className = 'mention-drop';
+  drop.style.cssText = 'display:none;position:absolute;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.14);max-height:360px;overflow-y:auto;width:320px;';
+
   inner.appendChild(dateInput);
-  inner.appendChild(textarea);
+  inner.appendChild(editor);
+  inner.appendChild(drop);
+
   const delBtn = document.createElement('button');
   delBtn.textContent = '✕';
   delBtn.title = 'Remove';
   delBtn.style.cssText = 'background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:0.75rem;padding:2px;flex-shrink:0';
   delBtn.onclick = () => div.remove();
+
   div.appendChild(inner);
   div.appendChild(delBtn);
   container.appendChild(div);
@@ -1386,8 +1442,9 @@ function collectProgressEntries() {
   const entries = [];
   const container = document.getElementById('rqProgressList');
   container.querySelectorAll('.progress-entry').forEach(div => {
-    const date = div.querySelector('input[type=date]')?.value || '';
-    const text = div.querySelector('textarea')?.value.trim() || '';
+    const date   = div.querySelector('input[type=date]')?.value || '';
+    const editor = div.querySelector('.rq-desc-editor');
+    const text   = editor ? rqEditorToRaw(editor) : '';
     if (text) entries.push({ date, text });
   });
   return entries;
@@ -2060,7 +2117,7 @@ function renderPapers() {
 }
 
 function toggleCard(id, e) {
-  if (e.target.closest('a, button, textarea, [contenteditable]')) return;
+  if (e.target.closest('a, button, textarea, [contenteditable], .rq-desc-editor')) return;
   document.getElementById(`exp-${id}`)?.classList.toggle('open');
   document.getElementById(`card-${id}`)?.classList.toggle('expanded');
 }
