@@ -349,6 +349,22 @@
   .note-title { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
   .note-expanded { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); display: none; flex-direction: column; gap: 12px; user-select: text; }
   .note-expanded.open { display: flex; }
+  .note-file-list { display: flex; flex-direction: column; gap: 12px; }
+  .note-file-group { display: flex; flex-direction: column; gap: 6px; }
+  .note-file-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px; border-radius: 6px;
+    background: var(--surface2); border: 1px solid var(--border);
+    font-size: 0.68rem; transition: border-color 0.12s, background 0.12s;
+  }
+  .note-file-row:hover { border-color: var(--accent); background: rgba(58,123,213,0.05); }
+  .note-file-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--accent); }
+  .note-file-link {
+    flex-shrink: 0; background: transparent; border: none; padding: 0;
+    color: var(--accent); cursor: pointer; font: inherit; font-size: 0.65rem;
+    text-decoration: underline dotted; text-underline-offset: 3px;
+  }
+  .note-file-link:hover { color: #285ab4; }
   .pdf-btn {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 7px 14px; border-radius: 6px;
@@ -806,7 +822,7 @@
       <input class="form-input" id="nfTitle" placeholder="e.g. Lecture notes on homogenization">
     </div>
     <div class="form-group">
-      <label class="form-label">PDF File</label>
+      <label class="form-label">Main PDF File</label>
       <div id="nfFileArea" style="display:flex;align-items:center;gap:10px;padding:10px;border:2px dashed var(--border);border-radius:6px;cursor:pointer;transition:border-color 0.15s" onclick="document.getElementById('nfFileInput').click()">
         <span style="font-size:1.2rem">📄</span>
         <div style="flex:1;min-width:0">
@@ -815,6 +831,18 @@
         </div>
         <input type="file" id="nfFileInput" accept=".pdf,application/pdf" style="display:none" onchange="handleNoteFileSelect(event)">
       </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Attachments</label>
+      <div id="nfAttachmentArea" style="display:flex;align-items:center;gap:10px;padding:10px;border:2px dashed var(--border);border-radius:6px;cursor:pointer;transition:border-color 0.15s" onclick="document.getElementById('nfAttachmentInput').click()">
+        <span style="font-size:1.2rem">📎</span>
+        <div style="flex:1;min-width:0">
+          <div id="nfAttachmentName" style="font-size:0.70rem;color:var(--text-muted)">Click to add attachment files</div>
+          <div id="nfAttachmentStatus" style="font-size:0.60rem;color:var(--text-muted)"></div>
+        </div>
+        <input type="file" id="nfAttachmentInput" multiple style="display:none" onchange="handleNoteAttachmentSelect(event)">
+      </div>
+      <div id="nfExistingAttachments" style="display:flex;flex-direction:column;gap:5px;margin-top:6px"></div>
     </div>
     <div class="form-group">
       <label class="form-label">Categories <span style="font-size:0.55rem;color:var(--text-muted)">(select multiple)</span></label>
@@ -1483,6 +1511,7 @@ async function saveRQ() {
 // ── Notes ─────────────────────────────────────────────────────────────────────
 let editingNoteId = null;
 let pendingNoteFile = null;
+let pendingNoteAttachments = [];
 
 function renderNotesSidebar() {
   if (!document.getElementById('countNotesAll')) return;
@@ -1525,7 +1554,6 @@ function renderNotes() {
           <div class="note-title">${esc(n.title)}</div>
           <div class="card-tags">
             ${cats.map(c=>`<span class="tag" style="background:${c.color}18;color:${c.color}">${esc(c.name)}</span>`).join('')}
-            ${n.fileName?`<span class="tag" style="background:rgba(58,123,213,0.08);color:#3a7bd5">📄 ${esc(n.fileName)}</span>`:''}
           </div>
         </div>
         <div class="card-actions">
@@ -1535,12 +1563,38 @@ function renderNotes() {
         </div>
       </div>
       <div class="note-expanded${isExp?' open':''}" id="noteexp-${n.id}">
+        ${renderNoteFiles(n)}
         ${n.desc ? `<div><div class="field-label">Description</div><div class="rq-desc-display">${renderRQDesc(n.desc)}</div></div>` : ''}
         <div class="card-meta"><span>Added ${n.added}</span></div>
       </div>
     </div>`;
   }).join('');
   setTimeout(() => renderKaTeX(list), 50);
+}
+
+function renderNoteFiles(n) {
+  const groups = [];
+  if (n.filePath) {
+    groups.push(`<div class="note-file-group">
+      <div class="field-label">Main</div>
+      <div class="note-file-row">
+        <span class="note-file-name">${esc(n.fileName || 'PDF file')}</span>
+        <button class="note-file-link" onclick="openNoteMentionPDF('${n.id}',event)" title="Open main file">link</button>
+      </div>
+    </div>`);
+  }
+  const attachmentRows = (n.attachments||[]).map(att => `<div class="note-file-row">
+    <span class="note-file-name">${esc(att.name)}</span>
+    <button class="note-file-link" onclick="openNoteAttachment('${esc(att.path)}',event)" title="Open attachment">link</button>
+  </div>`).join('');
+  if (attachmentRows) {
+    groups.push(`<div class="note-file-group">
+      <div class="field-label">Attachment</div>
+      ${attachmentRows}
+    </div>`);
+  }
+  if (!groups.length) return '';
+  return `<div class="note-file-list">${groups.join('')}</div>`;
 }
 
 function toggleNote(id, e) {
@@ -1558,11 +1612,19 @@ async function openNotePDF(noteId, e) {
   window.open(data.signedUrl, '_blank');
 }
 
+async function openNoteAttachment(path, e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  const { data, error } = await sb.storage.from('attachments').createSignedUrl(path, 3600);
+  if (error) { toast('Could not open attachment: ' + error.message); return; }
+  window.open(data.signedUrl, '_blank');
+}
+
 async function deleteNote(id, e) {
   e.stopPropagation();
   const n = state.notes.find(x=>x.id===id);
   if (!n || !confirm(`Delete "${n.title}"?`)) return;
-  if (n.filePath) await sb.storage.from('attachments').remove([n.filePath]);
+  const paths = [n.filePath, ...(n.attachments||[]).map(a=>a.path)].filter(Boolean);
+  if (paths.length) await sb.storage.from('attachments').remove(paths);
   state.notes = state.notes.filter(x=>x.id!==id);
   await dbDeleteNote(id);
   renderNotes(); renderNotesSidebar(); updateTabCounts();
@@ -1570,13 +1632,14 @@ async function deleteNote(id, e) {
 }
 
 function openNoteModal() {
-  editingNoteId = null; pendingNoteFile = null;
+  editingNoteId = null; pendingNoteFile = null; pendingNoteAttachments = [];
   document.getElementById('noteModalTitle').textContent = 'Add Note';
   document.getElementById('nfTitle').value = '';
   document.getElementById('nfFileName').textContent = 'Click to select a PDF file';
   document.getElementById('nfFileStatus').textContent = '';
   document.getElementById('nfFileInput').value = '';
   document.getElementById('nfFileArea').style.borderColor = '';
+  resetNoteAttachmentPicker([]);
   const ed = document.getElementById('nfDesc'); ed.innerHTML = '';
   renderNoteCatPills([]);
   document.getElementById('noteModal').classList.add('open');
@@ -1586,12 +1649,13 @@ function openNoteModal() {
 function editNote(id, e) {
   e.stopPropagation();
   const n = state.notes.find(x=>x.id===id); if (!n) return;
-  editingNoteId = id; pendingNoteFile = null;
+  editingNoteId = id; pendingNoteFile = null; pendingNoteAttachments = [];
   document.getElementById('noteModalTitle').textContent = 'Edit Note';
   document.getElementById('nfTitle').value = n.title;
   document.getElementById('nfFileName').textContent = n.fileName || 'Click to replace PDF';
   document.getElementById('nfFileStatus').textContent = n.filePath ? '✓ PDF stored' : '';
   document.getElementById('nfFileInput').value = '';
+  resetNoteAttachmentPicker(n.attachments||[]);
   const ed = document.getElementById('nfDesc'); ed.innerHTML = rqRawToEditorHTML(n.desc||'');
   renderNoteCatPills(n.catIds||[]);
   document.getElementById('noteModal').classList.add('open');
@@ -1615,6 +1679,27 @@ function handleNoteFileSelect(e) {
   document.getElementById('nfFileArea').style.borderColor = 'var(--accent)';
 }
 
+function resetNoteAttachmentPicker(existing) {
+  pendingNoteAttachments = [];
+  document.getElementById('nfAttachmentName').textContent = 'Click to add attachment files';
+  document.getElementById('nfAttachmentStatus').textContent = existing.length ? `${existing.length} stored attachment${existing.length>1?'s':''}` : '';
+  document.getElementById('nfAttachmentInput').value = '';
+  document.getElementById('nfAttachmentArea').style.borderColor = '';
+  document.getElementById('nfExistingAttachments').innerHTML = existing.map(a =>
+    `<div style="font-size:0.62rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📎 ${esc(a.name)}</div>`
+  ).join('');
+}
+
+function handleNoteAttachmentSelect(e) {
+  pendingNoteAttachments = [...e.target.files];
+  const count = pendingNoteAttachments.length;
+  if (!count) return;
+  const totalKb = pendingNoteAttachments.reduce((sum, f) => sum + f.size, 0) / 1024;
+  document.getElementById('nfAttachmentName').textContent = `${count} file${count>1?'s':''} selected`;
+  document.getElementById('nfAttachmentStatus').textContent = `${totalKb.toFixed(0)} KB — will upload on save`;
+  document.getElementById('nfAttachmentArea').style.borderColor = 'var(--accent)';
+}
+
 async function saveNote() {
   if (saveNote._saving) return; saveNote._saving = true;
   try {
@@ -1626,6 +1711,7 @@ async function saveNote() {
 
     let filePath = editingNoteId ? state.notes.find(n=>n.id===editingNoteId)?.filePath || null : null;
     let fileName = editingNoteId ? state.notes.find(n=>n.id===editingNoteId)?.fileName || '' : '';
+    let attachments = editingNoteId ? [...(state.notes.find(n=>n.id===editingNoteId)?.attachments || [])] : [];
 
     if (pendingNoteFile) {
       // Delete old file if replacing
@@ -1639,7 +1725,22 @@ async function saveNote() {
       if (upErr) { toast('Upload error: ' + upErr.message); return; }
     }
 
-    const note = { id: noteId, title, desc: rawDesc, catIds: catBoxes.map(cb=>cb.value), filePath, fileName, added: editingNoteId ? state.notes.find(n=>n.id===editingNoteId)?.added : new Date().toLocaleDateString() };
+    if (pendingNoteAttachments.length) {
+      showLoading(true);
+      for (const file of pendingNoteAttachments) {
+        const path = noteAttachmentPath(noteId, file.name);
+        const { error: upErr } = await sb.storage.from('attachments').upload(path, file, { upsert: true });
+        if (upErr) {
+          showLoading(false);
+          toast('Attachment upload error: ' + upErr.message);
+          return;
+        }
+        attachments.push({ path, name: file.name, size: file.size });
+      }
+      showLoading(false);
+    }
+
+    const note = { id: noteId, title, desc: rawDesc, catIds: catBoxes.map(cb=>cb.value), filePath, fileName, attachments, added: editingNoteId ? state.notes.find(n=>n.id===editingNoteId)?.added : new Date().toLocaleDateString() };
     if (editingNoteId) state.notes[state.notes.findIndex(n=>n.id===editingNoteId)] = note;
     else               state.notes.push(note);
     await dbSaveNote(note);
@@ -1692,7 +1793,44 @@ async function loadAllData() {
   state.scientists = (scientists.data || []).map(dbSciToLocal);
   state.questions  = (questions.data || []).map(dbRQToLocal);
   state.notes      = (notes.data || []).map(dbNoteToLocal);
+  await loadNoteAttachments();
   await applyCategoryPaletteOnce();
+}
+
+function noteAttachmentPrefix(noteId) {
+  return `${currentUserId}/${noteId}/attachments`;
+}
+
+function noteAttachmentPath(noteId, fileName) {
+  const safeName = encodeURIComponent(fileName);
+  return `${noteAttachmentPrefix(noteId)}/${uid()}-${safeName}`;
+}
+
+function noteAttachmentName(storageName) {
+  const encoded = storageName.replace(/^[^-]+-/, '');
+  try { return decodeURIComponent(encoded); }
+  catch(e) { return storageName.replace(/^[^-]+-/, ''); }
+}
+
+async function loadNoteAttachments() {
+  if (!currentUserId || !state.notes.length) return;
+  await Promise.all(state.notes.map(async n => {
+    const { data, error } = await sb.storage.from('attachments').list(noteAttachmentPrefix(n.id), {
+      limit: 100,
+      sortBy: { column: 'name', order: 'asc' },
+    });
+    if (error) {
+      n.attachments = [];
+      return;
+    }
+    n.attachments = (data || [])
+      .filter(item => item.name && item.name !== '.emptyFolderPlaceholder')
+      .map(item => ({
+        path: `${noteAttachmentPrefix(n.id)}/${item.name}`,
+        name: noteAttachmentName(item.name),
+        size: item.metadata?.size || 0,
+      }));
+  }));
 }
 
 async function applyCategoryPaletteOnce() {
