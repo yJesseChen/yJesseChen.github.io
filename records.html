@@ -357,7 +357,87 @@
   .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--border); padding: 9px 16px; border-radius: 8px; font-size: 0.71rem; color: var(--text); z-index: 999; animation: toastIn 0.2s ease; box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
   @keyframes toastIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
 
-  /* ── Loading spinner ── */
+  /* ── Mobile responsive ── */
+  @media (max-width: 768px) {
+
+    /* Header */
+    header { padding: 12px 16px; gap: 8px; }
+    header h1 { font-size: 1.1rem; }
+    .header-meta { display: none; }
+    .user-badge { display: none; }
+    .header-actions { gap: 6px; }
+    .btn { padding: 7px 11px; font-size: 0.68rem; }
+    #btnAddPaper, #btnAddScientist, #btnAddRQ, #btnAddNote { font-size: 0.65rem; padding: 7px 10px; }
+
+    /* Hamburger button */
+    #hamburgerBtn { display: flex !important; }
+
+    /* Sidebar becomes overlay drawer */
+    .sidebar {
+      position: fixed !important; top: 0; left: -260px; height: 100vh;
+      width: 260px !important; min-width: 260px !important;
+      z-index: 500; transition: left 0.25s ease;
+      box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+    }
+    .sidebar.open { left: 0 !important; }
+    #sidebarOverlay { display: block; }
+
+    /* App layout — full width */
+    .app { height: calc(100vh - 57px); }
+    main { width: 100%; }
+
+    /* Global nav tabs — horizontal scroll, shorter labels */
+    .global-nav { padding: 0 8px; overflow-x: auto; white-space: nowrap; border-bottom-width: 1px; }
+    .global-nav::-webkit-scrollbar { display: none; }
+    .global-tab { padding: 10px 12px; font-size: 0.82rem; }
+    .tab-count { display: none; }
+
+    /* Toolbar */
+    .toolbar { padding: 8px 12px; gap: 8px; }
+    .search-box { font-size: 0.72rem; padding: 7px 10px; }
+    .sort-select { font-size: 0.65rem; padding: 6px 8px; max-width: 110px; }
+    .view-label { display: none; }
+
+    /* Paper/note/rq list */
+    .paper-list, .scientist-list { padding: 12px 12px; gap: 10px; }
+
+    /* Cards */
+    .paper-card, .rq-card, .note-card, .scientist-card { padding: 12px 14px; }
+    .paper-title, .rq-question, .note-title { font-size: 0.88rem; }
+    .paper-authors { font-size: 0.62rem; }
+    .card-actions { gap: 4px; }
+    .icon-btn { width: 34px; height: 34px; font-size: 0.8rem; }
+    .icon-btn.link-btn { width: 60px; height: 34px; }
+
+    /* Modals — full screen */
+    .modal-overlay { align-items: flex-end; }
+    .modal {
+      width: 100% !important; max-width: 100% !important;
+      max-height: 92vh; border-radius: 16px 16px 0 0;
+      padding: 20px 18px 32px;
+    }
+    .form-row { flex-direction: column; gap: 0; }
+
+    /* Login */
+    .login-box { width: calc(100vw - 32px); padding: 28px 20px; }
+  }
+
+  /* Hamburger button — hidden on desktop */
+  #hamburgerBtn {
+    display: none;
+    background: transparent; border: 1px solid var(--border);
+    border-radius: 6px; padding: 6px 9px; cursor: pointer;
+    color: var(--text-muted); font-size: 1rem; align-items: center;
+    justify-content: center; flex-shrink: 0;
+  }
+  #hamburgerBtn:hover { color: var(--text); border-color: var(--text-muted); }
+
+  /* Sidebar overlay backdrop */
+  #sidebarOverlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4); z-index: 499;
+    backdrop-filter: blur(2px);
+  }
   .loading-bar { position: fixed; top: 0; left: 0; width: 100%; height: 3px; background: var(--accent); z-index: 9999; animation: loadingPulse 1s ease-in-out infinite; }
   @keyframes loadingPulse { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
 
@@ -390,6 +470,7 @@
 <div id="appShell">
 
 <header>
+  <button id="hamburgerBtn" onclick="toggleSidebar()">☰</button>
   <h1>Research <span>Records</span></h1>
   <span class="header-meta">// personal research library</span>
   <div class="header-actions">
@@ -403,6 +484,7 @@
   </div>
 </header>
 
+<div id="sidebarOverlay" onclick="toggleSidebar()"></div>
 <div class="app">
   <!-- Papers sidebar -->
   <aside class="sidebar" id="sidebarPapers">
@@ -1054,7 +1136,7 @@ function renderRQSidebar() {
 
 function setRQCat(id) {
   state.activeRQCat = id; savePrefs();
-  renderRQSidebar(); renderRQ();
+  renderRQSidebar(); renderRQ(); closeSidebarOnMobile();
 }
 
 function renderRQ() {
@@ -1357,7 +1439,7 @@ function renderNotesSidebar() {
 
 function setNotesCat(id) {
   state.activeNotesCat = id; savePrefs();
-  renderNotesSidebar(); renderNotes();
+  renderNotesSidebar(); renderNotes(); closeSidebarOnMobile();
 }
 
 function renderNotes() {
@@ -1803,10 +1885,10 @@ function renderSciSidebar() {
 
 function setSciCat(id) {
   state.activeSciCat = id; savePrefs();
-  renderSciSidebar(); renderScientists();
+  renderSciSidebar(); renderScientists(); closeSidebarOnMobile();
 }
 
-function setCat(id)  { state.activeCat  = id; savePrefs(); renderSidebar(); renderPapers(); }
+function setCat(id)  { state.activeCat  = id; savePrefs(); renderSidebar(); renderPapers(); closeSidebarOnMobile(); }
 
 async function deleteCat(id, e) {
   e.stopPropagation();
@@ -1820,6 +1902,29 @@ async function deleteCat(id, e) {
   await dbDeleteCat(id);
   renderSidebar(); renderPapers();
   toast(`Category "${cat.name}" deleted.`);
+}
+
+// ── Mobile sidebar ────────────────────────────────────────────────────────────
+function toggleSidebar() {
+  const sec = state.activeSection;
+  const sidebarId = sec==='papers'?'sidebarPapers':sec==='scientists'?'sidebarScientists':sec==='rq'?'sidebarRQ':'sidebarNotes';
+  const sidebar = document.getElementById(sidebarId);
+  const overlay = document.getElementById('sidebarOverlay');
+  if (!sidebar) return;
+  const isOpen = sidebar.classList.contains('open');
+  document.querySelectorAll('.sidebar').forEach(s => s.classList.remove('open'));
+  if (!isOpen) {
+    sidebar.style.display = '';
+    sidebar.classList.add('open');
+    overlay.style.display = 'block';
+  } else {
+    overlay.style.display = 'none';
+  }
+}
+function closeSidebarOnMobile() {
+  if (window.innerWidth > 768) return;
+  document.querySelectorAll('.sidebar').forEach(s => s.classList.remove('open'));
+  document.getElementById('sidebarOverlay').style.display = 'none';
 }
 
 // ── Section switching ─────────────────────────────────────────────────────────
@@ -1849,6 +1954,11 @@ function switchSection(sec) {
   if (sec==='scientists') { renderScientists(); renderSciSidebar(); }
   if (sec==='rq')         { renderRQ(); renderRQSidebar(); }
   if (sec==='notes')      { renderNotes(); renderNotesSidebar(); }
+  // On mobile, hide sidebars via display:none only on desktop; on mobile they're overlay
+  if (window.innerWidth <= 768) {
+    document.querySelectorAll('.sidebar').forEach(s => { s.style.display = ''; s.classList.remove('open'); });
+    document.getElementById('sidebarOverlay').style.display = 'none';
+  }
 }
 function updateTabCounts() {
   document.getElementById('tabCountPapers').textContent     = state.papers.length;
