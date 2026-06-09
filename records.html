@@ -294,20 +294,15 @@
   /* ── @ mention chips ── */
   .mention-chip {
     display: inline;
-    background: rgba(58,123,213,0.10);
-    color: var(--accent);
-    border-bottom: 2px dotted var(--accent);
+    background: rgba(107,126,163,0.10);
+    color: #5a6a8a;
+    border-bottom: 2px dotted #5a6a8a;
     border-radius: 3px;
     padding: 0 3px;
     font-size: 0.70rem;
     cursor: pointer;
     white-space: nowrap;
     text-decoration: none;
-  }
-  .mention-chip[data-type="scientist"] {
-    background: rgba(107,126,163,0.10);
-    color: #5a6a8a;
-    border-bottom-color: #5a6a8a;
   }
   .mention-chip:hover { opacity: 0.8; }
 
@@ -333,6 +328,27 @@
   /* RQ description display */
   .rq-desc-display { font-size: 0.85rem; color: var(--text-muted); line-height: 1.8; word-break: break-word; }
   .rq-desc-display .mention-chip { font-size: 0.85rem; }
+
+  /* ── Notes ── */
+  .note-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    cursor: pointer; user-select: none;
+  }
+  .note-card:hover { border-color: #b0b8cc; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+  .note-card.expanded { border-color: var(--accent); }
+  .note-title { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .note-expanded { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); display: none; flex-direction: column; gap: 12px; user-select: text; }
+  .note-expanded.open { display: flex; }
+  .pdf-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 6px;
+    background: rgba(58,123,213,0.08); border: 1px solid rgba(58,123,213,0.25);
+    color: var(--accent); font-size: 0.70rem; cursor: pointer;
+    text-decoration: none; transition: all 0.14s; font-family: 'DM Mono', monospace;
+  }
+  .pdf-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
 
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -381,6 +397,7 @@
     <button class="btn btn-ghost" onclick="openCatModal()">+ Category</button>
     <button class="btn btn-primary" id="btnAddScientist" style="display:none" onclick="openSciModal()">+ Scientist</button>
     <button class="btn btn-primary" id="btnAddRQ" style="display:none" onclick="openRQModal()">+ Research Question</button>
+    <button class="btn btn-primary" id="btnAddNote" style="display:none" onclick="openNoteModal()">+ Note</button>
     <button class="btn btn-primary" id="btnAddPaper" onclick="openAddModal()">+ Add Paper</button>
     <button class="btn btn-ghost" onclick="doLogout()" title="Sign out" style="font-size:0.65rem">↩ Out</button>
   </div>
@@ -438,6 +455,19 @@
     <div id="rqCatList"></div>
   </aside>
 
+  <!-- Notes sidebar -->
+  <aside class="sidebar" id="sidebarNotes" style="display:none">
+    <div class="sidebar-label">All Notes</div>
+    <div class="cat-item active" id="notesCatAll" onclick="setNotesCat('all')">
+      <span class="cat-dot" style="background:#6b748e"></span>
+      <span class="cat-name">All Notes</span>
+      <span class="cat-count" id="countNotesAll">0</span>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-label">By Category</div>
+    <div id="notesCatList"></div>
+  </aside>
+
   <main>
     <div class="global-nav">
       <button class="global-tab active" id="tabPapers" onclick="switchSection('papers')">
@@ -448,6 +478,9 @@
       </button>
       <button class="global-tab" id="tabRQ" onclick="switchSection('rq')">
         <span>💡</span> Research Questions <span class="tab-count" id="tabCountRQ">0</span>
+      </button>
+      <button class="global-tab" id="tabNotes" onclick="switchSection('notes')">
+        <span>📎</span> Notes <span class="tab-count" id="tabCountNotes">0</span>
       </button>
     </div>
 
@@ -486,6 +519,15 @@
         <span class="view-label" id="rqCountLabel">0 questions</span>
       </div>
       <div class="paper-list" id="rqList"></div>
+    </div>
+
+    <!-- Notes -->
+    <div class="section" id="sectionNotes">
+      <div class="toolbar">
+        <input class="search-box" id="notesSearchBox" placeholder="Search notes…" oninput="renderNotes()">
+        <span class="view-label" id="notesCountLabel">0 notes</span>
+      </div>
+      <div class="paper-list" id="notesList"></div>
     </div>
   </main>
 </div>
@@ -541,7 +583,7 @@
     <div class="form-group"><label class="form-label">Abstract / Notes</label><textarea class="form-textarea" id="fAbstract" placeholder="Paste abstract or key findings…"></textarea></div>
     <div class="form-group">
       <label class="form-label">Personal Comment</label>
-      <div class="comment-editor-wrap">
+      <div class="comment-editor-wrap" style="position:relative">
         <div class="comment-toolbar" onmousedown="event.preventDefault()">
           <button class="tb-btn" title="Bold" onclick="fmt('bold')"><b>B</b></button>
           <button class="tb-btn" title="Italic" onclick="fmt('italic')"><i>I</i></button>
@@ -555,7 +597,11 @@
           <div class="tb-sep"></div>
           <button class="tb-btn" title="Clear formatting" onclick="fmt('removeFormat')" style="font-size:0.6rem;font-family:sans-serif">✕</button>
         </div>
-        <div class="comment-box" id="fComment" contenteditable="true" style="min-height:80px" onkeyup="updateToolbar(this)" onmouseup="updateToolbar(this)"></div>
+        <div class="comment-box" id="fComment" contenteditable="true" style="min-height:80px"
+          onkeyup="updateToolbar(this)" onmouseup="updateToolbar(this)"
+          oninput="onMentionInput(event,'fCommentMentionDrop')"
+          onkeydown="onMentionKeydown(event,'fCommentMentionDrop')"></div>
+        <div id="fCommentMentionDrop" style="display:none;position:absolute;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.14);max-height:360px;overflow-y:auto;width:320px;"></div>
       </div>
     </div>
     <div class="form-group"><label class="form-label">Rating</label><div class="rating-stars" id="fRatingStars"><span class="star" data-v="1">★</span><span class="star" data-v="2">★</span><span class="star" data-v="3">★</span><span class="star" data-v="4">★</span><span class="star" data-v="5">★</span></div></div>
@@ -596,7 +642,17 @@
       <label class="form-label">Related Papers</label>
       <div id="sfPaperList" style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;"></div>
     </div>
-    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="sfNotes" placeholder="Research focus, notable contributions…"></textarea></div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <div class="rq-desc-editor-wrap" style="position:relative">
+        <div class="form-textarea rq-desc-editor" id="sfNotes" contenteditable="true"
+          style="min-height:80px;font-family:'DM Mono',monospace;font-size:0.72rem;line-height:1.7;outline:none;word-break:break-word"
+          data-placeholder="Research focus, notable contributions… Type @ to cite"
+          oninput="onMentionInput(event,'sfMentionDrop')" onkeydown="onMentionKeydown(event,'sfMentionDrop')"></div>
+        <div id="sfMentionDrop" style="display:none;position:absolute;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.14);max-height:360px;overflow-y:auto;"></div>
+      </div>
+      <div class="form-hint">Type <b>@</b> to cite a paper, scientist, research question, or note.</div>
+    </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('sciModal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveScientist()">Save Scientist</button>
@@ -620,7 +676,7 @@
           data-placeholder="Background, motivation, current thinking… Type @ to cite a paper or scientist"
           oninput="onRQDescInput(event)" onkeydown="onRQDescKeydown(event)"></div>
         <!-- @ mention dropdown -->
-        <div id="rqMentionDrop" style="display:none;position:absolute;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.14);max-height:220px;overflow-y:auto;"></div>
+        <div id="rqMentionDrop" style="display:none;position:absolute;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.14);max-height:360px;overflow-y:auto;"></div>
       </div>
       <div class="form-hint">Type <b>@</b> to cite a paper or scientist — they appear as clickable links.</div>
     </div>
@@ -651,6 +707,47 @@
   </div>
 </div>
 
+<!-- Note Modal -->
+<div class="modal-overlay" id="noteModal">
+  <div class="modal">
+    <div class="modal-header">📎 <span id="noteModalTitle">Add Note</span></div>
+    <div class="form-group">
+      <label class="form-label">Title *</label>
+      <input class="form-input" id="nfTitle" placeholder="e.g. Lecture notes on homogenization">
+    </div>
+    <div class="form-group">
+      <label class="form-label">PDF File</label>
+      <div id="nfFileArea" style="display:flex;align-items:center;gap:10px;padding:10px;border:2px dashed var(--border);border-radius:6px;cursor:pointer;transition:border-color 0.15s" onclick="document.getElementById('nfFileInput').click()">
+        <span style="font-size:1.2rem">📄</span>
+        <div style="flex:1;min-width:0">
+          <div id="nfFileName" style="font-size:0.70rem;color:var(--text-muted)">Click to select a PDF file</div>
+          <div id="nfFileStatus" style="font-size:0.60rem;color:var(--text-muted)"></div>
+        </div>
+        <input type="file" id="nfFileInput" accept=".pdf,application/pdf" style="display:none" onchange="handleNoteFileSelect(event)">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Categories <span style="font-size:0.55rem;color:var(--text-muted)">(select multiple)</span></label>
+      <div id="nfCatPills" style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 0;min-height:28px;"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <div class="rq-desc-editor-wrap" style="position:relative">
+        <div class="form-textarea rq-desc-editor" id="nfDesc" contenteditable="true"
+          style="min-height:80px;font-family:'DM Mono',monospace;font-size:0.72rem;line-height:1.7;outline:none;word-break:break-word"
+          data-placeholder="Notes about this document… Type @ to cite"
+          oninput="onMentionInput(event,'nfMentionDrop')" onkeydown="onMentionKeydown(event,'nfMentionDrop')"></div>
+        <div id="nfMentionDrop" style="display:none;position:absolute;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.14);max-height:360px;overflow-y:auto;"></div>
+      </div>
+      <div class="form-hint">Type <b>@</b> to cite a paper, scientist, or research question.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('noteModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNote()">Save Note</button>
+    </div>
+  </div>
+</div>
+
 <!-- Category Modal -->
 <div class="modal-overlay" id="catModal">
   <div class="modal">
@@ -674,20 +771,20 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const COLORS = ['#c47d2a','#a8682a','#b8943a','#c4a040','#7a8c3a',
                 '#4a8c8c','#3a7a9c','#7a5a9c','#9c5a7a','#6b7ea3'];
 
-let state = { categories: [], papers: [], scientists: [], questions: [], activeCat: 'all', activeType: 'all', activeSciCat: 'all', activeRQCat: 'all', activeSection: 'papers' };
+let state = { categories: [], papers: [], scientists: [], questions: [], notes: [], activeCat: 'all', activeType: 'all', activeSciCat: 'all', activeRQCat: 'all', activeNotesCat: 'all', activeSection: 'papers' };
 let currentUserId = null;
 
-// UI prefs stay in localStorage (not data)
 function loadPrefs() {
   const p = JSON.parse(localStorage.getItem('rrPrefs') || '{}');
-  state.activeCat    = p.activeCat    || 'all';
-  state.activeType   = p.activeType   || 'all';
-  state.activeSciCat = p.activeSciCat || 'all';
-  state.activeRQCat  = p.activeRQCat  || 'all';
-  state.activeSection= p.activeSection|| 'papers';
+  state.activeCat     = p.activeCat     || 'all';
+  state.activeType    = p.activeType    || 'all';
+  state.activeSciCat  = p.activeSciCat  || 'all';
+  state.activeRQCat   = p.activeRQCat   || 'all';
+  state.activeNotesCat= p.activeNotesCat|| 'all';
+  state.activeSection = p.activeSection || 'papers';
 }
 function savePrefs() {
-  localStorage.setItem('rrPrefs', JSON.stringify({ activeCat: state.activeCat, activeType: state.activeType, activeSciCat: state.activeSciCat, activeRQCat: state.activeRQCat, activeSection: state.activeSection }));
+  localStorage.setItem('rrPrefs', JSON.stringify({ activeCat: state.activeCat, activeType: state.activeType, activeSciCat: state.activeSciCat, activeRQCat: state.activeRQCat, activeNotesCat: state.activeNotesCat, activeSection: state.activeSection }));
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
@@ -725,9 +822,8 @@ let editingRQId = null;
 
 // Convert raw stored text → editor HTML (chips for mentions, plain text for rest)
 function rqRawToEditorHTML(raw) {
-  return raw.replace(/@\[\[(paper|scientist)\|([^|]+)\|([^\]]+)\]\]/g, (_, type, id, label) => {
-    return `<span class="mention-chip" contenteditable="false" data-type="${esc(type)}" data-id="${esc(id)}" data-label="${esc(label)}">` +
-      (type==='paper'?'📄':'🔬') + ' ' + esc(label) + '</span>';
+  return raw.replace(/@\[\[(paper|scientist|rq|note)\|([^|]+)\|([^\]]+)\]\]/g, (_, type, id, label) => {
+    return `<span class="mention-chip" contenteditable="false" data-type="${esc(type)}" data-id="${esc(id)}" data-label="${esc(label)}">${esc(label)}</span>`;
   });
 }
 
@@ -749,17 +845,16 @@ function rqEditorToRaw(editorEl) {
 function renderRQDesc(raw) {
   if (!raw) return '';
   let html = esc(raw);
-  // Mentions — restore from escaped form
-  html = html.replace(/@\[\[(paper|scientist)\|([^|]+)\|([^\]]+)\]\]/g, (_, type, id, label) => {
-    const clickFn = type==='paper' ? `jumpToPaper('${id}',event)` : `jumpToScientist('${id}',event)`;
-    const icon = type==='paper' ? '📄' : '🔬';
+  html = html.replace(/@\[\[(paper|scientist|rq|note)\|([^|]+)\|([^\]]+)\]\]/g, (_, type, id, label) => {
+    let clickFn = '';
+    if (type==='paper')     clickFn = `jumpToPaper('${id}',event)`;
+    if (type==='scientist') clickFn = `jumpToScientist('${id}',event)`;
+    if (type==='rq')        clickFn = `jumpToRQ('${id}',event)`;
+    if (type==='note')      clickFn = `openNoteMentionPDF('${id}',event)`;
     return `<span class="mention-chip" data-type="${type}" data-id="${id}" onclick="${clickFn}" style="cursor:pointer">${label}</span>`;
   });
-  // Display math $$...$$ first
   html = html.replace(/\$\$([^$]+)\$\$/g, (_, math) => `<span class="rq-math-block" data-math="${math.replace(/"/g,'&quot;')}"></span>`);
-  // Inline math $...$
   html = html.replace(/\$([^$\n]+)\$/g, (_, math) => `<span class="rq-math-inline" data-math="${math.replace(/"/g,'&quot;')}"></span>`);
-  // Line breaks
   html = html.replace(/\n/g, '<br>');
   return html;
 }
@@ -779,13 +874,14 @@ function renderKaTeX(container) {
 
 // ── @ Mention picker ──────────────────────────────────────────────────────────
 let mentionQuery = '', mentionActive = false, mentionIndex = 0, mentionItems = [];
+let activeMentionDropId = 'rqMentionDrop';
 
-function onRQDescInput(e) {
-  const ed = document.getElementById('rqDesc');
+function onMentionInput(e, dropId) {
+  activeMentionDropId = dropId;
+  const ed = e.target;
   const sel = window.getSelection();
   if (!sel.rangeCount) return;
   const range = sel.getRangeAt(0);
-  // Get text before cursor in current text node
   const node = range.startContainer;
   if (node.nodeType !== Node.TEXT_NODE) { closeMentionDrop(); return; }
   const textBefore = node.textContent.slice(0, range.startOffset);
@@ -794,61 +890,87 @@ function onRQDescInput(e) {
   mentionQuery = textBefore.slice(atIdx + 1).toLowerCase();
   mentionActive = true;
   buildMentionItems(mentionQuery);
-  if (mentionItems.length) showMentionDrop(ed, range);
+  if (mentionItems.length) showMentionDrop(ed, range, dropId);
   else closeMentionDrop();
 }
 
-function onRQDescKeydown(e) {
+// Keep backward compat for RQ
+function onRQDescInput(e)    { onMentionInput(e, 'rqMentionDrop'); }
+function onRQDescKeydown(e)  { onMentionKeydown(e, 'rqMentionDrop'); }
+
+function onMentionKeydown(e, dropId) {
+  activeMentionDropId = dropId;
   if (!mentionActive) return;
-  if (e.key === 'ArrowDown') { e.preventDefault(); mentionIndex = Math.min(mentionIndex+1, mentionItems.length-1); updateMentionActive(); }
-  else if (e.key === 'ArrowUp') { e.preventDefault(); mentionIndex = Math.max(mentionIndex-1, 0); updateMentionActive(); }
+  if (e.key === 'ArrowDown') { e.preventDefault(); mentionIndex = Math.min(mentionIndex+1, mentionItems.length-1); updateMentionActive(dropId); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); mentionIndex = Math.max(mentionIndex-1, 0); updateMentionActive(dropId); }
   else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); insertMention(mentionItems[mentionIndex]); }
   else if (e.key === 'Escape') { closeMentionDrop(); }
 }
 
 function buildMentionItems(q) {
   mentionItems = [];
-  const papers = state.papers.filter(p => p.title.toLowerCase().includes(q) || (p.authors||'').toLowerCase().includes(q)).slice(0, 20);
-  const scis   = state.scientists.filter(s => s.name.toLowerCase().includes(q)).slice(0, 10);
-  papers.forEach(p => mentionItems.push({type:'paper',    id:p.id, label:p.title, sub:p.year||''}));
-  scis.forEach  (s => mentionItems.push({type:'scientist',id:s.id, label:s.name,  sub:s.affil||''}));
+  const limit = q ? 20 : 15;
+  const papers = state.papers.filter(p => p.title.toLowerCase().includes(q) || (p.authors||'').toLowerCase().includes(q)).slice(0, limit);
+  const scis   = state.scientists.filter(s => s.name.toLowerCase().includes(q)).slice(0, q ? 10 : 5);
+  const rqs    = state.questions.filter(r => r.question.toLowerCase().includes(q)).slice(0, q ? 5 : 5);
+  const notes  = (state.notes||[]).filter(n => n.title.toLowerCase().includes(q)).slice(0, q ? 5 : 5);
+  papers.forEach(p => mentionItems.push({type:'paper',    id:p.id, label:p.title,    sub:p.year||'',   icon:'📄'}));
+  scis.forEach  (s => mentionItems.push({type:'scientist',id:s.id, label:s.name,     sub:s.affil||'',  icon:'🔬'}));
+  rqs.forEach   (r => mentionItems.push({type:'rq',       id:r.id, label:r.question, sub:'',           icon:'💡'}));
+  notes.forEach (n => mentionItems.push({type:'note',     id:n.id, label:n.title,    sub:'',           icon:'📎'}));
   mentionIndex = 0;
 }
 
-function showMentionDrop(ed, range) {
-  const drop = document.getElementById('rqMentionDrop');
+function showMentionDrop(ed, range, dropId) {
+  // Move drop to body so it isn't clipped by overflow:hidden parents
+  let drop = document.getElementById(dropId);
+  if (!drop) return;
+  if (drop.parentElement !== document.body) {
+    drop._origParent = drop.parentElement;
+    document.body.appendChild(drop);
+  }
   const rect = range.getBoundingClientRect();
-  const edRect = ed.getBoundingClientRect();
-  // Position below cursor, clamped to editor width
-  const leftRaw = rect.left - edRect.left;
-  const dropWidth = 320;
-  const maxLeft = edRect.width - dropWidth;
-  drop.style.top   = (rect.bottom - edRect.top + 4) + 'px';
-  drop.style.left  = Math.max(0, Math.min(leftRaw, maxLeft)) + 'px';
+  const dropWidth = 360;
+  const maxLeft = window.innerWidth - dropWidth - 8;
+  drop.style.position = 'fixed';
+  drop.style.top   = (rect.bottom + 4) + 'px';
+  drop.style.left  = Math.max(8, Math.min(rect.left, maxLeft)) + 'px';
   drop.style.width = dropWidth + 'px';
   drop.style.display = '';
-  drop.innerHTML = mentionItems.map((item, i) => {
-    const isPaper = item.type === 'paper';
+
+  const groups = [
+    { type:'paper',     items: mentionItems.filter(x=>x.type==='paper') },
+    { type:'scientist', items: mentionItems.filter(x=>x.type==='scientist') },
+    { type:'rq',        items: mentionItems.filter(x=>x.type==='rq') },
+    { type:'note',      items: mentionItems.filter(x=>x.type==='note') },
+  ].filter(g => g.items.length > 0);
+
+  let globalIdx = 0;
+  drop.innerHTML = groups.map(g => g.items.map(item => {
+    const i = globalIdx++;
+    const hasSub  = item.type==='scientist' && item.sub;
+    const hasYear = item.type==='paper'      && item.sub;
     return `<div class="mention-item ${i===mentionIndex?'active':''}" onmousedown="event.preventDefault();insertMentionAt(${i})">
-      <span class="mention-item-icon">${isPaper?'📄':'🔬'}</span>
+      <span class="mention-item-icon">${item.icon}</span>
       <span class="mention-item-main">
         <span class="mention-item-title">${esc(item.label)}</span>
-        ${!isPaper && item.sub ? `<span class="mention-item-sub">${esc(item.sub)}</span>` : ''}
+        ${hasSub ? `<span class="mention-item-sub">${esc(item.sub)}</span>` : ''}
       </span>
-      ${isPaper && item.sub ? `<span class="mention-item-year">${esc(item.sub)}</span>` : ''}
+      ${hasYear ? `<span class="mention-item-year">${esc(item.sub)}</span>` : ''}
     </div>`;
-  }).join('');
+  }).join('')).join('');
 }
 
-function updateMentionActive() {
-  document.querySelectorAll('#rqMentionDrop .mention-item').forEach((el,i) => el.classList.toggle('active', i===mentionIndex));
+function updateMentionActive(dropId) {
+  const d = dropId || activeMentionDropId;
+  document.querySelectorAll(`#${d} .mention-item`).forEach((el,i) => el.classList.toggle('active', i===mentionIndex));
 }
 
 function insertMentionAt(idx) { insertMention(mentionItems[idx]); }
 
 function insertMention(item) {
   if (!item) return;
-  const ed = document.getElementById('rqDesc');
+  // Find the active contenteditable
   const sel = window.getSelection();
   if (!sel.rangeCount) return;
   const range = sel.getRangeAt(0);
@@ -856,27 +978,22 @@ function insertMention(item) {
   if (node.nodeType !== Node.TEXT_NODE) return;
   const textBefore = node.textContent.slice(0, range.startOffset);
   const atIdx = textBefore.lastIndexOf('@');
-  // Delete from @ to cursor
   const delRange = document.createRange();
   delRange.setStart(node, atIdx);
   delRange.setEnd(node, range.startOffset);
   delRange.deleteContents();
-  // Insert chip
   const chip = document.createElement('span');
   chip.className = 'mention-chip';
   chip.contentEditable = 'false';
-  chip.dataset.type = item.type;
-  chip.dataset.id   = item.id;
+  chip.dataset.type  = item.type;
+  chip.dataset.id    = item.id;
   chip.dataset.label = item.label;
-  chip.textContent = (item.type==='paper'?'📄':'🔬') + ' ' + item.label;
-  // Insert chip then a space
+  chip.textContent   = item.label;
   const afterRange = document.createRange();
   afterRange.setStart(node, atIdx);
   afterRange.collapse(true);
   afterRange.insertNode(chip);
-  // Move cursor after chip
   const space = document.createTextNode('\u00A0');
-  chip.insertAdjacentElement('afterend', document.createElement('span')).remove();
   chip.after(space);
   const cur = document.createRange();
   cur.setStartAfter(space); cur.collapse(true);
@@ -886,12 +1003,38 @@ function insertMention(item) {
 
 function closeMentionDrop() {
   mentionActive = false;
-  document.getElementById('rqMentionDrop').style.display = 'none';
+  document.querySelectorAll('[id$="MentionDrop"],[id^="cmbox-drop-"],[id^="nfMentionDrop"],[id^="sfMentionDrop"],[id^="rqMentionDrop"],[id^="fCommentMentionDrop"]').forEach(d => d.style.display = 'none');
 }
 
-// Close mention drop when clicking outside
 document.addEventListener('click', e => {
-  if (!e.target.closest('#rqMentionDrop') && !e.target.closest('#rqDesc')) closeMentionDrop();
+  if (!e.target.closest('[id$="MentionDrop"]') && !e.target.closest('.rq-desc-editor')) closeMentionDrop();
+});
+
+async function openNoteMentionPDF(noteId, e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  const n = (state.notes||[]).find(x=>x.id===noteId);
+  if (n?.filePath) {
+    const { data, error } = await sb.storage.from('attachments').createSignedUrl(n.filePath, 3600);
+    if (!error) window.open(data.signedUrl, '_blank');
+    else toast('Could not open PDF');
+  } else {
+    jumpToNote(noteId, e);
+  }
+}
+
+// Event delegation for mention chips in rendered content (comment previews, descriptions)
+document.addEventListener('click', async e => {
+  const chip = e.target.closest('.mention-chip');
+  if (!chip) return;
+  if (chip.getAttribute('onclick')) return; // already has handler
+  e.stopPropagation();
+  const type = chip.dataset.type;
+  const id   = chip.dataset.id;
+  if (!type || !id) return;
+  if      (type === 'paper')     jumpToPaper(id, e);
+  else if (type === 'scientist') jumpToScientist(id, e);
+  else if (type === 'rq')        jumpToRQ(id, e);
+  else if (type === 'note')      openNoteMentionPDF(id, e);
 });
 
 function renderRQSidebar() {
@@ -1011,11 +1154,29 @@ function toggleRQ(id, e) {
 }
 
 function jumpToScientist(sciId, e) {
-  e.stopPropagation();
+  if (e && e.stopPropagation) e.stopPropagation();
   switchSection('scientists');
   setTimeout(()=>{
     const el = document.getElementById(`sci-${sciId}`);
     if (el) { el.scrollIntoView({behavior:'smooth',block:'center'}); el.classList.add('expanded'); document.getElementById(`sciexp-${sciId}`)?.classList.add('open'); }
+  }, 80);
+}
+
+function jumpToRQ(rqId, e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  switchSection('rq');
+  setTimeout(()=>{
+    const el = document.getElementById(`rqcard-${rqId}`);
+    if (el) { el.scrollIntoView({behavior:'smooth',block:'center'}); el.classList.add('expanded'); document.getElementById(`rqexp-${rqId}`)?.classList.add('open'); }
+  }, 80);
+}
+
+function jumpToNote(noteId, e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  switchSection('notes');
+  setTimeout(()=>{
+    const el = document.getElementById(`note-${noteId}`);
+    if (el) { el.scrollIntoView({behavior:'smooth',block:'center'}); el.classList.add('expanded'); document.getElementById(`noteexp-${noteId}`)?.classList.add('open'); }
   }, 80);
 }
 
@@ -1175,6 +1336,174 @@ async function saveRQ() {
   } finally { saveRQ._saving = false; }
 }
 
+// ── Notes ─────────────────────────────────────────────────────────────────────
+let editingNoteId = null;
+let pendingNoteFile = null;
+
+function renderNotesSidebar() {
+  if (!document.getElementById('countNotesAll')) return;
+  document.getElementById('countNotesAll').textContent = state.notes.length;
+  document.getElementById('notesCatAll').classList.toggle('active', (state.activeNotesCat||'all')==='all');
+  document.getElementById('notesCatList').innerHTML = state.categories.map(c => {
+    const cnt = state.notes.filter(n=>(n.catIds||[]).includes(c.id)).length;
+    if (!cnt) return '';
+    return `<div class="cat-item ${state.activeNotesCat===c.id?'active':''}" onclick="setNotesCat('${c.id}')">
+      <span class="cat-dot" style="background:${c.color}"></span>
+      <span class="cat-name">${esc(c.name)}</span>
+      <span class="cat-count">${cnt}</span>
+    </div>`;
+  }).join('');
+}
+
+function setNotesCat(id) {
+  state.activeNotesCat = id; savePrefs();
+  renderNotesSidebar(); renderNotes();
+}
+
+function renderNotes() {
+  const q = (document.getElementById('notesSearchBox').value||'').toLowerCase();
+  let notes = state.notes.slice();
+  if ((state.activeNotesCat||'all') !== 'all') notes = notes.filter(n=>(n.catIds||[]).includes(state.activeNotesCat));
+  if (q) notes = notes.filter(n => n.title.toLowerCase().includes(q) || (n.desc||'').toLowerCase().includes(q));
+  notes.reverse();
+  document.getElementById('notesCountLabel').textContent = `${notes.length} note${notes.length!==1?'s':''}`;
+  const list = document.getElementById('notesList');
+  if (!notes.length) {
+    list.innerHTML = `<div class="empty-state"><div class="big">📎</div>${q?'No notes match.':'No notes yet.<br>Click <b>+ Note</b> to upload a PDF.'}</div>`;
+    return;
+  }
+  list.innerHTML = notes.map(n => {
+    const cats   = (n.catIds||[]).map(id=>state.categories.find(c=>c.id===id)).filter(Boolean);
+    const isExp  = state.expandedNote === n.id;
+    return `<div class="note-card${isExp?' expanded':''}" id="note-${n.id}" onclick="toggleNote('${n.id}',event)">
+      <div class="card-top">
+        <div class="card-main">
+          <div class="note-title">${esc(n.title)}</div>
+          <div class="card-tags">
+            ${cats.map(c=>`<span class="tag" style="background:${c.color}18;color:${c.color}">${esc(c.name)}</span>`).join('')}
+            ${n.fileName?`<span class="tag" style="background:rgba(58,123,213,0.08);color:#3a7bd5">📄 ${esc(n.fileName)}</span>`:''}
+          </div>
+        </div>
+        <div class="card-actions">
+          ${n.filePath?`<button class="icon-btn link-btn" onclick="openNoteMentionPDF('${n.id}',event)" title="Open PDF">Open</button>`:`<span class="icon-btn link-btn disabled">No PDF</span>`}
+          <button class="icon-btn" onclick="editNote('${n.id}',event)">&#9998;</button>
+          <button class="icon-btn delete" onclick="deleteNote('${n.id}',event)">&#10005;</button>
+        </div>
+      </div>
+      <div class="note-expanded${isExp?' open':''}" id="noteexp-${n.id}">
+        ${n.desc ? `<div><div class="field-label">Description</div><div class="rq-desc-display">${renderRQDesc(n.desc)}</div></div>` : ''}
+        <div class="card-meta"><span>Added ${n.added}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+  setTimeout(() => renderKaTeX(list), 50);
+}
+
+function toggleNote(id, e) {
+  if (e.target.closest('a, button')) return;
+  state.expandedNote = state.expandedNote === id ? null : id;
+  renderNotes();
+}
+
+async function openNotePDF(noteId, e) {
+  e.stopPropagation();
+  const n = state.notes.find(x=>x.id===noteId);
+  if (!n?.filePath) return;
+  const { data, error } = await sb.storage.from('attachments').createSignedUrl(n.filePath, 3600);
+  if (error) { toast('Could not open PDF: ' + error.message); return; }
+  window.open(data.signedUrl, '_blank');
+}
+
+async function deleteNote(id, e) {
+  e.stopPropagation();
+  const n = state.notes.find(x=>x.id===id);
+  if (!n || !confirm(`Delete "${n.title}"?`)) return;
+  if (n.filePath) await sb.storage.from('attachments').remove([n.filePath]);
+  state.notes = state.notes.filter(x=>x.id!==id);
+  await dbDeleteNote(id);
+  renderNotes(); renderNotesSidebar(); updateTabCounts();
+  toast('Note removed.');
+}
+
+function openNoteModal() {
+  editingNoteId = null; pendingNoteFile = null;
+  document.getElementById('noteModalTitle').textContent = 'Add Note';
+  document.getElementById('nfTitle').value = '';
+  document.getElementById('nfFileName').textContent = 'Click to select a PDF file';
+  document.getElementById('nfFileStatus').textContent = '';
+  document.getElementById('nfFileInput').value = '';
+  document.getElementById('nfFileArea').style.borderColor = '';
+  const ed = document.getElementById('nfDesc'); ed.innerHTML = '';
+  renderNoteCatPills([]);
+  document.getElementById('noteModal').classList.add('open');
+  setTimeout(()=>document.getElementById('nfTitle').focus(), 60);
+}
+
+function editNote(id, e) {
+  e.stopPropagation();
+  const n = state.notes.find(x=>x.id===id); if (!n) return;
+  editingNoteId = id; pendingNoteFile = null;
+  document.getElementById('noteModalTitle').textContent = 'Edit Note';
+  document.getElementById('nfTitle').value = n.title;
+  document.getElementById('nfFileName').textContent = n.fileName || 'Click to replace PDF';
+  document.getElementById('nfFileStatus').textContent = n.filePath ? '✓ PDF stored' : '';
+  document.getElementById('nfFileInput').value = '';
+  const ed = document.getElementById('nfDesc'); ed.innerHTML = rqRawToEditorHTML(n.desc||'');
+  renderNoteCatPills(n.catIds||[]);
+  document.getElementById('noteModal').classList.add('open');
+}
+
+function renderNoteCatPills(selectedIds) {
+  const c = document.getElementById('nfCatPills');
+  if (!state.categories.length) { c.innerHTML=`<span style="font-size:0.65rem;color:var(--text-muted)">No categories yet.</span>`; return; }
+  c.innerHTML = state.categories.map(cat => {
+    const checked = selectedIds.includes(cat.id);
+    return `<label class="cat-check-pill ${checked?'checked':''}" style="background:${cat.color}18;color:${cat.color};border-color:${checked?cat.color:'transparent'}" onclick="toggleCatPill(this,'${cat.id}','${cat.color}')">
+      <input type="checkbox" value="${cat.id}" ${checked?'checked':''}>${esc(cat.name)}</label>`;
+  }).join('');
+}
+
+function handleNoteFileSelect(e) {
+  const file = e.target.files[0]; if (!file) return;
+  pendingNoteFile = file;
+  document.getElementById('nfFileName').textContent = file.name;
+  document.getElementById('nfFileStatus').textContent = `${(file.size/1024).toFixed(0)} KB — will upload on save`;
+  document.getElementById('nfFileArea').style.borderColor = 'var(--accent)';
+}
+
+async function saveNote() {
+  if (saveNote._saving) return; saveNote._saving = true;
+  try {
+    const title = document.getElementById('nfTitle').value.trim();
+    if (!title) { toast('Title is required.'); return; }
+    const catBoxes = [...document.getElementById('nfCatPills').querySelectorAll('input[type=checkbox]:checked')];
+    const rawDesc  = rqEditorToRaw(document.getElementById('nfDesc'));
+    const noteId   = editingNoteId || uid();
+
+    let filePath = editingNoteId ? state.notes.find(n=>n.id===editingNoteId)?.filePath || null : null;
+    let fileName = editingNoteId ? state.notes.find(n=>n.id===editingNoteId)?.fileName || '' : '';
+
+    if (pendingNoteFile) {
+      // Delete old file if replacing
+      if (filePath) await sb.storage.from('attachments').remove([filePath]);
+      const ext = pendingNoteFile.name.split('.').pop();
+      filePath = `${currentUserId}/${noteId}.${ext}`;
+      fileName = pendingNoteFile.name;
+      showLoading(true);
+      const { error: upErr } = await sb.storage.from('attachments').upload(filePath, pendingNoteFile, { upsert: true });
+      showLoading(false);
+      if (upErr) { toast('Upload error: ' + upErr.message); return; }
+    }
+
+    const note = { id: noteId, title, desc: rawDesc, catIds: catBoxes.map(cb=>cb.value), filePath, fileName, added: editingNoteId ? state.notes.find(n=>n.id===editingNoteId)?.added : new Date().toLocaleDateString() };
+    if (editingNoteId) state.notes[state.notes.findIndex(n=>n.id===editingNoteId)] = note;
+    else               state.notes.push(note);
+    await dbSaveNote(note);
+    closeModal('noteModal'); renderNotes(); renderNotesSidebar(); updateTabCounts();
+    toast(editingNoteId ? 'Note updated.' : 'Note added!');
+  } finally { saveNote._saving = false; }
+}
+
 // ── Boot ──────────────────────────────────────────────────────────────────────
 async function bootApp(user) {
   currentUserId = user.id;
@@ -1207,16 +1536,40 @@ function showLoading(on) {
 
 // ── Load all data from Supabase ───────────────────────────────────────────────
 async function loadAllData() {
-  const [cats, papers, scientists, questions] = await Promise.all([
+  const [cats, papers, scientists, questions, notes] = await Promise.all([
     sb.from('categories').select('*').order('name'),
     sb.from('papers').select('*').order('created_at'),
     sb.from('scientists').select('*').order('created_at'),
     sb.from('questions').select('*').order('created_at'),
+    sb.from('notes').select('*').order('created_at'),
   ]);
   state.categories = (cats.data || []).map(dbCatToLocal);
   state.papers     = (papers.data || []).map(dbPaperToLocal);
   state.scientists = (scientists.data || []).map(dbSciToLocal);
   state.questions  = (questions.data || []).map(dbRQToLocal);
+  state.notes      = (notes.data || []).map(dbNoteToLocal);
+}
+
+function dbNoteToLocal(r) {
+  return {
+    id: r.id, title: r.title, desc: r.description || '',
+    catIds: r.cat_ids || [], filePath: r.file_path || null,
+    fileName: r.file_name || '', added: r.added || '',
+  };
+}
+function localNoteToDB(n) {
+  return {
+    id: n.id, user_id: currentUserId, title: n.title,
+    description: n.desc, cat_ids: n.catIds,
+    file_path: n.filePath, file_name: n.fileName, added: n.added,
+  };
+}
+async function dbSaveNote(n) {
+  const { error } = await sb.from('notes').upsert(localNoteToDB(n));
+  if (error) { toast('Save error: ' + error.message); console.error(error); }
+}
+async function dbDeleteNote(id) {
+  await sb.from('notes').delete().eq('id', id);
 }
 
 function dbRQToLocal(r) {
@@ -1472,25 +1825,36 @@ async function deleteCat(id, e) {
 // ── Section switching ─────────────────────────────────────────────────────────
 function switchSection(sec) {
   state.activeSection = sec; savePrefs();
+  ['papers','scientists','rq','notes'].forEach(s => {
+    const id = 'section' + s.charAt(0).toUpperCase() + s.slice(1);
+    const el = document.getElementById(id) || document.getElementById('sectionRQ'.replace('RQ', s==='rq'?'RQ':''));
+    // handle sectionRQ specially
+  });
   document.getElementById('sectionPapers').classList.toggle('active', sec==='papers');
   document.getElementById('sectionScientists').classList.toggle('active', sec==='scientists');
   document.getElementById('sectionRQ').classList.toggle('active', sec==='rq');
+  document.getElementById('sectionNotes').classList.toggle('active', sec==='notes');
   document.getElementById('tabPapers').classList.toggle('active', sec==='papers');
   document.getElementById('tabScientists').classList.toggle('active', sec==='scientists');
   document.getElementById('tabRQ').classList.toggle('active', sec==='rq');
+  document.getElementById('tabNotes').classList.toggle('active', sec==='notes');
   document.getElementById('btnAddPaper').style.display     = sec==='papers'     ? '' : 'none';
   document.getElementById('btnAddScientist').style.display = sec==='scientists' ? '' : 'none';
   document.getElementById('btnAddRQ').style.display        = sec==='rq'         ? '' : 'none';
+  document.getElementById('btnAddNote').style.display      = sec==='notes'      ? '' : 'none';
   document.getElementById('sidebarPapers').style.display     = sec==='papers'     ? '' : 'none';
   document.getElementById('sidebarScientists').style.display = sec==='scientists' ? '' : 'none';
   document.getElementById('sidebarRQ').style.display         = sec==='rq'         ? '' : 'none';
+  document.getElementById('sidebarNotes').style.display      = sec==='notes'      ? '' : 'none';
   if (sec==='scientists') { renderScientists(); renderSciSidebar(); }
   if (sec==='rq')         { renderRQ(); renderRQSidebar(); }
+  if (sec==='notes')      { renderNotes(); renderNotesSidebar(); }
 }
 function updateTabCounts() {
   document.getElementById('tabCountPapers').textContent     = state.papers.length;
   document.getElementById('tabCountScientists').textContent = state.scientists.length;
   document.getElementById('tabCountRQ').textContent         = state.questions.length;
+  document.getElementById('tabCountNotes').textContent      = state.notes.length;
 }
 
 // ── Render papers ─────────────────────────────────────────────────────────────
@@ -1539,12 +1903,12 @@ function renderPapers() {
           <button class="icon-btn delete" onclick="deletePaper('${p.id}',event)">&#10005;</button>
         </div>
       </div>
-      ${p.comment?`<div class="comment-preview"><span class="comment-preview-icon">💬</span><span class="comment-preview-text">${p.comment}</span></div>`:''}
+      ${p.comment && p.comment.replace(/<[^>]*>/g,'').trim() ?`<div class="comment-preview"><span class="comment-preview-icon">💬</span><span class="comment-preview-text">${p.comment}</span></div>`:''}
       <div class="card-expanded" id="exp-${p.id}">
         ${p.abstract?`<div><div class="field-label">Abstract / Notes</div><div class="abstract-text">${esc(p.abstract)}</div></div>`:''}
         <div>
           <div class="field-label">Personal Comment</div>
-          <div class="comment-editor-wrap">
+          <div class="comment-editor-wrap" style="position:relative">
             <div class="comment-toolbar" onmousedown="event.preventDefault()">
               <button class="tb-btn" title="Bold" onclick="fmt('bold')"><b>B</b></button>
               <button class="tb-btn" title="Italic" onclick="fmt('italic')"><i>I</i></button>
@@ -1562,7 +1926,11 @@ function renderPapers() {
               onblur="saveComment('${p.id}',this)"
               onkeyup="updateToolbar(this)" onmouseup="updateToolbar(this)"
               onclick="event.stopPropagation()"
+              oninput="onMentionInput(event,'cmbox-drop-${p.id}')"
+              onkeydown="onMentionKeydown(event,'cmbox-drop-${p.id}')"
+              style="min-height:120px"
             >${p.comment||''}</div>
+            <div id="cmbox-drop-${p.id}" style="display:none;position:absolute;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.14);max-height:360px;overflow-y:auto;width:380px;"></div>
           </div>
         </div>
         <div class="card-meta">
@@ -1822,7 +2190,7 @@ function toggleSci(id, e) {
 }
 
 function jumpToPaper(paperId, e) {
-  e.stopPropagation();
+  if (e && e.stopPropagation) e.stopPropagation();
   switchSection('papers'); state.activeCat='all';
   renderSidebar(); renderPapers();
   setTimeout(()=>{
@@ -1844,7 +2212,8 @@ async function deleteScientist(id, e) {
 function openSciModal() {
   editingSciId=null; currentPhotoData=null;
   document.getElementById('sciModalTitle').textContent='Add Scientist';
-  ['sfName','sfInitials','sfAffil','sfScholar','sfNotes'].forEach(id=>document.getElementById(id).value='');
+  ['sfName','sfInitials','sfAffil','sfScholar'].forEach(id=>document.getElementById(id).value='');
+  const sfn = document.getElementById('sfNotes'); if (sfn) sfn.innerHTML = '';
   clearPhotoPreview(); renderSciCatPills([]); renderSciPaperCheckboxes([]);
   document.getElementById('sciModal').classList.add('open');
   setTimeout(()=>document.getElementById('sfName').focus(),60);
@@ -1859,7 +2228,8 @@ function editScientist(id, e) {
   document.getElementById('sfInitials').value= s.initials||'';
   document.getElementById('sfAffil').value   = s.affil||'';
   document.getElementById('sfScholar').value = s.scholarUrl||'';
-  document.getElementById('sfNotes').value   = s.notes||'';
+  const sfn = document.getElementById('sfNotes');
+  if (sfn) sfn.innerHTML = rqRawToEditorHTML(s.notes||'');
   if (s.photo) setPhotoPreview(s.photo); else clearPhotoPreview();
   const catIds = s.catIds||(s.catId?[s.catId]:[]);
   renderSciCatPills(catIds); renderSciPaperCheckboxes(s.paperIds||[]);
@@ -1931,7 +2301,7 @@ async function saveScientist() {
     affil:      document.getElementById('sfAffil').value.trim(),
     catIds:     checkedCats.map(cb=>cb.value),
     scholarUrl: document.getElementById('sfScholar').value.trim(),
-    notes:      document.getElementById('sfNotes').value.trim(),
+    notes:      rqEditorToRaw(document.getElementById('sfNotes')),
     paperIds:   checkedPapers.map(cb=>cb.value),
     added:      editingSciId?state.scientists.find(s=>s.id===editingSciId)?.added:new Date().toLocaleDateString(),
   };
