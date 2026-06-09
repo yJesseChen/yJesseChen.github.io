@@ -858,8 +858,9 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ── State (in-memory, loaded from Supabase) ───────────────────────────────────
-const COLORS = ['#c47d2a','#a8682a','#b8943a','#c4a040','#7a8c3a',
-                '#4a8c8c','#3a7a9c','#7a5a9c','#9c5a7a','#6b7ea3'];
+const COLORS = ['#5B4AD6','#8A3FD1','#C13AAE','#B53374','#E0782D',
+                '#D7A12D','#A8A92E','#5D963F','#168E8A','#238AAE'];
+const CATEGORY_PALETTE_VERSION = 'categoryPalette20260609-v1';
 
 let state = { categories: [], papers: [], scientists: [], questions: [], notes: [], activeCat: 'all', activeType: 'all', activeSciCat: 'all', activeRQCat: 'all', activeNotesCat: 'all', activeSection: 'papers' };
 let currentUserId = null;
@@ -1691,6 +1692,35 @@ async function loadAllData() {
   state.scientists = (scientists.data || []).map(dbSciToLocal);
   state.questions  = (questions.data || []).map(dbRQToLocal);
   state.notes      = (notes.data || []).map(dbNoteToLocal);
+  await applyCategoryPaletteOnce();
+}
+
+async function applyCategoryPaletteOnce() {
+  if (!currentUserId || !state.categories.length) return;
+  const prefKey = `${CATEGORY_PALETTE_VERSION}:${currentUserId}`;
+  if (localStorage.getItem(prefKey)) return;
+
+  const updates = state.categories
+    .map((cat, i) => ({ ...cat, color: COLORS[i % COLORS.length] }))
+    .filter((cat, i) => cat.color !== state.categories[i].color);
+
+  if (!updates.length) {
+    localStorage.setItem(prefKey, 'done');
+    return;
+  }
+
+  updates.forEach(cat => {
+    const idx = state.categories.findIndex(c => c.id === cat.id);
+    if (idx !== -1) state.categories[idx] = cat;
+  });
+
+  const { error } = await sb.from('categories').upsert(updates.map(localCatToDB));
+  if (error) {
+    console.error(error);
+    toast('Could not update category colors: ' + error.message);
+    return;
+  }
+  localStorage.setItem(prefKey, 'done');
 }
 
 function dbNoteToLocal(r) {
