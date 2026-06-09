@@ -1807,6 +1807,7 @@ async function loadAllData() {
   state.questions  = (questions.data || []).map(dbRQToLocal);
   state.notes      = (notes.data || []).map(dbNoteToLocal);
   await loadNoteAttachments();
+  await migrateLocalPaperMarks();
   await applyCategoryPaletteOnce();
 }
 
@@ -2209,15 +2210,32 @@ function updateTabCounts() {
   document.getElementById('tabCountNotes').textContent      = state.notes.length;
 }
 
-function markedPaperIds() {
-  try { return new Set(JSON.parse(localStorage.getItem(`rrMarkedPapers:${currentUserId||'local'}`) || '[]')); }
-  catch(e) { return new Set(); }
+const PAPER_MARK_TOKEN = '[[marked]]';
+function paperFeatureText(p) {
+  return String(p?.feature || '').replace(PAPER_MARK_TOKEN, '').trim();
 }
 function isPaperMarked(id) {
-  return markedPaperIds().has(id);
+  const p = state.papers.find(x=>x.id===id);
+  return String(p?.feature || '').includes(PAPER_MARK_TOKEN);
 }
-function saveMarkedPaperIds(ids) {
-  localStorage.setItem(`rrMarkedPapers:${currentUserId||'local'}`, JSON.stringify([...ids]));
+function withPaperMark(feature, marked) {
+  const text = String(feature || '').replace(PAPER_MARK_TOKEN, '').trim();
+  return marked ? `${PAPER_MARK_TOKEN}${text ? ' ' + text : ''}` : text;
+}
+
+async function migrateLocalPaperMarks() {
+  const keys = [`rrMarkedPapers:${currentUserId||'local'}`, 'rrMarkedPapers'];
+  const ids = new Set();
+  keys.forEach(key => {
+    try { JSON.parse(localStorage.getItem(key) || '[]').forEach(id => ids.add(id)); }
+    catch(e) {}
+  });
+  if (!ids.size) return;
+  const updates = state.papers.filter(p => ids.has(p.id) && !String(p.feature || '').includes(PAPER_MARK_TOKEN));
+  if (!updates.length) return;
+  updates.forEach(p => { p.feature = withPaperMark(p.feature, true); });
+  const { error } = await sb.from('papers').upsert(updates.map(localPaperToDB));
+  if (!error) keys.forEach(key => localStorage.removeItem(key));
 }
 
 // ── Render papers ─────────────────────────────────────────────────────────────
@@ -2251,7 +2269,7 @@ function renderPapers() {
           <div class="paper-title">
             <span class="paper-title-text">${esc(p.title)}</span>
             ${p.readingTime?`<span class="label-pill">⏱ ${esc(p.readingTime)}</span>`:''}
-            ${p.feature    ?`<span class="label-pill">★ ${esc(p.feature)}</span>`:''}
+            ${paperFeatureText(p) ?`<span class="label-pill">★ ${esc(paperFeatureText(p))}</span>`:''}
           </div>
           <div class="paper-authors">${esc(p.authors||'—')}</div>
           <div class="card-tags">
@@ -2324,12 +2342,12 @@ async function saveComment(id, el) {
   renderPapers();
 }
 
-function togglePaperMarked(id, e) {
+async function togglePaperMarked(id, e) {
   e.stopPropagation();
-  const ids = markedPaperIds();
-  if (ids.has(id)) ids.delete(id);
-  else ids.add(id);
-  saveMarkedPaperIds(ids);
+  const p = state.papers.find(x=>x.id===id);
+  if (!p) return;
+  p.feature = withPaperMark(p.feature, !isPaperMarked(id));
+  await dbSavePaper(p);
   renderPapers();
 }
 
@@ -2367,7 +2385,7 @@ function editPaper(id, e) {
   clearForm(); activateTab(formType);
   document.getElementById('fTitle').value      = p.title;
   document.getElementById('fReadingTime').value= p.readingTime||'';
-  document.getElementById('fFeature').value    = p.feature||'';
+  document.getElementById('fFeature').value    = paperFeatureText(p);
   document.getElementById('fUrl').value        = p.url||'';
   document.getElementById('fAuthors').value    = p.authors||'';
   document.getElementById('fYear').value       = p.year||'';
@@ -2416,7 +2434,7 @@ async function savePaper() {
     type:        formType,
     title:       toTitleCase(title),
     readingTime: document.getElementById('fReadingTime').value.trim(),
-    feature:     document.getElementById('fFeature').value.trim(),
+    feature:     withPaperMark(document.getElementById('fFeature').value.trim(), editingId ? isPaperMarked(editingId) : false),
     authors:     toTitleCase(document.getElementById('fAuthors').value.trim()),
     year:        document.getElementById('fYear').value.trim(),
     catId:       document.getElementById('fCat').value||null,
