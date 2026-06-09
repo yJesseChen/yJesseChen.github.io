@@ -126,9 +126,8 @@
   .paper-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; transition: border-color 0.15s, box-shadow 0.15s; position: relative; cursor: pointer; user-select: none; --pill-rgb: 107,126,163; }
   .paper-card:hover { border-color: #b0b8cc; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
   .paper-card.expanded { border-color: var(--accent); }
-  .paper-card.marked { padding-left: 30px; }
   .paper-card.marked::before {
-    content: ''; position: absolute; left: 10px; top: 12px; bottom: 12px; width: 5px;
+    content: ''; position: absolute; left: 7px; top: 12px; bottom: 12px; width: 5px;
     border-radius: 999px; background: #f4b400;
   }
   .paper-card.status-unread { border-color: #e05555; border-width: 3px; box-shadow: 0 0 0 2px rgba(224,85,85,0.15), 0 4px 20px rgba(224,85,85,0.12); --pill-rgb: 224,85,85; }
@@ -440,6 +439,7 @@
 
     /* Cards */
     .paper-card, .rq-card, .note-card, .scientist-card { padding: 12px 14px; }
+    .paper-card.marked::before { left: 5px; top: 10px; bottom: 10px; width: 4px; }
     .paper-title, .rq-question, .note-title { font-size: 0.88rem; }
     .paper-authors { font-size: 0.62rem; }
     .card-actions { gap: 4px; }
