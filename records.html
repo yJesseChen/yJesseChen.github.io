@@ -126,6 +126,11 @@
   .paper-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; transition: border-color 0.15s, box-shadow 0.15s; position: relative; cursor: pointer; user-select: none; --pill-rgb: 107,126,163; }
   .paper-card:hover { border-color: #b0b8cc; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
   .paper-card.expanded { border-color: var(--accent); }
+  .paper-card.marked { padding-left: 30px; }
+  .paper-card.marked::before {
+    content: ''; position: absolute; left: 10px; top: 12px; bottom: 12px; width: 5px;
+    border-radius: 999px; background: #f4b400;
+  }
   .paper-card.status-unread { border-color: #e05555; border-width: 3px; box-shadow: 0 0 0 2px rgba(224,85,85,0.15), 0 4px 20px rgba(224,85,85,0.12); --pill-rgb: 224,85,85; }
   .paper-card.status-unread:hover { border-color: #c93f3f; box-shadow: 0 0 0 2px rgba(224,85,85,0.22), 0 6px 24px rgba(224,85,85,0.18); }
   .paper-card.status-read { border-color: #2aab6a; border-width: 3px; box-shadow: 0 0 0 2px rgba(42,171,106,0.15), 0 4px 20px rgba(42,171,106,0.12); --pill-rgb: 42,171,106; }
@@ -149,6 +154,14 @@
   .icon-btn.link-btn { width: 70px; height: 28px; font-size: 0.85rem; background: rgba(58,123,213,0.08); color: var(--accent); border-color: rgba(58,123,213,0.35); text-decoration: none; border-radius: 6px; }
   .icon-btn.link-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
   .icon-btn.link-btn.disabled { opacity: 0.22; cursor: default; pointer-events: none; }
+  .star-btn {
+    border: none; background: transparent; color: #b8beca;
+    font-size: 1.18rem; line-height: 1; width: 28px; height: 28px;
+    border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.12s; padding: 0; margin-top: 1px; flex-shrink: 0;
+  }
+  .star-btn:hover { background: rgba(244,180,0,0.12); color: #d09a00; }
+  .star-btn.marked { color: #f4b400; text-shadow: 0 1px 0 rgba(0,0,0,0.08); }
   .card-expanded { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); display: none; flex-direction: column; gap: 12px; user-select: text; }
   .card-expanded.open { display: flex; }
   .field-label { font-size: 0.59rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px; }
@@ -2196,6 +2209,17 @@ function updateTabCounts() {
   document.getElementById('tabCountNotes').textContent      = state.notes.length;
 }
 
+function markedPaperIds() {
+  try { return new Set(JSON.parse(localStorage.getItem(`rrMarkedPapers:${currentUserId||'local'}`) || '[]')); }
+  catch(e) { return new Set(); }
+}
+function isPaperMarked(id) {
+  return markedPaperIds().has(id);
+}
+function saveMarkedPaperIds(ids) {
+  localStorage.setItem(`rrMarkedPapers:${currentUserId||'local'}`, JSON.stringify([...ids]));
+}
+
 // ── Render papers ─────────────────────────────────────────────────────────────
 function renderPapers() {
   const q    = document.getElementById('searchBox').value.toLowerCase();
@@ -2217,11 +2241,12 @@ function renderPapers() {
     const stars = p.rating ? '★'.repeat(p.rating)+'☆'.repeat(5-p.rating) : '';
     const venue = venueOf(p);
     const link  = linkOf(p);
+    const marked = isPaperMarked(p.id);
     const volInfo = p.type==='journal'&&p.journalVol?` · ${p.journalVol}`:'';
     const pages   = p.type==='conf'   &&p.confPages ?` · ${p.confPages}`:'';
-    return `<div class="paper-card${p.readStatus?' status-'+p.readStatus:''}" id="card-${p.id}" onclick="toggleCard('${p.id}',event)">
+    return `<div class="paper-card${p.readStatus?' status-'+p.readStatus:''}${marked?' marked':''}" id="card-${p.id}" onclick="toggleCard('${p.id}',event)">
       <div class="card-top">
-        <span class="source-badge ${TYPE_CLASS[p.type]}">${TYPE_BADGE[p.type]}</span>
+        <button class="star-btn${marked?' marked':''}" onclick="togglePaperMarked('${p.id}',event)" title="${marked?'Unmark paper':'Mark paper'}">${marked?'★':'☆'}</button>
         <div class="card-main">
           <div class="paper-title">
             <span class="paper-title-text">${esc(p.title)}</span>
@@ -2277,6 +2302,7 @@ function renderPapers() {
             ?`<button class="read-toggle mark-unread" onclick="toggleRead('${p.id}',event)"><span class="dot" style="background:#2aab6a"></span> Mark as Unread</button>`
             :`<button class="read-toggle mark-read"   onclick="toggleRead('${p.id}',event)"><span class="dot" style="background:#e05555"></span> Mark as Read</button>`}
           ${link?`<a class="paper-link" href="${esc(link)}" target="_blank">🔗 ${esc(link.length>55?link.slice(0,52)+'…':link)}</a>`:''}
+          <span>${TYPE_BADGE[p.type]} · ${esc(venue)}${esc(volInfo||pages)}</span>
           <span>Added ${p.added}</span>
         </div>
       </div>
@@ -2295,6 +2321,15 @@ async function saveComment(id, el) {
   if (!p) return;
   p.comment = el.innerHTML.trim();
   await dbSavePaper(p);
+  renderPapers();
+}
+
+function togglePaperMarked(id, e) {
+  e.stopPropagation();
+  const ids = markedPaperIds();
+  if (ids.has(id)) ids.delete(id);
+  else ids.add(id);
+  saveMarkedPaperIds(ids);
   renderPapers();
 }
 
