@@ -301,7 +301,6 @@
     padding: 0 3px;
     font-size: 0.70rem;
     cursor: pointer;
-    white-space: nowrap;
     text-decoration: none;
   }
   .mention-chip:hover { opacity: 0.8; }
@@ -1095,12 +1094,17 @@ document.addEventListener('click', e => {
 async function openNoteMentionPDF(noteId, e) {
   if (e && e.stopPropagation) e.stopPropagation();
   const n = (state.notes||[]).find(x=>x.id===noteId);
-  if (n?.filePath) {
-    const { data, error } = await sb.storage.from('attachments').createSignedUrl(n.filePath, 3600);
-    if (!error) window.open(data.signedUrl, '_blank');
-    else toast('Could not open PDF');
+  if (!n?.filePath) { jumpToNote(noteId, e); return; }
+  // Open window synchronously first (before await) to avoid popup blocker on mobile
+  const win = window.open('', '_blank');
+  if (win) win.document.write('<p style="font-family:sans-serif;padding:20px">Loading PDF…</p>');
+  const { data, error } = await sb.storage.from('attachments').createSignedUrl(n.filePath, 3600);
+  if (!error && data?.signedUrl) {
+    if (win) win.location.href = data.signedUrl;
+    else window.open(data.signedUrl, '_blank');
   } else {
-    jumpToNote(noteId, e);
+    if (win) win.close();
+    toast('Could not open PDF: ' + (error?.message || 'unknown error'));
   }
 }
 
