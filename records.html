@@ -1563,8 +1563,8 @@ function renderNotes() {
         </div>
       </div>
       <div class="note-expanded${isExp?' open':''}" id="noteexp-${n.id}">
+        ${n.desc ? `<div><div class="field-label" style="font-size:0.72rem">Description</div><div class="rq-desc-display">${renderRQDesc(n.desc)}</div></div>` : ''}
         ${renderNoteFiles(n)}
-        ${n.desc ? `<div><div class="field-label">Description</div><div class="rq-desc-display">${renderRQDesc(n.desc)}</div></div>` : ''}
         <div class="card-meta"><span>Added ${n.added}</span></div>
       </div>
     </div>`;
