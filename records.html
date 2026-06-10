@@ -899,9 +899,11 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ── State (in-memory, loaded from Supabase) ───────────────────────────────────
-const COLORS = ['#5B4AD6','#8A3FD1','#C13AAE','#B53374','#E0782D',
-                '#D7A12D','#A8A92E','#5D963F','#168E8A','#238AAE'];
-const CATEGORY_PALETTE_VERSION = 'categoryPalette20260609-v1';
+const COLORS = ['#5B4AD6','#8A3FD1','#C13AAE','#B53374','#D85C8A',
+                '#E0782D','#D7A12D','#A8A92E','#7FA33B','#5D963F',
+                '#2E9B6F','#168E8A','#238AAE','#3E74C8','#6B6FD6',
+                '#9E63C7','#C07038','#A65A2E','#8B6A2B','#6F7F2A'];
+const CATEGORY_PALETTE_VERSION = 'categoryPalette20260609-v2';
 
 let state = { categories: [], papers: [], scientists: [], questions: [], notes: [], activeCat: 'all', activeType: 'all', activeSciCat: 'all', activeRQCat: 'all', activeNotesCat: 'all', activeSection: 'papers' };
 let currentUserId = null;
