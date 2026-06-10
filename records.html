@@ -481,6 +481,18 @@
   /* ── Migration panel ── */
   .migrate-banner { background: rgba(58,123,213,0.08); border: 1px solid rgba(58,123,213,0.25); border-radius: 8px; padding: 12px 16px; margin: 16px 28px 0; font-size: 0.70rem; display: flex; align-items: center; gap: 12px; }
   .migrate-banner b { color: var(--accent); }
+  .share-mode .owner-only,
+  .share-mode .cat-del-btn,
+  .share-mode .star-btn,
+  .share-mode .read-toggle,
+  .share-mode .comment-editor-wrap,
+  .share-mode .card-actions .icon-btn:not(.link-btn) { display: none !important; }
+  .share-mode .user-badge::after { content: 'Shared view'; }
+  .share-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .share-box { border: 1px solid var(--border); border-radius: 8px; padding: 10px; background: var(--surface2); min-height: 150px; max-height: 220px; overflow-y: auto; }
+  .share-row { display: flex; align-items: center; gap: 8px; font-size: 0.68rem; padding: 4px 0; }
+  .share-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .share-result { font-size: 0.66rem; color: var(--text-muted); word-break: break-all; line-height: 1.6; }
 </style>
 </head>
 <body>
@@ -512,12 +524,13 @@
   <span class="header-meta">// personal research library</span>
   <div class="header-actions">
     <span class="user-badge" id="userBadge"></span>
-    <button class="btn btn-ghost" onclick="openCatModal()">+ Category</button>
-    <button class="btn btn-primary" id="btnAddScientist" style="display:none" onclick="openSciModal()">+ Scientist</button>
-    <button class="btn btn-primary" id="btnAddRQ" style="display:none" onclick="openRQModal()">+ Research Question</button>
-    <button class="btn btn-primary" id="btnAddNote" style="display:none" onclick="openNoteModal()">+ Note</button>
-    <button class="btn btn-primary" id="btnAddPaper" onclick="openAddModal()">+ Add Paper</button>
-    <button class="btn btn-ghost" onclick="doLogout()" title="Sign out" style="font-size:0.65rem">↩ Out</button>
+    <button class="btn btn-ghost owner-only" onclick="openShareModal()">Share</button>
+    <button class="btn btn-ghost owner-only" onclick="openCatModal()">+ Category</button>
+    <button class="btn btn-primary owner-only" id="btnAddScientist" style="display:none" onclick="openSciModal()">+ Scientist</button>
+    <button class="btn btn-primary owner-only" id="btnAddRQ" style="display:none" onclick="openRQModal()">+ Research Question</button>
+    <button class="btn btn-primary owner-only" id="btnAddNote" style="display:none" onclick="openNoteModal()">+ Note</button>
+    <button class="btn btn-primary owner-only" id="btnAddPaper" onclick="openAddModal()">+ Add Paper</button>
+    <button class="btn btn-ghost owner-only" onclick="doLogout()" title="Sign out" style="font-size:0.65rem">↩ Out</button>
   </div>
 </header>
 
@@ -879,6 +892,34 @@
   </div>
 </div>
 
+<!-- Share Modal -->
+<div class="modal-overlay" id="shareModal">
+  <div class="modal">
+    <div class="modal-header">🔗 Share Selection</div>
+    <div class="form-group">
+      <label class="form-label">Link Name</label>
+      <input class="form-input" id="shareName" placeholder="e.g. Reading group packet">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Closure</label>
+      <div class="form-hint" id="shareClosureHint">Selected items automatically include cited/related items. Expire links manually below.</div>
+    </div>
+    <div class="share-grid" id="sharePicker"></div>
+    <div class="form-group" style="margin-top:22px">
+      <label class="form-label">Result</label>
+      <div class="share-result" id="shareResult">Create a link to see it here.</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Existing Links</label>
+      <div id="shareLinksList" class="share-result">Open this panel after login to load links.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('shareModal')">Close</button>
+      <button class="btn btn-primary" onclick="createShareLink()">Create Link</button>
+    </div>
+  </div>
+</div>
+
 <!-- Category Modal -->
 <div class="modal-overlay" id="catModal">
   <div class="modal">
@@ -907,6 +948,8 @@ const CATEGORY_PALETTE_VERSION = 'categoryPalette20260609-v2';
 
 let state = { categories: [], papers: [], scientists: [], questions: [], notes: [], activeCat: 'all', activeType: 'all', activeSciCat: 'all', activeRQCat: 'all', activeNotesCat: 'all', activeSection: 'papers' };
 let currentUserId = null;
+let isShareMode = false;
+let shareToken = new URLSearchParams(location.search).get('share');
 
 function loadPrefs() {
   const p = JSON.parse(localStorage.getItem('rrPrefs') || '{}');
@@ -1176,7 +1219,8 @@ document.addEventListener('click', e => {
 async function openNoteMentionPDF(noteId, e) {
   if (e && e.stopPropagation) e.stopPropagation();
   const n = (state.notes||[]).find(x=>x.id===noteId);
-  if (!n?.filePath) { jumpToNote(noteId, e); return; }
+  if (!n?.filePath && !n?.fileSignedUrl) { jumpToNote(noteId, e); return; }
+  if (n.fileSignedUrl) { window.open(n.fileSignedUrl, '_blank'); return; }
   // Open window synchronously first (before await) to avoid popup blocker on mobile
   const win = window.open('', '_blank');
   if (win) win.document.write('<p style="font-family:sans-serif;padding:20px">Loading PDF…</p>');
@@ -1652,7 +1696,8 @@ function toggleNote(id, e) {
 async function openNotePDF(noteId, e) {
   e.stopPropagation();
   const n = state.notes.find(x=>x.id===noteId);
-  if (!n?.filePath) return;
+  if (!n?.filePath && !n?.fileSignedUrl) return;
+  if (n.fileSignedUrl) { window.open(n.fileSignedUrl, '_blank'); return; }
   const { data, error } = await sb.storage.from('attachments').createSignedUrl(n.filePath, 3600);
   if (error) { toast('Could not open PDF: ' + error.message); return; }
   window.open(data.signedUrl, '_blank');
@@ -1660,6 +1705,8 @@ async function openNotePDF(noteId, e) {
 
 async function openNoteAttachment(path, e) {
   if (e && e.stopPropagation) e.stopPropagation();
+  const att = state.notes.flatMap(n => n.attachments || []).find(a => a.path === path);
+  if (att?.signedUrl) { window.open(att.signedUrl, '_blank'); return; }
   const { data, error } = await sb.storage.from('attachments').createSignedUrl(path, 3600);
   if (error) { toast('Could not open attachment: ' + error.message); return; }
   window.open(data.signedUrl, '_blank');
@@ -1812,8 +1859,40 @@ async function bootApp(user) {
   switchSection(state.activeSection);
 }
 
+async function bootShareApp(token) {
+  isShareMode = true;
+  document.body.classList.add('share-mode');
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appShell').style.display = 'flex';
+  document.getElementById('userBadge').textContent = '';
+  showLoading(true);
+  const { data, error } = await sb.rpc('get_shared_library', { share_token: token });
+  showLoading(false);
+  if (error || !data) {
+    document.querySelector('main').innerHTML = `<div class="empty-state"><div class="big">🔒</div>This share link is unavailable or expired.</div>`;
+    return;
+  }
+  loadSharedPayload(data);
+  renderSidebar();
+  renderPapers();
+  renderSciSidebar();
+  renderRQSidebar();
+  renderNotesSidebar();
+  updateTabCounts();
+  switchSection('papers');
+}
+
+function loadSharedPayload(data) {
+  state.categories = (data.categories || []).map(dbCatToLocal);
+  state.papers = (data.papers || []).map(dbPaperToLocal);
+  state.scientists = (data.scientists || []).map(dbSciToLocal);
+  state.questions = (data.questions || []).map(dbRQToLocal);
+  state.notes = (data.notes || []).map(r => ({ ...dbNoteToLocal(r), fileSignedUrl: r.file_signed_url || r.fileSignedUrl || null, attachments: r.attachments || [] }));
+}
+
 // Check if existing session
 (async () => {
+  if (shareToken) { await bootShareApp(shareToken); return; }
   const { data: { session } } = await sb.auth.getSession();
   if (session) await bootApp(session.user);
 })();
@@ -1910,9 +1989,9 @@ async function applyCategoryPaletteOnce() {
 
 function dbNoteToLocal(r) {
   return {
-    id: r.id, title: r.title, desc: r.description || '',
-    catIds: r.cat_ids || [], filePath: r.file_path || null,
-    fileName: r.file_name || '', added: r.added || '',
+    id: r.id, title: r.title, desc: r.description || r.desc || '',
+    catIds: r.cat_ids || r.catIds || [], filePath: r.file_path || r.filePath || null,
+    fileName: r.file_name || r.fileName || '', added: r.added || '',
   };
 }
 function localNoteToDB(n) {
@@ -1932,9 +2011,9 @@ async function dbDeleteNote(id) {
 
 function dbRQToLocal(r) {
   return {
-    id: r.id, question: r.question, desc: r.description || '',
-    catIds: r.cat_ids || [], paperIds: r.paper_ids || [],
-    sciIds: r.sci_ids || [], progress: r.progress || [],
+    id: r.id, question: r.question, desc: r.description || r.desc || '',
+    catIds: r.cat_ids || r.catIds || [], paperIds: r.paper_ids || r.paperIds || [],
+    sciIds: r.sci_ids || r.sciIds || [], progress: r.progress || [],
     added: r.added || '',
   };
 }
@@ -1966,15 +2045,15 @@ function localCatToDB(c) {
 function dbPaperToLocal(r) {
   return {
     id: r.id, type: r.type, title: r.title, authors: r.authors || '',
-    year: r.year || '', catId: r.cat_id || null,
+    year: r.year || '', catId: r.cat_id || r.catId || null,
     abstract: r.abstract || '', comment: r.comment || '',
     url: r.url || '', rating: r.rating || 0,
-    readStatus: r.read_status || 'unread',
-    arxivId: r.arxiv_id || '', confName: r.conf_name || '',
-    confPages: r.conf_pages || '', confDoi: r.conf_doi || '',
-    journalName: r.journal_name || '', journalVol: r.journal_vol || '',
-    journalDoi: r.journal_doi || '', otherVenue: r.other_venue || '',
-    otherUrl: r.other_url || '', readingTime: r.reading_time || '',
+    readStatus: r.read_status || r.readStatus || 'unread',
+    arxivId: r.arxiv_id || r.arxivId || '', confName: r.conf_name || r.confName || '',
+    confPages: r.conf_pages || r.confPages || '', confDoi: r.conf_doi || r.confDoi || '',
+    journalName: r.journal_name || r.journalName || '', journalVol: r.journal_vol || r.journalVol || '',
+    journalDoi: r.journal_doi || r.journalDoi || '', otherVenue: r.other_venue || r.otherVenue || '',
+    otherUrl: r.other_url || r.otherUrl || '', readingTime: r.reading_time || r.readingTime || '',
     feature: r.feature || '', added: r.added || '',
   };
 }
@@ -1997,8 +2076,8 @@ function dbSciToLocal(r) {
   return {
     id: r.id, name: r.name, initials: r.initials || '',
     photo: r.photo || null, affil: r.affil || '',
-    catIds: r.cat_ids || [], scholarUrl: r.scholar_url || '',
-    notes: r.notes || '', paperIds: r.paper_ids || [],
+    catIds: r.cat_ids || r.catIds || [], scholarUrl: r.scholar_url || r.scholarUrl || '',
+    notes: r.notes || '', paperIds: r.paper_ids || r.paperIds || [],
     added: r.added || '',
   };
 }
@@ -2118,9 +2197,146 @@ function toast(msg) {
   const t = document.createElement('div'); t.className='toast'; t.textContent=msg;
   document.body.appendChild(t); setTimeout(()=>t.remove(),2600);
 }
+function shareTokenString() {
+  const bytes = new Uint8Array(18);
+  crypto.getRandomValues(bytes);
+  return [...bytes].map(b => b.toString(36).padStart(2, '0')).join('');
+}
 function toTitleCase(str) {
   const small = new Set(['a','an','the','and','but','or','nor','for','so','yet','at','by','in','of','on','to','up','as','is','it']);
   return str.trim().replace(/\s+/g,' ').split(' ').map((w,i)=>{ const l=w.toLowerCase(); return (i!==0&&small.has(l))?l:l.charAt(0).toUpperCase()+l.slice(1); }).join(' ');
+}
+
+// ── Share links ───────────────────────────────────────────────────────────────
+function openShareModal() {
+  document.getElementById('shareName').value = '';
+  document.getElementById('shareResult').textContent = 'Create a link to see it here.';
+  renderSharePicker();
+  loadShareLinks();
+  document.getElementById('shareModal').classList.add('open');
+}
+
+function renderSharePicker() {
+  const boxes = [
+    ['papers', 'Papers', state.papers, p => p.title],
+    ['scientists', 'Scientists', state.scientists, s => s.name],
+    ['questions', 'Research Questions', state.questions, q => q.question],
+    ['notes', 'Notes', state.notes, n => n.title],
+  ];
+  document.getElementById('sharePicker').innerHTML = boxes.map(([type, label, items, nameOf]) => `
+    <div class="share-box">
+      <div class="field-label">${label}</div>
+      ${items.length ? items.map(item => `<label class="share-row">
+        <input type="checkbox" data-share-type="${type}" value="${esc(item.id)}">
+        <span>${esc(nameOf(item))}</span>
+      </label>`).join('') : `<div class="form-hint">No items.</div>`}
+    </div>
+  `).join('');
+}
+
+function selectedShareSeeds() {
+  const seeds = { papers:new Set(), scientists:new Set(), questions:new Set(), notes:new Set() };
+  document.querySelectorAll('#sharePicker input[type=checkbox]:checked').forEach(cb => {
+    seeds[cb.dataset.shareType]?.add(cb.value);
+  });
+  return seeds;
+}
+
+function mentionRefs(text) {
+  const refs = [];
+  String(text || '').replace(/@\[\[(paper|scientist|rq|note)\|([^|]+)\|[^\]]+\]\]/g, (_, type, id) => {
+    refs.push([type === 'rq' ? 'questions' : type + 's', id]);
+  });
+  String(text || '').replace(/data-type="(paper|scientist|rq|note)"\s+data-id="([^"]+)"/g, (_, type, id) => {
+    refs.push([type === 'rq' ? 'questions' : type + 's', id]);
+  });
+  return refs;
+}
+
+function addShareRef(sets, type, id) {
+  if (sets[type] && id && !sets[type].has(id)) { sets[type].add(id); return true; }
+  return false;
+}
+
+function shareClosure(seedSets) {
+  const sets = {
+    papers: new Set(seedSets.papers),
+    scientists: new Set(seedSets.scientists),
+    questions: new Set(seedSets.questions),
+    notes: new Set(seedSets.notes),
+  };
+  let changed = true;
+  while (changed) {
+    changed = false;
+    state.papers.filter(p => sets.papers.has(p.id)).forEach(p => {
+      mentionRefs(p.comment).forEach(([type,id]) => { changed = addShareRef(sets, type, id) || changed; });
+    });
+    state.scientists.filter(s => sets.scientists.has(s.id)).forEach(s => {
+      (s.paperIds || []).forEach(id => { changed = addShareRef(sets, 'papers', id) || changed; });
+      mentionRefs(s.notes).forEach(([type,id]) => { changed = addShareRef(sets, type, id) || changed; });
+    });
+    state.questions.filter(q => sets.questions.has(q.id)).forEach(q => {
+      (q.paperIds || []).forEach(id => { changed = addShareRef(sets, 'papers', id) || changed; });
+      (q.sciIds || []).forEach(id => { changed = addShareRef(sets, 'scientists', id) || changed; });
+      mentionRefs(q.desc).forEach(([type,id]) => { changed = addShareRef(sets, type, id) || changed; });
+      (q.progress || []).forEach(pg => mentionRefs(pg.text).forEach(([type,id]) => { changed = addShareRef(sets, type, id) || changed; }));
+    });
+    state.notes.filter(n => sets.notes.has(n.id)).forEach(n => {
+      mentionRefs(n.desc).forEach(([type,id]) => { changed = addShareRef(sets, type, id) || changed; });
+    });
+  }
+  const categoryIds = new Set();
+  state.papers.filter(p => sets.papers.has(p.id) && p.catId).forEach(p => categoryIds.add(p.catId));
+  state.scientists.filter(s => sets.scientists.has(s.id)).forEach(s => (s.catIds || []).forEach(id => categoryIds.add(id)));
+  state.questions.filter(q => sets.questions.has(q.id)).forEach(q => (q.catIds || []).forEach(id => categoryIds.add(id)));
+  state.notes.filter(n => sets.notes.has(n.id)).forEach(n => (n.catIds || []).forEach(id => categoryIds.add(id)));
+  return { ...sets, categories: categoryIds };
+}
+
+async function createShareLink() {
+  const closure = shareClosure(selectedShareSeeds());
+  const total = ['papers','scientists','questions','notes'].reduce((n,k) => n + closure[k].size, 0);
+  if (!total) { toast('Select at least one item to share.'); return; }
+  const token = shareTokenString();
+  const row = {
+    token,
+    user_id: currentUserId,
+    name: document.getElementById('shareName').value.trim() || 'Shared research library',
+    enabled: true,
+    expires_at: null,
+    allowed_category_ids: [...closure.categories],
+    allowed_paper_ids: [...closure.papers],
+    allowed_scientist_ids: [...closure.scientists],
+    allowed_question_ids: [...closure.questions],
+    allowed_note_ids: [...closure.notes],
+  };
+  const { error } = await sb.from('share_links').insert(row);
+  if (error) { toast('Share table not ready: ' + error.message); return; }
+  const url = `${location.origin}${location.pathname}?share=${encodeURIComponent(token)}`;
+  document.getElementById('shareResult').innerHTML = `<a href="${esc(url)}" target="_blank">${esc(url)}</a><br>Includes closure: ${total} item${total!==1?'s':''}.`;
+  await navigator.clipboard?.writeText(url).catch(()=>{});
+  loadShareLinks();
+}
+
+async function loadShareLinks() {
+  const el = document.getElementById('shareLinksList');
+  const { data, error } = await sb.from('share_links').select('*').eq('user_id', currentUserId).order('created_at', { ascending:false }).limit(20);
+  if (error) { el.textContent = 'Share table not ready yet.'; return; }
+  if (!data?.length) { el.textContent = 'No links yet.'; return; }
+  el.innerHTML = data.map(l => {
+    const url = `${location.origin}${location.pathname}?share=${encodeURIComponent(l.token)}`;
+    return `<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+      <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(l.name || 'Share link')} ${l.enabled?'':'(disabled)'}</span>
+      <a href="${esc(url)}" target="_blank" style="color:var(--accent);text-decoration:underline dotted">open</a>
+      <button class="btn btn-ghost" style="font-size:0.58rem;padding:3px 8px" onclick="disableShareLink('${l.id}')">Expire</button>
+    </div>`;
+  }).join('');
+}
+
+async function disableShareLink(id) {
+  const { error } = await sb.from('share_links').update({ enabled:false, expires_at:new Date().toISOString() }).eq('id', id);
+  if (error) { toast('Could not expire link: ' + error.message); return; }
+  loadShareLinks();
 }
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
