@@ -628,7 +628,7 @@
         <input class="search-box" id="sciSearchBox" placeholder="Search scientists, affiliations…" oninput="renderScientists()">
         <span class="view-label" id="sciCountLabel">0 scientists</span>
       </div>
-      <div class="scientist-list" id="scientistList"></div>
+      <div class="scientist-list" id="scientistList" onclick="closeExpandedOnBlankClick(event,'scientists')"></div>
     </div>
 
     <!-- Research Questions -->
@@ -1227,6 +1227,9 @@ function collapseExpandedItems(section) {
   if (section === 'papers' || !section) {
     document.querySelectorAll('.paper-card.expanded').forEach(card => card.classList.remove('expanded'));
     document.querySelectorAll('.card-expanded.open').forEach(exp => exp.classList.remove('open'));
+  }
+  if (section === 'scientists' || !section) {
+    if (state.expandedSci) { state.expandedSci = null; renderScientists(); }
   }
   if (section === 'rq' || !section) {
     if (state.expandedRQ) { state.expandedRQ = null; renderRQ(); }
@@ -2611,6 +2614,11 @@ function renderScientists() {
 
 function toggleSci(id, e) {
   if (e.target.closest('a, button')) return;
+  if (state.expandedSci === id && !e.target.closest('.sci-avatar,.sci-name,.sci-affil,.sci-tags,.sci-notes,.sci-paper-link,.sci-meta')) {
+    state.expandedSci = null;
+    renderScientists();
+    return;
+  }
   state.expandedSci = state.expandedSci===id ? null : id;
   renderScientists();
 }
