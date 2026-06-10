@@ -496,6 +496,13 @@
   .share-row { display: flex; align-items: center; gap: 8px; font-size: 0.68rem; padding: 4px 0; }
   .share-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .share-result { font-size: 0.66rem; color: var(--text-muted); word-break: break-all; line-height: 1.6; }
+  .share-link-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+  .share-link-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .share-status-dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
+  .share-link-row.is-active .share-link-name { color: #1e8f58; }
+  .share-link-row.is-disabled .share-link-name { color: #c93f3f; }
+  .share-link-row.is-active .share-status-dot { background: #1e8f58; }
+  .share-link-row.is-disabled .share-status-dot { background: #c93f3f; }
 </style>
 </head>
 <body>
@@ -2327,11 +2334,15 @@ async function loadShareLinks() {
   if (!data?.length) { el.textContent = 'No links yet.'; return; }
   el.innerHTML = data.map(l => {
     const url = `${location.origin}${location.pathname}?share=${encodeURIComponent(l.token)}`;
-    return `<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
-      <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(l.name || 'Share link')} ${l.enabled?'':'(disabled)'}</span>
+    const rowClass = l.enabled ? 'is-active' : 'is-disabled';
+    return `<div class="share-link-row ${rowClass}">
+      <span class="share-status-dot" aria-hidden="true"></span>
+      <span class="share-link-name">${esc(l.name || 'Share link')} ${l.enabled?'':'(disabled)'}</span>
       <a href="${esc(url)}" target="_blank" style="color:var(--accent);text-decoration:underline dotted">open</a>
       <button class="btn btn-ghost" style="font-size:0.58rem;padding:3px 8px" onclick="copyShareLink('${esc(url)}')">Copy Link</button>
-      <button class="btn btn-ghost" style="font-size:0.58rem;padding:3px 8px" onclick="disableShareLink('${l.id}')">Expire</button>
+      ${l.enabled
+        ? `<button class="btn btn-ghost" style="font-size:0.58rem;padding:3px 8px" onclick="disableShareLink('${l.id}')">Expire</button>`
+        : `<button class="btn btn-ghost" style="font-size:0.58rem;padding:3px 8px" onclick="deleteShareLink('${l.id}')">Delete</button>`}
     </div>`;
   }).join('');
 }
@@ -2344,6 +2355,12 @@ async function copyShareLink(url) {
 async function disableShareLink(id) {
   const { error } = await sb.from('share_links').update({ enabled:false, expires_at:new Date().toISOString() }).eq('id', id);
   if (error) { toast('Could not expire link: ' + error.message); return; }
+  loadShareLinks();
+}
+
+async function deleteShareLink(id) {
+  const { error } = await sb.from('share_links').delete().eq('id', id).eq('enabled', false);
+  if (error) { toast('Could not delete link: ' + error.message); return; }
   loadShareLinks();
 }
 
