@@ -488,6 +488,11 @@
   .share-mode .cat-del-btn,
   .share-mode .star-btn,
   .share-mode .read-toggle,
+  .share-mode .comment-preview,
+  .share-mode .personal-comment-section,
+  .share-mode #tabScientists,
+  .share-mode #sidebarScientists,
+  .share-mode #sectionScientists,
   .share-mode .comment-editor-wrap,
   .share-mode .card-actions .icon-btn:not(.link-btn) { display: none !important; }
   .share-mode .user-badge::after { content: 'Shared view'; }
@@ -1402,6 +1407,7 @@ function toggleRQ(id, e) {
 
 function jumpToScientist(sciId, e) {
   if (e && e.stopPropagation) e.stopPropagation();
+  if (isShareMode) return;
   switchSection('scientists');
   setTimeout(()=>{
     const el = document.getElementById(`sci-${sciId}`);
@@ -1893,8 +1899,8 @@ async function bootShareApp(token) {
 
 function loadSharedPayload(data) {
   state.categories = (data.categories || []).map(dbCatToLocal);
-  state.papers = (data.papers || []).map(dbPaperToLocal);
-  state.scientists = (data.scientists || []).map(dbSciToLocal);
+  state.papers = (data.papers || []).map(r => ({ ...dbPaperToLocal(r), comment: '' }));
+  state.scientists = [];
   state.questions = (data.questions || []).map(dbRQToLocal);
   state.notes = (data.notes || []).map(r => ({ ...dbNoteToLocal(r), fileSignedUrl: r.file_signed_url || r.fileSignedUrl || null, attachments: r.attachments || [] }));
 }
@@ -2446,6 +2452,7 @@ function closeSidebarOnMobile() {
 
 // ── Section switching ─────────────────────────────────────────────────────────
 function switchSection(sec) {
+  if (isShareMode && sec === 'scientists') sec = 'papers';
   state.activeSection = sec; savePrefs();
   ['papers','scientists','rq','notes'].forEach(s => {
     const id = 'section' + s.charAt(0).toUpperCase() + s.slice(1);
@@ -2562,7 +2569,7 @@ function renderPapers() {
       ${p.comment && p.comment.replace(/<[^>]*>/g,'').trim() ?`<div class="comment-preview"><span class="comment-preview-icon">💬</span><span class="comment-preview-text">${p.comment}</span></div>`:''}
       <div class="card-expanded" id="exp-${p.id}">
         ${p.abstract?`<div><div class="field-label">Abstract / Notes</div><div class="abstract-text">${esc(p.abstract)}</div></div>`:''}
-        <div>
+        <div class="personal-comment-section">
           <div class="field-label">Personal Comment</div>
           <div class="comment-editor-wrap" style="position:relative">
             <div class="comment-toolbar" onmousedown="event.preventDefault()">
