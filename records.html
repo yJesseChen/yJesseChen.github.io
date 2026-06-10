@@ -14,9 +14,11 @@
     --bg: #f4f6fb; --surface: #ffffff; --surface2: #eef1f8;
     --border: #d8dde8; --accent: #3a7bd5; --accent2: #e07b3a;
     --text: #1a1f2e; --text-muted: #6b748e; --danger: #d94f4f;
+    --font-base: Arial, Helvetica, sans-serif;
+    --font-mono: 'DM Mono', monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'DM Mono', monospace; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+  body { font-family: var(--font-base); background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
 
   /* ── Login screen ── */
   #loginScreen {
@@ -36,14 +38,14 @@
   .login-input {
     width: 100%; background: var(--surface2); border: 1px solid var(--border);
     border-radius: 6px; padding: 10px 12px;
-    font-family: 'DM Mono', monospace; font-size: 0.75rem;
+    font-family: var(--font-base); font-size: 0.75rem;
     color: var(--text); outline: none; transition: border-color 0.15s;
   }
   .login-input:focus { border-color: var(--accent); }
   .login-btn {
     width: 100%; background: var(--accent); color: #fff;
     border: none; border-radius: 8px; padding: 11px;
-    font-family: 'DM Mono', monospace; font-size: 0.75rem;
+    font-family: var(--font-base); font-size: 0.75rem;
     font-weight: 500; cursor: pointer; margin-top: 8px;
     transition: filter 0.15s;
   }
@@ -64,10 +66,11 @@
   header h1 span { color: var(--accent); }
   .header-meta { font-size: 0.68rem; color: var(--text-muted); letter-spacing: 0.06em; }
   .header-actions { margin-left: auto; display: flex; gap: 10px; align-items: center; }
-  .user-badge { font-size: 0.65rem; color: var(--text-muted); }
+  .user-badge { font-size: 0.78rem; color: var(--text-muted); }
 
   /* ── Buttons ── */
-  .btn { font-family: 'DM Mono', monospace; font-size: 0.72rem; letter-spacing: 0.04em; padding: 8px 16px; border-radius: 6px; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; }
+  .btn { font-family: var(--font-base); font-size: 0.72rem; letter-spacing: 0.04em; padding: 8px 16px; border-radius: 6px; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; }
+  .header-actions .btn { font-size: 0.92rem; font-weight: 500; padding: 11px 20px; }
   .btn-primary { background: var(--accent); color: #fff; font-weight: 500; border-color: var(--accent); }
   .btn-primary:hover { filter: brightness(1.1); }
   .btn-ghost { background: transparent; color: var(--text-muted); border-color: var(--border); }
@@ -79,7 +82,7 @@
   /* ── Sidebar ── */
   .sidebar { width: 230px; min-width: 230px; background: var(--surface); border-right: 1px solid var(--border); padding: 18px 0; overflow-y: auto; display: flex; flex-direction: column; }
   .sidebar-label { font-size: 0.59rem; letter-spacing: 0.14em; color: var(--text-muted); text-transform: uppercase; padding: 10px 20px 4px; }
-  .cat-item { display: flex; align-items: center; gap: 8px; padding: 8px 20px; cursor: pointer; font-size: 0.72rem; color: var(--text-muted); border-left: 2px solid transparent; transition: all 0.12s; user-select: none; }
+  .cat-item { display: flex; align-items: center; gap: 8px; padding: 8px 20px; cursor: pointer; font-size: 0.78rem; color: var(--text-muted); border-left: 2px solid transparent; transition: all 0.12s; user-select: none; }
   .cat-item:hover { color: var(--text); background: var(--surface2); }
   .cat-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(58,123,213,0.06); }
   .cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
@@ -103,7 +106,7 @@
   .global-tab { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 600; padding: 14px 26px; cursor: pointer; color: var(--text-muted); background: transparent; border: none; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.14s; display: flex; align-items: center; gap: 7px; }
   .global-tab:hover { color: var(--text); }
   .global-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-  .tab-count { font-family: 'DM Mono', monospace; font-size: 0.62rem; background: var(--surface2); color: var(--text-muted); padding: 1px 7px; border-radius: 10px; font-weight: 400; }
+  .tab-count { font-family: var(--font-base); font-size: 0.62rem; background: var(--surface2); color: var(--text-muted); padding: 1px 7px; border-radius: 10px; font-weight: 400; }
   .global-tab.active .tab-count { background: rgba(58,123,213,0.1); color: var(--accent); }
 
   /* ── Main sections ── */
@@ -111,10 +114,10 @@
   .section { display: none; flex: 1; flex-direction: column; overflow: hidden; }
   .section.active { display: flex; }
   .toolbar { padding: 12px 28px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; background: var(--surface); }
-  .search-box { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 14px; font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--text); outline: none; transition: border-color 0.15s; }
+  .search-box { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 14px; font-family: var(--font-base); font-size: 0.82rem; color: var(--text); outline: none; transition: border-color 0.15s; }
   .search-box:focus { border-color: var(--accent); }
   .search-box::placeholder { color: var(--text-muted); }
-  .sort-select { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--text-muted); outline: none; cursor: pointer; }
+  .sort-select { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-family: var(--font-base); font-size: 0.76rem; color: var(--text-muted); outline: none; cursor: pointer; }
   .view-label { font-size: 0.68rem; color: var(--text-muted); white-space: nowrap; }
 
   /* ── Paper list ── */
@@ -137,12 +140,12 @@
   .card-top { display: flex; align-items: flex-start; gap: 10px; }
   .source-badge { font-size: 0.58rem; letter-spacing: 0.06em; font-weight: 500; padding: 3px 8px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; margin-top: 3px; }
   .card-main { flex: 1; min-width: 0; }
-  .paper-title { font-family: 'Playfair Display', serif; font-size: 0.97rem; font-weight: 600; line-height: 1.4; color: var(--text); margin-bottom: 3px; display: flex; align-items: baseline; flex-wrap: wrap; gap: 7px; }
+  .paper-title { font-family: 'Playfair Display', serif; font-size: 1.08rem; font-weight: 600; line-height: 1.4; color: var(--text); margin-bottom: 3px; display: flex; align-items: baseline; flex-wrap: wrap; gap: 7px; }
   .paper-title-text { flex-shrink: 1; min-width: 0; }
-  .label-pill { font-family: 'DM Mono', monospace; font-size: 0.58rem; font-weight: 500; letter-spacing: 0.05em; padding: 2px 8px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; vertical-align: middle; line-height: 1.6; background: rgba(var(--pill-rgb), 0.10); color: rgb(var(--pill-rgb)); border: 1px solid rgba(var(--pill-rgb), 0.28); }
-  .paper-authors { font-size: 0.66rem; color: var(--text-muted); margin-bottom: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .label-pill { font-family: var(--font-base); font-size: 0.66rem; font-weight: 500; letter-spacing: 0.04em; padding: 2px 8px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; vertical-align: middle; line-height: 1.6; background: rgba(var(--pill-rgb), 0.10); color: rgb(var(--pill-rgb)); border: 1px solid rgba(var(--pill-rgb), 0.28); }
+  .paper-authors { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .card-tags { display: flex; flex-wrap: wrap; gap: 5px; }
-  .tag { font-size: 0.59rem; padding: 2px 8px; border-radius: 20px; font-weight: 500; letter-spacing: 0.04em; }
+  .tag { font-size: 0.72rem; padding: 2px 8px; border-radius: 20px; font-weight: 500; letter-spacing: 0.04em; }
   .tag-venue { background: rgba(107,116,142,0.10); color: var(--text-muted); font-style: italic; }
   .tag-year { background: rgba(107,116,142,0.10); color: var(--text-muted); }
   .tag-rating { background: rgba(224,123,58,0.12); color: var(--accent2); }
@@ -164,15 +167,15 @@
   .card-expanded { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); display: none; flex-direction: column; gap: 12px; user-select: text; }
   .card-expanded.open { display: flex; }
   .field-label { font-size: 0.59rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px; }
-  .abstract-text { font-size: 0.70rem; color: var(--text-muted); line-height: 1.7; }
+  .abstract-text { font-size: 0.88rem; color: var(--text-muted); line-height: 1.7; }
   .comment-preview { display: flex; align-items: flex-start; gap: 8px; margin-top: 10px; background: rgba(107,116,142,0.07); border-left: 3px solid #b0b8cc; border-radius: 0 6px 6px 0; padding: 7px 11px; user-select: text; }
   .comment-preview-icon { font-size: 0.75rem; flex-shrink: 0; margin-top: 1px; opacity: 0.7; }
-  .comment-preview-text { font-size: 0.70rem; color: var(--text); line-height: 1.55; font-style: italic; word-break: break-word; }
+  .comment-preview-text { font-size: 0.90rem; color: var(--text); line-height: 1.6; font-style: normal; word-break: break-word; }
   .comment-preview-text b, .comment-preview-text strong { font-weight: 700; }
   .comment-preview-text i, .comment-preview-text em { font-style: italic; }
   .comment-preview-text u { text-decoration: underline; }
   .comment-preview-text s { text-decoration: line-through; }
-  .comment-preview-text code { font-family: 'DM Mono', monospace; font-size: 0.68rem; background: rgba(107,116,142,0.12); border-radius: 3px; padding: 1px 5px; font-style: normal; }
+  .comment-preview-text code { font-family: var(--font-mono); font-size: 0.68rem; background: rgba(107,116,142,0.12); border-radius: 3px; padding: 1px 5px; font-style: normal; }
   .comment-preview-text ul, .comment-preview-text ol { padding-left: 1.2em; margin: 2px 0; }
   .comment-preview-text li { margin: 1px 0; }
 
@@ -185,20 +188,20 @@
   .tb-btn:hover { background: var(--border); color: var(--text); }
   .tb-btn.active { background: rgba(58,123,213,0.12); color: var(--accent); border-color: rgba(58,123,213,0.2); }
   .tb-sep { width: 1px; height: 16px; background: var(--border); margin: 0 3px; flex-shrink: 0; }
-  .comment-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 0 0 6px 6px; padding: 9px 12px; font-family: 'DM Mono', monospace; font-size: 0.71rem; color: var(--text); outline: none; width: 100%; min-height: 64px; transition: border-color 0.15s; line-height: 1.6; word-break: break-word; }
+  .comment-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 0 0 6px 6px; padding: 9px 12px; font-family: var(--font-base); font-size: 0.90rem; color: var(--text); outline: none; width: 100%; min-height: 64px; transition: border-color 0.15s; line-height: 1.6; word-break: break-word; }
   .comment-box:focus { border-color: var(--accent); }
   .comment-box b, .comment-box strong { font-weight: 700; }
   .comment-box i, .comment-box em { font-style: italic; }
   .comment-box u { text-decoration: underline; }
   .comment-box s { text-decoration: line-through; }
-  .comment-box code { font-family: 'DM Mono', monospace; font-size: 0.68rem; background: rgba(107,116,142,0.12); border-radius: 3px; padding: 1px 5px; }
+  .comment-box code { font-family: var(--font-mono); font-size: 0.68rem; background: rgba(107,116,142,0.12); border-radius: 3px; padding: 1px 5px; }
   .comment-box ul, .comment-box ol { padding-left: 1.2em; margin: 2px 0; }
   .comment-box li { margin: 1px 0; }
 
   .card-meta { font-size: 0.62rem; color: var(--text-muted); display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
   .paper-link { color: var(--accent); text-decoration: none; font-size: 0.63rem; }
   .paper-link:hover { text-decoration: underline; }
-  .read-toggle { display: inline-flex; align-items: center; gap: 6px; font-family: 'DM Mono', monospace; font-size: 0.68rem; padding: 5px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--text-muted); transition: all 0.15s; user-select: none; }
+  .read-toggle { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-base); font-size: 0.68rem; padding: 5px 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--text-muted); transition: all 0.15s; user-select: none; }
   .read-toggle:hover { border-color: var(--text-muted); color: var(--text); }
   .read-toggle.mark-read:hover   { background: rgba(42,171,106,0.1); border-color: #2aab6a; color: #2aab6a; }
   .read-toggle.mark-unread:hover { background: rgba(224,85,85,0.1);  border-color: #e05555; color: #e05555; }
@@ -213,13 +216,13 @@
   .sci-avatar { width: 44px; height: 44px; border-radius: 50%; background: rgba(58,123,213,0.15); border: 2px solid rgba(58,123,213,0.3); color: #3a7bd5; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; flex-shrink: 0; font-family: 'Playfair Display', serif; font-weight: 600; overflow: hidden; }
   .sci-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
   .sci-main { flex: 1; min-width: 0; }
-  .sci-name { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: 3px; }
-  .sci-affil { font-size: 0.66rem; color: var(--text-muted); margin-bottom: 7px; }
+  .sci-name { font-family: 'Playfair Display', serif; font-size: 1.08rem; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+  .sci-affil { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 7px; }
   .sci-tags { display: flex; flex-wrap: wrap; gap: 5px; }
   .sci-expanded { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); display: none; flex-direction: column; gap: 12px; }
   .sci-expanded.open { display: flex; }
   .sci-papers-list { display: flex; flex-direction: column; gap: 6px; }
-  .sci-paper-link { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 6px; background: var(--surface2); border: 1px solid var(--border); font-size: 0.68rem; color: var(--text); text-decoration: none; transition: border-color 0.12s, box-shadow 0.12s; cursor: pointer; }
+  .sci-paper-link { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 6px; background: var(--surface2); border: 1px solid var(--border); font-size: 0.82rem; color: var(--text); text-decoration: none; transition: border-color 0.12s, box-shadow 0.12s; cursor: pointer; }
   .sci-paper-link:hover { border-color: var(--accent); color: var(--accent); }
   .sci-paper-link.status-read   { border-color: rgba(42,171,106,0.5);  background: rgba(42,171,106,0.04);  box-shadow: 0 0 0 1px rgba(42,171,106,0.15); }
   .sci-paper-link.status-unread { border-color: rgba(224,85,85,0.5);   background: rgba(224,85,85,0.04);   box-shadow: 0 0 0 1px rgba(224,85,85,0.15); }
@@ -247,12 +250,12 @@
   .form-row .form-group { flex: 1; }
   .form-group { margin-bottom: 14px; }
   .form-label { display: block; font-size: 0.63rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; }
-  .form-input, .form-textarea, .form-select { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 11px; font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--text); outline: none; transition: border-color 0.15s; }
+  .form-input, .form-textarea, .form-select { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 11px; font-family: var(--font-base); font-size: 0.88rem; color: var(--text); outline: none; transition: border-color 0.15s; }
   .form-input:focus, .form-textarea:focus, .form-select:focus { border-color: var(--accent); }
   .form-textarea { resize: vertical; min-height: 80px; }
   .form-hint { font-size: 0.59rem; color: var(--text-muted); margin-top: 3px; }
   .type-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
-  .type-tab { flex: 1; font-family: 'DM Mono', monospace; font-size: 0.68rem; padding: 7px 10px; text-align: center; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; color: var(--text-muted); background: transparent; transition: all 0.14s; }
+  .type-tab { flex: 1; font-family: var(--font-base); font-size: 0.68rem; padding: 7px 10px; text-align: center; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; color: var(--text-muted); background: transparent; transition: all 0.14s; }
   .type-tab:hover { color: var(--text); border-color: var(--text-muted); }
   .type-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
   .source-fields { display: none; }
@@ -280,7 +283,7 @@
     color: var(--text); margin-bottom: 6px;
   }
   .rq-desc-preview {
-    font-size: 0.70rem; color: var(--text-muted);
+    font-size: 0.86rem; color: var(--text-muted);
     line-height: 1.65; margin-bottom: 8px;
     display: -webkit-box; -webkit-line-clamp: 2;
     -webkit-box-orient: vertical; overflow: hidden;
@@ -297,7 +300,7 @@
     display: flex; align-items: center; gap: 8px;
     padding: 6px 10px; border-radius: 6px;
     background: var(--surface2); border: 1px solid var(--border);
-    font-size: 0.68rem; color: var(--accent);
+    font-size: 0.82rem; color: var(--accent);
     text-decoration: none; transition: border-color 0.12s;
     cursor: pointer;
   }
@@ -346,8 +349,8 @@
   .mention-item-year { font-size: 0.60rem; color: var(--text-muted); flex-shrink: 0; }
 
   /* RQ description display */
-  .rq-desc-display { font-size: 0.85rem; color: var(--text-muted); line-height: 1.8; word-break: break-word; }
-  .rq-desc-display .mention-chip { font-size: 0.85rem; }
+  .rq-desc-display { font-size: 0.95rem; color: var(--text-muted); line-height: 1.8; word-break: break-word; }
+  .rq-desc-display .mention-chip { font-size: 0.95rem; }
 
   /* ── Notes ── */
   .note-card {
@@ -358,7 +361,7 @@
   }
   .note-card:hover { border-color: #b0b8cc; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
   .note-card.expanded { border-color: var(--accent); }
-  .note-title { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .note-title { font-family: 'Playfair Display', serif; font-size: 1.08rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
   .note-expanded { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); display: none; flex-direction: column; gap: 12px; user-select: text; }
   .note-expanded.open { display: flex; }
   .note-file-list { display: flex; flex-direction: column; gap: 12px; }
@@ -367,7 +370,7 @@
     display: flex; align-items: center; gap: 8px;
     padding: 6px 10px; border-radius: 6px;
     background: var(--surface2); border: 1px solid var(--border);
-    font-size: 0.68rem; transition: border-color 0.12s, background 0.12s;
+    font-size: 0.82rem; transition: border-color 0.12s, background 0.12s;
   }
   .note-file-row:hover { border-color: var(--accent); background: rgba(58,123,213,0.05); }
   .note-file-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--accent); }
@@ -382,7 +385,7 @@
     padding: 7px 14px; border-radius: 6px;
     background: rgba(58,123,213,0.08); border: 1px solid rgba(58,123,213,0.25);
     color: var(--accent); font-size: 0.70rem; cursor: pointer;
-    text-decoration: none; transition: all 0.14s; font-family: 'DM Mono', monospace;
+    text-decoration: none; transition: all 0.14s; font-family: var(--font-base);
   }
   .pdf-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
 
@@ -440,8 +443,8 @@
     /* Cards */
     .paper-card, .rq-card, .note-card, .scientist-card { padding: 12px 14px; }
     .paper-card.marked::before { left: 5px; top: 10px; bottom: 10px; width: 4px; }
-    .paper-title, .rq-question, .note-title { font-size: 0.88rem; }
-    .paper-authors { font-size: 0.62rem; }
+    .paper-title, .rq-question, .note-title { font-size: 1rem; }
+    .paper-authors { font-size: 0.78rem; }
     .card-actions { gap: 4px; }
     .icon-btn { width: 34px; height: 34px; font-size: 0.8rem; }
     .icon-btn.link-btn { width: 60px; height: 34px; }
@@ -521,7 +524,6 @@
 <header>
   <button id="hamburgerBtn" onclick="toggleSidebar()">☰</button>
   <h1>Research <span>Records</span></h1>
-  <span class="header-meta">// personal research library</span>
   <div class="header-actions">
     <span class="user-badge" id="userBadge"></span>
     <button class="btn btn-ghost owner-only" onclick="openShareModal()">Share</button>
@@ -530,7 +532,7 @@
     <button class="btn btn-primary owner-only" id="btnAddRQ" style="display:none" onclick="openRQModal()">+ Research Question</button>
     <button class="btn btn-primary owner-only" id="btnAddNote" style="display:none" onclick="openNoteModal()">+ Note</button>
     <button class="btn btn-primary owner-only" id="btnAddPaper" onclick="openAddModal()">+ Add Paper</button>
-    <button class="btn btn-ghost owner-only" onclick="doLogout()" title="Sign out" style="font-size:0.65rem">↩ Out</button>
+    <button class="btn btn-ghost owner-only" onclick="doLogout()" title="Sign out">↩ Out</button>
   </div>
 </header>
 
@@ -778,7 +780,7 @@
       <label class="form-label">Notes</label>
       <div class="rq-desc-editor-wrap" style="position:relative">
         <div class="form-textarea rq-desc-editor" id="sfNotes" contenteditable="true"
-          style="min-height:80px;font-family:'DM Mono',monospace;font-size:0.72rem;line-height:1.7;outline:none;word-break:break-word"
+          style="min-height:80px;font-family:var(--font-base);font-size:0.90rem;line-height:1.7;outline:none;word-break:break-word"
           data-placeholder="Research focus, notable contributions… Type @ to cite"
           oninput="onMentionInput(event,'sfMentionDrop')" onkeydown="onMentionKeydown(event,'sfMentionDrop')"></div>
         <div id="sfMentionDrop" style="display:none;position:absolute;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.14);max-height:360px;overflow-y:auto;"></div>
@@ -804,7 +806,7 @@
       <label class="form-label">Description / Context</label>
       <div class="rq-desc-editor-wrap" style="position:relative">
         <div class="form-textarea rq-desc-editor" id="rqDesc" contenteditable="true"
-          style="min-height:100px;font-family:'DM Mono',monospace;font-size:0.72rem;line-height:1.7;outline:none;word-break:break-word"
+          style="min-height:100px;font-family:var(--font-base);font-size:0.90rem;line-height:1.7;outline:none;word-break:break-word"
           data-placeholder="Background, motivation, current thinking… Type @ to cite a paper or scientist"
           oninput="onRQDescInput(event)" onkeydown="onRQDescKeydown(event)"></div>
         <!-- @ mention dropdown -->
@@ -878,7 +880,7 @@
       <label class="form-label">Description</label>
       <div class="rq-desc-editor-wrap" style="position:relative">
         <div class="form-textarea rq-desc-editor" id="nfDesc" contenteditable="true"
-          style="min-height:80px;font-family:'DM Mono',monospace;font-size:0.72rem;line-height:1.7;outline:none;word-break:break-word"
+          style="min-height:80px;font-family:var(--font-base);font-size:0.90rem;line-height:1.7;outline:none;word-break:break-word"
           data-placeholder="Notes about this document… Type @ to cite"
           oninput="onMentionInput(event,'nfMentionDrop')" onkeydown="onMentionKeydown(event,'nfMentionDrop')"></div>
         <div id="nfMentionDrop" style="display:none;position:absolute;z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.14);max-height:360px;overflow-y:auto;"></div>
@@ -1520,14 +1522,14 @@ function addProgressEntryDOM(date, text) {
   const dateInput = document.createElement('input');
   dateInput.type = 'date';
   dateInput.value = date || today;
-  dateInput.style.cssText = "font-family:'DM Mono',monospace;font-size:0.65rem;background:transparent;border:none;color:var(--text-muted);outline:none;cursor:pointer";
+  dateInput.style.cssText = "font-family:var(--font-base);font-size:0.70rem;background:transparent;border:none;color:var(--text-muted);outline:none;cursor:pointer";
 
   const dropId = entryId + '-drop';
   const editor = document.createElement('div');
   editor.className = 'rq-desc-editor';
   editor.contentEditable = 'true';
   editor.dataset.placeholder = 'Describe your progress… Type @ to cite a paper or note';
-  editor.style.cssText = "font-family:'DM Mono',monospace;font-size:0.70rem;background:transparent;border:none;outline:none;min-height:50px;color:var(--text);line-height:1.6;word-break:break-word";
+  editor.style.cssText = "font-family:var(--font-base);font-size:0.90rem;background:transparent;border:none;outline:none;min-height:50px;color:var(--text);line-height:1.6;word-break:break-word";
   if (text) editor.innerHTML = rqRawToEditorHTML(text);
   editor.addEventListener('input', ev => onMentionInput(ev, dropId, { priority: ['rq', 'note', 'paper', 'scientist'], fullTypes: ['rq', 'note'] }));
   editor.addEventListener('keydown', ev => onMentionKeydown(ev, dropId));
