@@ -2532,11 +2532,20 @@ function updateToolbar(el) {
 
 // ── Category modal ────────────────────────────────────────────────────────────
 let selectedColor = COLORS[0];
+function usedCategoryColors() {
+  return new Set(state.categories.map(c => String(c.color || '').toLowerCase()));
+}
+function availableCategoryColors() {
+  const used = usedCategoryColors();
+  return COLORS.filter(c => !used.has(c.toLowerCase()));
+}
 function openCatModal() {
-  document.getElementById('cName').value=''; selectedColor=COLORS[0];
-  document.getElementById('colorPicker').innerHTML = COLORS.map((c,i)=>
+  const available = availableCategoryColors();
+  document.getElementById('cName').value='';
+  selectedColor = available[0] || '';
+  document.getElementById('colorPicker').innerHTML = available.length ? available.map((c,i)=>
     `<div class="color-swatch ${i===0?'selected':''}" style="background:${c}" onclick="pickColor(this,'${c}')"></div>`
-  ).join('');
+  ).join('') : `<span style="font-size:0.65rem;color:var(--text-muted)">All palette colors are already used.</span>`;
   document.getElementById('catModal').classList.add('open');
   setTimeout(()=>document.getElementById('cName').focus(),60);
 }
@@ -2548,6 +2557,8 @@ function pickColor(el,color) {
 async function saveCat() {
   const name = document.getElementById('cName').value.trim();
   if (!name) { toast('Category name required.'); return; }
+  if (!selectedColor) { toast('No unused category colors available.'); return; }
+  if (usedCategoryColors().has(selectedColor.toLowerCase())) { toast('That category color is already used.'); return; }
   const cat = { id:uid(), name, color:selectedColor };
   state.categories.push(cat);
   await dbSaveCat(cat);
