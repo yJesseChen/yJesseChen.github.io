@@ -2328,9 +2328,15 @@ async function loadShareLinks() {
     return `<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
       <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(l.name || 'Share link')} ${l.enabled?'':'(disabled)'}</span>
       <a href="${esc(url)}" target="_blank" style="color:var(--accent);text-decoration:underline dotted">open</a>
+      <button class="btn btn-ghost" style="font-size:0.58rem;padding:3px 8px" onclick="copyShareLink('${esc(url)}')">Copy Link</button>
       <button class="btn btn-ghost" style="font-size:0.58rem;padding:3px 8px" onclick="disableShareLink('${l.id}')">Expire</button>
     </div>`;
   }).join('');
+}
+
+async function copyShareLink(url) {
+  await navigator.clipboard?.writeText(url).catch(()=>{});
+  toast('Share link copied.');
 }
 
 async function disableShareLink(id) {
