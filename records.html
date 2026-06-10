@@ -619,7 +619,7 @@
         </select>
         <span class="view-label" id="countLabel">0 papers</span>
       </div>
-      <div class="paper-list" id="paperList"></div>
+      <div class="paper-list" id="paperList" onclick="closeExpandedOnBlankClick(event,'papers')"></div>
     </div>
 
     <!-- Scientists -->
@@ -637,7 +637,7 @@
         <input class="search-box" id="rqSearchBox" placeholder="Search research questions…" oninput="renderRQ()">
         <span class="view-label" id="rqCountLabel">0 questions</span>
       </div>
-      <div class="paper-list" id="rqList"></div>
+      <div class="paper-list" id="rqList" onclick="closeExpandedOnBlankClick(event,'rq')"></div>
     </div>
 
     <!-- Notes -->
@@ -646,7 +646,7 @@
         <input class="search-box" id="notesSearchBox" placeholder="Search notes…" oninput="renderNotes()">
         <span class="view-label" id="notesCountLabel">0 notes</span>
       </div>
-      <div class="paper-list" id="notesList"></div>
+      <div class="paper-list" id="notesList" onclick="closeExpandedOnBlankClick(event,'notes')"></div>
     </div>
   </main>
 </div>
@@ -1223,6 +1223,24 @@ function setRQCat(id) {
   renderRQSidebar(); renderRQ(); closeSidebarOnMobile();
 }
 
+function collapseExpandedItems(section) {
+  if (section === 'papers' || !section) {
+    document.querySelectorAll('.paper-card.expanded').forEach(card => card.classList.remove('expanded'));
+    document.querySelectorAll('.card-expanded.open').forEach(exp => exp.classList.remove('open'));
+  }
+  if (section === 'rq' || !section) {
+    if (state.expandedRQ) { state.expandedRQ = null; renderRQ(); }
+  }
+  if (section === 'notes' || !section) {
+    if (state.expandedNote) { state.expandedNote = null; renderNotes(); }
+  }
+}
+
+function closeExpandedOnBlankClick(e, section) {
+  if (e.target !== e.currentTarget) return;
+  collapseExpandedItems(section);
+}
+
 function renderRQ() {
   const q = (document.getElementById('rqSearchBox').value||'').toLowerCase();
   let questions = state.questions.slice();
@@ -1315,6 +1333,11 @@ async function deleteProgressEntry(rqId, index, e) {
 
 function toggleRQ(id, e) {
   if (e.target.closest('a, button')) return;
+  if (state.expandedRQ === id && !e.target.closest('.rq-question,.card-tags,.rq-ref-link,.rq-desc-display,.card-meta')) {
+    state.expandedRQ = null;
+    renderRQ();
+    return;
+  }
   state.expandedRQ = state.expandedRQ === id ? null : id;
   renderRQ();
 }
@@ -1612,6 +1635,11 @@ function renderNoteFiles(n) {
 
 function toggleNote(id, e) {
   if (e.target.closest('a, button')) return;
+  if (state.expandedNote === id && !e.target.closest('.note-title,.card-tags,.note-file-row,.rq-desc-display,.card-meta')) {
+    state.expandedNote = null;
+    renderNotes();
+    return;
+  }
   state.expandedNote = state.expandedNote === id ? null : id;
   renderNotes();
 }
@@ -2330,6 +2358,12 @@ function renderPapers() {
 
 function toggleCard(id, e) {
   if (e.target.closest('a, button, textarea, [contenteditable], .rq-desc-editor')) return;
+  const card = document.getElementById(`card-${id}`);
+  if (card?.classList.contains('expanded') && !e.target.closest('.paper-title,.paper-authors,.card-tags,.abstract-text,.comment-preview,.comment-editor-wrap,.card-meta')) {
+    document.getElementById(`exp-${id}`)?.classList.remove('open');
+    card.classList.remove('expanded');
+    return;
+  }
   document.getElementById(`exp-${id}`)?.classList.toggle('open');
   document.getElementById(`card-${id}`)?.classList.toggle('expanded');
 }
