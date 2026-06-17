@@ -179,6 +179,15 @@ main { padding-bottom: 70px; }
   padding: 50px 0 10px;
 }
 
+/* Grid items default to min-width: auto, which lets unwrapped content
+   (e.g. the flex rows below) force the column — and the whole page —
+   wider than the viewport on mobile. min-width: 0 lets them shrink
+   and wrap normally instead of overflowing. */
+.hero-side,
+.hero-info {
+  min-width: 0;
+}
+
 .hero img.avatar {
   display: block;
   width: 180px;
@@ -208,6 +217,11 @@ main { padding-bottom: 70px; }
   text-justify: inter-word;
 }
 .info-list li:last-child { border-bottom: none; }
+/* Same min-width: auto fix as above — lets the address/email text
+   wrap inside its flex item instead of pushing past the edge. */
+.info-list li > span {
+  min-width: 0;
+}
 .info-list .label {
   font-weight: 700;
   color: var(--rust);
@@ -380,6 +394,10 @@ main { padding-bottom: 70px; }
   border-bottom: 1px solid var(--border);
 }
 .timeline-item:last-child { border-bottom: none; }
+.timeline-item .date,
+.timeline-item .what {
+  min-width: 0;
+}
 .timeline-item .date {
   color: var(--rust);
   font-size: 0.88rem;
