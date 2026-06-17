@@ -1,0 +1,425 @@
+/* ==========================================================================
+   Yuan Chen — personal site
+   Warm academic + clean modern blend
+   ========================================================================== */
+
+:root {
+  --cream: #ffffff;
+  --cream-alt: #f2f5f9;
+  --card: #ffffff;
+  --ink: #1c2b3a;
+  --ink-soft: #5b7184;
+  --rust: #205ea6;
+  --rust-light: #3f80c9;
+  --gold: #6f93bd;
+  --border: #d8e2ee;
+  --shadow: 0 2px 14px rgba(28, 43, 58, 0.08);
+  --max-width: 880px;
+  --nav-height: 72px;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: "Optima", "STFangSong", -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif;
+  font-size: 16.5px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.25s ease, color 0.25s ease;
+  text-align: justify;
+  text-justify: inter-word;
+}
+
+h1, h2, h3, h4 {
+  font-family: "Optima", "STFangSong", -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.25;
+  margin: 0 0 0.5em;
+}
+
+h1 { font-size: 2.5rem; font-weight: 500; }
+h2 { font-size: 1.5rem; letter-spacing: 0.01em; -webkit-text-stroke: 0.3px currentColor; }
+h3 { font-size: 1.15rem; -webkit-text-stroke: 0.3px currentColor; }
+
+/* Optima's bold face has very low weight contrast — add a hairline
+   text-stroke so bold/emphasis text actually reads as bold. */
+strong, b, .brand {
+  -webkit-text-stroke: 0.3px currentColor;
+}
+
+p { margin: 0 0 1.1em; }
+
+a {
+  color: var(--rust);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+a:hover { border-bottom-color: var(--rust); }
+
+ul { padding-left: 1.3em; }
+li { margin-bottom: 0.45em; }
+
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 28px;
+}
+
+/* ---------------- Nav ---------------- */
+.site-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+
+.site-nav .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--nav-height);
+}
+
+.brand {
+  font-family: "Optima", "STFangSong", -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--ink);
+  border-bottom: none;
+  white-space: nowrap;
+}
+.brand:hover { color: var(--rust); border-bottom: none; }
+.brand .surname { color: var(--rust); }
+.brand .cn-name {
+  font-family: "Noto Serif SC", cursive, sans-serif;
+  font-weight: 400;
+  font-size: 0.9em;
+  margin-left: 2px;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-links a {
+  color: var(--ink-soft);
+  font-size: 0.93rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  border-bottom: 2px solid transparent;
+  padding-bottom: 4px;
+}
+.nav-links a:hover,
+.nav-links a.active {
+  color: var(--rust);
+  border-bottom-color: var(--rust);
+}
+
+.nav-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+/* ---------------- Hero / page header ---------------- */
+.page-header {
+  padding: 56px 0 28px;
+}
+.page-header .kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.78rem;
+  color: var(--rust-light);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.page-header p.lede {
+  color: var(--ink-soft);
+  font-size: 1.05rem;
+  max-width: 640px;
+}
+
+main { padding-bottom: 70px; }
+
+/* ---------------- Home hero ---------------- */
+.hero {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 48px;
+  align-items: start;
+  padding: 50px 0 10px;
+}
+
+.hero img.avatar {
+  display: block;
+  width: 180px;
+  height: 180px;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 4px solid var(--card);
+  box-shadow: 0 0 0 3px var(--rust), var(--shadow);
+  margin: 0 auto 22px;
+}
+
+.info-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+}
+.info-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+  text-align: justify;
+  text-justify: inter-word;
+}
+.info-list li:last-child { border-bottom: none; }
+.info-list .label {
+  font-weight: 700;
+  color: var(--rust);
+}
+.info-list .icon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--rust);
+}
+.info-list a { color: var(--rust); }
+.info-list a:hover { color: var(--rust-light); }
+
+.hero-info h1 { margin-bottom: 18px; }
+.hero-info p { color: var(--ink); max-width: 660px; }
+.hero-info a { font-weight: 500; }
+.hero-info .related-label {
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+/* ---------------- Pills / tags ---------------- */
+.pill-row {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 8px;
+  margin: 18px 0 8px;
+  padding: 4px 2px;
+}
+.pill {
+  display: inline-block;
+  flex-shrink: 0;
+  white-space: nowrap;
+  background: var(--cream-alt);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+.pill:hover {
+  border-color: var(--rust);
+  background: rgba(32, 94, 166, 0.08);
+  color: var(--rust);
+  transform: translateY(-1px);
+}
+
+/* ---------------- Icon buttons (social/profile links) ---------------- */
+.social-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  margin: 18px 0 6px;
+}
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--rust);
+  font-size: 2.15rem;
+  line-height: 1;
+  border-bottom: none;
+  transition: opacity 0.2s ease;
+}
+.icon-btn:hover {
+  opacity: 0.7;
+  border-bottom: none;
+}
+.icon-btn .text-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  background: var(--rust);
+  color: #fff;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.icon-btn .text-glyph i { font-size: 1rem; }
+.icon-btn .text-glyph .spiral-icon {
+  width: 1.3rem;
+  height: 1.3rem;
+  display: block;
+}
+
+/* ---------------- Section ---------------- */
+.section {
+  padding: 28px 0 14px;
+  border-top: 1px solid var(--border);
+}
+.section:first-of-type { border-top: none; }
+.section-title {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.section-title h2 { margin: 0; }
+.section-title .count {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
+/* ---------------- Publications ---------------- */
+.pub-group { margin-bottom: 14px; }
+.pub-group h3 {
+  color: var(--rust);
+  font-size: 0.92rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+.pub-list {
+  list-style: disc;
+  padding-left: 1.2em;
+  margin: 0;
+}
+.pub-item {
+  padding: 0;
+  margin-bottom: 10px;
+}
+.pub-item::marker { color: var(--ink-soft); }
+.pub-item:last-child { margin-bottom: 0; }
+.pub-item .pub-title {
+  font-weight: 400;
+  color: var(--ink);
+  font-size: 1.08rem;
+  line-height: 1.35;
+  margin-bottom: 2px;
+}
+.pub-item .pub-authors {
+  color: var(--ink);
+  font-size: 0.97rem;
+  line-height: 1.35;
+  margin-bottom: 2px;
+}
+.pub-item .pub-venue {
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+.pub-item .pub-venue em { font-style: italic; }
+.pub-item .pub-venue a {
+  color: var(--rust);
+  font-weight: 600;
+  margin-left: 4px;
+  white-space: nowrap;
+}
+.pub-item .pub-venue a:hover { color: var(--rust-light); }
+
+/* ---------------- Timeline (talks) ---------------- */
+.timeline-item {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: 18px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.timeline-item:last-child { border-bottom: none; }
+.timeline-item .date {
+  color: var(--rust);
+  font-size: 0.88rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.timeline-item .what .conf { font-weight: 600; }
+.timeline-item .what .loc { color: var(--ink-soft); font-size: 0.9rem; }
+
+/* ---------------- Footer ---------------- */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 32px 0 46px;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+}
+footer .container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+footer .icons {
+  display: flex;
+  gap: 16px;
+}
+footer .icons a {
+  color: var(--ink-soft);
+  border-bottom: none;
+  font-size: 0.85rem;
+}
+footer .icons a:hover { color: var(--rust); }
+
+/* ---------------- Responsive ---------------- */
+@media (max-width: 720px) {
+  .hero { grid-template-columns: 1fr; }
+  .hero img.avatar { width: 150px; height: 150px; }
+  .nav-links {
+    position: absolute;
+    top: var(--nav-height);
+    left: 0;
+    right: 0;
+    background: var(--cream);
+    border-bottom: 1px solid var(--border);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 16px 28px 22px;
+    display: none;
+  }
+  .nav-links.open { display: flex; }
+  .nav-links a { width: 100%; padding: 10px 0; }
+  .nav-toggle { display: inline-flex; }
+  .timeline-item { grid-template-columns: 1fr; gap: 4px; }
+  h1 { font-size: 2rem; }
+}
