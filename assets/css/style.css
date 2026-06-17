@@ -434,8 +434,12 @@ footer .icons a:hover { color: var(--rust); }
 
 /* ---------------- Responsive ---------------- */
 @media (max-width: 720px) {
-  body { text-align: left; }
-  .info-list li { text-align: left; }
+  /* Keep justify on phone too, but allow word-internal breaks so
+     narrow lines don't get ugly, stretched-out gaps between words. */
+  body {
+    hyphens: auto;
+    -webkit-hyphens: auto;
+  }
   .hero { grid-template-columns: 1fr; gap: 30px; padding: 36px 0 6px; }
   .hero img.avatar { width: 150px; height: 150px; }
   .social-row { gap: 6px; }
