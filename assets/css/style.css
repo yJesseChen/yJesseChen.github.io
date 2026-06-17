@@ -21,7 +21,11 @@
 
 * { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
+}
 
 body {
   margin: 0;
@@ -34,6 +38,8 @@ body {
   transition: background 0.25s ease, color 0.25s ease;
   text-align: justify;
   text-justify: inter-word;
+  overflow-wrap: break-word;
+  overflow-x: hidden;
 }
 
 h1, h2, h3, h4 {
@@ -79,6 +85,7 @@ li { margin-bottom: 0.45em; }
   top: 0;
   z-index: 50;
   background: rgba(255, 255, 255, 0.92);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
 }
@@ -138,6 +145,9 @@ li { margin-bottom: 0.45em; }
   font-size: 1.4rem;
   color: var(--ink);
   cursor: pointer;
+  padding: 10px;
+  margin: -10px;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ---------------- Hero / page header ---------------- */
@@ -226,6 +236,7 @@ main { padding-bottom: 70px; }
   display: flex;
   flex-wrap: nowrap;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   gap: 8px;
   margin: 18px 0 8px;
   padding: 4px 2px;
@@ -267,6 +278,9 @@ main { padding-bottom: 70px; }
   line-height: 1;
   border-bottom: none;
   transition: opacity 0.2s ease;
+  padding: 5px;
+  margin: -5px;
+  -webkit-tap-highlight-color: transparent;
 }
 .icon-btn:hover {
   opacity: 0.7;
@@ -402,8 +416,11 @@ footer .icons a:hover { color: var(--rust); }
 
 /* ---------------- Responsive ---------------- */
 @media (max-width: 720px) {
-  .hero { grid-template-columns: 1fr; }
+  body { text-align: left; }
+  .info-list li { text-align: left; }
+  .hero { grid-template-columns: 1fr; gap: 30px; padding: 36px 0 6px; }
   .hero img.avatar { width: 150px; height: 150px; }
+  .social-row { gap: 6px; }
   .nav-links {
     position: absolute;
     top: var(--nav-height);
@@ -422,4 +439,8 @@ footer .icons a:hover { color: var(--rust); }
   .nav-toggle { display: inline-flex; }
   .timeline-item { grid-template-columns: 1fr; gap: 4px; }
   h1 { font-size: 2rem; }
+}
+
+@media (max-width: 420px) {
+  .container { padding: 0 18px; }
 }
