@@ -211,7 +211,7 @@ main { padding-bottom: 70px; }
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 11px 0;
+  padding: 8px 0;
   border-bottom: 1px solid var(--border);
   text-align: justify;
   text-justify: inter-word;
@@ -281,7 +281,7 @@ main { padding-bottom: 70px; }
   align-items: center;
   justify-content: flex-start;
   gap: 10px;
-  margin: 18px 0 6px;
+  margin: 12px 0 6px;
 }
 .icon-btn {
   display: inline-flex;
