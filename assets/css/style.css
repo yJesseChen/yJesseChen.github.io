@@ -173,7 +173,7 @@ main { padding-bottom: 70px; }
 /* ---------------- Home hero ---------------- */
 .hero {
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: 270px 1fr;
   gap: 48px;
   align-items: start;
   padding: 50px 0 10px;
