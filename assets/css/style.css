@@ -366,16 +366,12 @@ main { padding-bottom: 70px; }
   margin-bottom: 2px;
 }
 .pub-item .pub-authors {
-  display: inline;
   color: var(--ink);
   font-size: 0.97rem;
   line-height: 1.35;
-}
-.pub-item .pub-authors::after {
-  content: ". ";
+  margin-bottom: 2px;
 }
 .pub-item .pub-venue {
-  display: inline;
   color: var(--ink-soft);
   font-size: 0.92rem;
   line-height: 1.35;
