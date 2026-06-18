@@ -444,6 +444,11 @@ footer .icons a:hover { color: var(--rust); }
   .hero { grid-template-columns: 1fr; gap: 30px; padding: 36px 0 6px; }
   .hero img.avatar { width: 150px; height: 150px; }
   .social-row { gap: 6px; }
+  /* Let the info list bleed slightly past the container's side padding —
+     a few extra px of width is enough for the email line to fit on one line
+     instead of wrapping "edu" to its own line. */
+  .info-list { margin: 0 -10px; }
+  .info-list li { padding: 11px 10px; }
   .nav-links {
     position: absolute;
     top: var(--nav-height);
