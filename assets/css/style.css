@@ -397,7 +397,7 @@ main { padding-bottom: 70px; }
 }
 .pub-item .pub-citation {
   color: var(--ink);
-  font-size: 0.94rem;
+  font-size: 1.03rem;
   line-height: 1.28;
 }
 .pub-item .pub-citation em { font-style: italic; }
