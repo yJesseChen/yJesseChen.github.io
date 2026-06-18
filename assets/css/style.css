@@ -348,7 +348,7 @@ main { padding-bottom: 70px; }
   margin-bottom: 10px;
 }
 .pub-list {
-  list-style: disc;
+  list-style: square;
   padding-left: 1.2em;
   margin: 0;
 }
@@ -356,7 +356,7 @@ main { padding-bottom: 70px; }
   padding: 0;
   margin-bottom: 10px;
 }
-.pub-item::marker { color: var(--ink-soft); }
+.pub-item::marker { color: var(--rust); }
 .pub-item:last-child { margin-bottom: 0; }
 .pub-item .pub-title {
   font-weight: 400;
