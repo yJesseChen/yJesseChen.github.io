@@ -365,6 +365,9 @@ main { padding-bottom: 70px; }
   line-height: 1.25;
   margin-bottom: 1px;
 }
+.pub-item .pub-title.pub-title-plain {
+  color: var(--ink);
+}
 .pub-item .pub-title a {
   color: var(--rust);
   border-bottom: none;
