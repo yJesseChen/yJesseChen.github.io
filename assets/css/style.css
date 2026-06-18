@@ -390,13 +390,14 @@ main { padding-bottom: 70px; }
   display: grid;
   grid-template-columns: 190px 1fr;
   gap: 18px;
-  padding: 14px 0;
+  padding: 9px 0;
   border-bottom: 1px solid var(--border);
 }
 .timeline-item:last-child { border-bottom: none; }
 .timeline-item .date,
 .timeline-item .what {
   min-width: 0;
+  line-height: 1.35;
 }
 .timeline-item .date {
   color: var(--rust);
@@ -405,7 +406,7 @@ main { padding-bottom: 70px; }
   white-space: nowrap;
 }
 .timeline-item .what .conf { font-weight: 600; }
-.timeline-item .what .loc { color: var(--ink-soft); font-size: 0.9rem; }
+.timeline-item .what .loc { color: var(--ink-soft); font-size: 0.85rem; margin-top: 1px; }
 
 /* ---------------- Footer ---------------- */
 footer {
