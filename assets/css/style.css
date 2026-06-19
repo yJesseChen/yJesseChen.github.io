@@ -378,6 +378,8 @@ main { padding-bottom: 70px; }
 }
 .pub-item .pub-title .pub-resource {
   display: inline-block;
+  position: relative;
+  top: 0;
   margin-left: 3px;
   padding: 1px 4px;
   border: 1px solid rgba(32, 94, 166, 0.35);
@@ -388,12 +390,14 @@ main { padding-bottom: 70px; }
   line-height: 1.2;
   vertical-align: 0.08em;
   white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease, top 0.15s ease;
 }
 .pub-item .pub-title .pub-resource + .pub-resource {
   margin-left: 2px;
 }
 .pub-item .pub-title .pub-resource:hover,
 .pub-item .pub-title .pub-resource:focus-visible {
+  top: -1px;
   background: rgba(32, 94, 166, 0.08);
   border-color: var(--rust);
   text-decoration: none;
