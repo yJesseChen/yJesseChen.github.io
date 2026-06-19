@@ -242,7 +242,7 @@ main { padding-bottom: 70px; }
 .hero-info .related-label {
   font-weight: 400;
   color: var(--ink);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 /* ---------------- Pills / tags ---------------- */
@@ -252,7 +252,7 @@ main { padding-bottom: 70px; }
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   gap: 8px;
-  margin: 18px 0 8px;
+  margin: 4px 0 8px;
   padding: 4px 2px;
 }
 .pill {
