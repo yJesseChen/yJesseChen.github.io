@@ -380,6 +380,11 @@
     text-decoration: underline dotted; text-underline-offset: 3px;
   }
   .note-file-link:hover { color: #285ab4; }
+  .note-file-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .note-file-link.muted { color: var(--text-muted); }
+  .note-file-link.muted:hover { color: var(--text); }
+  .note-file-link.danger { color: var(--text-muted); }
+  .note-file-link.danger:hover { color: var(--danger); }
   .pdf-btn {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 7px 14px; border-radius: 6px;
@@ -905,6 +910,8 @@
     </div>
   </div>
 </div>
+
+<input type="file" id="cardFileReplaceInput" style="display:none" onchange="handleCardFileReplace(event)">
 
 <!-- Share Modal -->
 <div class="modal-overlay" id="shareModal">
@@ -1612,6 +1619,7 @@ async function saveRQ() {
 let editingNoteId = null;
 let pendingNoteFile = null;
 let pendingNoteAttachments = [];
+let cardFileReplaceCtx = null; // { noteId, mode: 'main'|'attachment', path? } — used for immediate update of an existing file
 
 function renderNotesSidebar() {
   if (!document.getElementById('countNotesAll')) return;
@@ -1679,13 +1687,21 @@ function renderNoteFiles(n) {
       <div class="field-label">Main</div>
       <div class="note-file-row">
         <span class="note-file-name">${esc(n.fileName || 'PDF file')}</span>
-        <button class="note-file-link" onclick="openNoteMentionPDF('${n.id}',event)" title="Open main file">link</button>
+        <div class="note-file-actions">
+          <button class="note-file-link" onclick="openNoteMentionPDF('${n.id}',event)" title="Open main file">link</button>
+          <button class="note-file-link muted" onclick="triggerNoteMainFileReplace('${n.id}',event)" title="Replace main file">update</button>
+          <button class="note-file-link danger" onclick="deleteNoteMainFileFromCard('${n.id}',event)" title="Delete main file">delete</button>
+        </div>
       </div>
     </div>`);
   }
   const attachmentRows = (n.attachments||[]).map(att => `<div class="note-file-row">
     <span class="note-file-name">${esc(att.name)}</span>
-    <button class="note-file-link" onclick="openNoteAttachment('${esc(att.path)}',event)" title="Open attachment">link</button>
+    <div class="note-file-actions">
+      <button class="note-file-link" onclick="openNoteAttachment('${esc(att.path)}',event)" title="Open attachment">link</button>
+      <button class="note-file-link muted" onclick="triggerNoteAttachmentReplace('${n.id}','${esc(att.path)}',event)" title="Replace attachment">update</button>
+      <button class="note-file-link danger" onclick="deleteNoteAttachmentFromCard('${n.id}','${esc(att.path)}',event)" title="Delete attachment">delete</button>
+    </div>
   </div>`).join('');
   if (attachmentRows) {
     groups.push(`<div class="note-file-group">
@@ -1790,11 +1806,21 @@ function handleNoteFileSelect(e) {
 function resetNoteAttachmentPicker(existing) {
   pendingNoteAttachments = [];
   document.getElementById('nfAttachmentName').textContent = 'Click to add attachment files';
-  document.getElementById('nfAttachmentStatus').textContent = existing.length ? `${existing.length} stored attachment${existing.length>1?'s':''}` : '';
   document.getElementById('nfAttachmentInput').value = '';
   document.getElementById('nfAttachmentArea').style.borderColor = '';
+  renderExistingAttachmentsList(existing);
+}
+
+function renderExistingAttachmentsList(existing) {
+  document.getElementById('nfAttachmentStatus').textContent = existing.length ? `${existing.length} stored attachment${existing.length>1?'s':''}` : '';
   document.getElementById('nfExistingAttachments').innerHTML = existing.map(a =>
-    `<div style="font-size:0.62rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📎 ${esc(a.name)}</div>`
+    `<div class="note-file-row" style="padding:5px 8px">
+      <span class="note-file-name" style="font-size:0.68rem">📎 ${esc(a.name)}</span>
+      <div class="note-file-actions">
+        <button type="button" class="note-file-link muted" onclick="triggerNoteAttachmentReplace('${editingNoteId}','${esc(a.path)}',event)" title="Replace attachment">update</button>
+        <button type="button" class="note-file-link danger" onclick="removeExistingAttachment('${esc(a.path)}',event)" title="Delete attachment">delete</button>
+      </div>
+    </div>`
   ).join('');
 }
 
@@ -1855,6 +1881,91 @@ async function saveNote() {
     closeModal('noteModal'); renderNotes(); renderNotesSidebar(); updateTabCounts();
     toast(editingNoteId ? 'Note updated.' : 'Note added!');
   } finally { saveNote._saving = false; }
+}
+
+// ── Per-file update / delete (card view + edit modal) ──────────────────────────
+function triggerNoteMainFileReplace(noteId, e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  cardFileReplaceCtx = { noteId, mode: 'main' };
+  const input = document.getElementById('cardFileReplaceInput');
+  input.accept = '.pdf,application/pdf';
+  input.value = '';
+  input.click();
+}
+
+function triggerNoteAttachmentReplace(noteId, path, e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  cardFileReplaceCtx = { noteId, mode: 'attachment', path };
+  const input = document.getElementById('cardFileReplaceInput');
+  input.accept = '';
+  input.value = '';
+  input.click();
+}
+
+async function handleCardFileReplace(e) {
+  const file = e.target.files[0];
+  const ctx = cardFileReplaceCtx; cardFileReplaceCtx = null;
+  if (!file || !ctx) return;
+  const n = state.notes.find(x=>x.id===ctx.noteId); if (!n) return;
+  showLoading(true);
+  if (ctx.mode === 'main') {
+    if (n.filePath) await sb.storage.from('attachments').remove([n.filePath]);
+    const ext = file.name.split('.').pop();
+    const filePath = `${currentUserId}/${n.id}.${ext}`;
+    const { error: upErr } = await sb.storage.from('attachments').upload(filePath, file, { upsert: true });
+    showLoading(false);
+    if (upErr) { toast('Upload error: ' + upErr.message); return; }
+    n.filePath = filePath; n.fileName = file.name;
+    await dbSaveNote(n);
+    toast('Main file updated.');
+    if (editingNoteId === ctx.noteId) {
+      document.getElementById('nfFileName').textContent = n.fileName || 'Click to replace PDF';
+      document.getElementById('nfFileStatus').textContent = '✓ PDF stored';
+    }
+  } else {
+    await sb.storage.from('attachments').remove([ctx.path]);
+    const newPath = noteAttachmentPath(n.id, file.name);
+    const { error: upErr } = await sb.storage.from('attachments').upload(newPath, file, { upsert: true });
+    showLoading(false);
+    if (upErr) { toast('Upload error: ' + upErr.message); return; }
+    n.attachments = (n.attachments||[]).filter(a=>a.path!==ctx.path);
+    n.attachments.push({ path: newPath, name: file.name, size: file.size });
+    toast('Attachment updated.');
+    if (editingNoteId === ctx.noteId) renderExistingAttachmentsList(n.attachments||[]);
+  }
+  renderNotes();
+}
+
+async function deleteNoteMainFileFromCard(noteId, e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  const n = state.notes.find(x=>x.id===noteId); if (!n || !n.filePath) return;
+  if (!confirm('Delete the main PDF file for this note?')) return;
+  await sb.storage.from('attachments').remove([n.filePath]);
+  n.filePath = null; n.fileName = '';
+  await dbSaveNote(n);
+  renderNotes();
+  toast('Main file deleted.');
+  if (editingNoteId === noteId) {
+    document.getElementById('nfFileName').textContent = 'Click to select a PDF file';
+    document.getElementById('nfFileStatus').textContent = '';
+  }
+}
+
+async function deleteNoteAttachmentFromCard(noteId, path, e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  const n = state.notes.find(x=>x.id===noteId); if (!n) return;
+  if (!confirm('Delete this attachment?')) return;
+  await sb.storage.from('attachments').remove([path]);
+  n.attachments = (n.attachments||[]).filter(a=>a.path!==path);
+  renderNotes();
+  toast('Attachment deleted.');
+  if (editingNoteId === noteId) renderExistingAttachmentsList(n.attachments||[]);
+}
+
+async function removeExistingAttachment(path, e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  if (!editingNoteId) return;
+  await deleteNoteAttachmentFromCard(editingNoteId, path, e);
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
