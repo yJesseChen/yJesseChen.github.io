@@ -316,6 +316,7 @@ main { padding-bottom: 70px; }
   letter-spacing: -0.01em;
 }
 .icon-btn .text-glyph i { font-size: 1rem; }
+.icon-btn .text-glyph i.github-glyph { font-size: 1.48rem; }
 .icon-btn .text-glyph .spiral-icon {
   width: 1.3rem;
   height: 1.3rem;
