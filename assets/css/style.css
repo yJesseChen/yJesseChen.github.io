@@ -282,7 +282,7 @@ main { padding-bottom: 70px; }
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 10px;
+  gap: 8px;
   margin: 12px 0 6px;
 }
 .icon-btn {
@@ -470,7 +470,7 @@ footer .icons a:hover { color: var(--rust); }
   }
   .hero { grid-template-columns: 1fr; gap: 30px; padding: 36px 0 6px; }
   .hero img.avatar { width: 150px; height: 150px; }
-  .social-row { gap: 6px; }
+  .social-row { gap: 5px; }
   /* Let the info list bleed slightly past the container's side padding —
      a few extra px of width is enough for the email line to fit on one line
      instead of wrapping "edu" to its own line. */
