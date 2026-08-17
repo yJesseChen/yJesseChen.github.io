@@ -417,7 +417,7 @@ main { padding-bottom: 70px; }
   display: grid;
   grid-template-columns: 190px 1fr;
   gap: 18px;
-  padding: 9px 0;
+  padding: 6px 0;
   border-bottom: 1px solid var(--border);
 }
 .timeline-item:last-child { border-bottom: none; }
