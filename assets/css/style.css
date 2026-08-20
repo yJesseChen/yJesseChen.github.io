@@ -344,6 +344,7 @@ main { padding-bottom: 70px; }
 /* ---------------- Publications ---------------- */
 .pub-group { margin-bottom: 14px; }
 .pub-group.thesis-group { margin-top: 20px; }
+.pub-group.thesis-group h3 { margin-bottom: 4px; }
 .pub-group h3 {
   color: var(--rust);
   font-size: 0.92rem;
