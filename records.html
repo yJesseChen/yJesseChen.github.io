@@ -394,6 +394,85 @@
   }
   .pdf-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
 
+  /* ── Proposals ── */
+  .proposal-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    cursor: pointer; user-select: none;
+  }
+  .proposal-card:hover { border-color: #b0b8cc; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+  .proposal-card.expanded { border-color: var(--accent); }
+  .proposal-title { font-family: 'Playfair Display', serif; font-size: 1.12rem; font-weight: 650; color: var(--text); margin-bottom: 6px; }
+  .proposal-subtitle { color: var(--text-muted); font-size: 0.86rem; line-height: 1.6; margin-bottom: 8px; }
+  .proposal-expanded { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); display: none; flex-direction: column; gap: 18px; user-select: text; }
+  .proposal-expanded.open { display: flex; }
+  .proposal-section-title { display:flex; align-items:center; flex-wrap:wrap; gap:7px; font-size:0.73rem; letter-spacing:0.09em; text-transform:uppercase; color:var(--text-muted); margin-bottom:9px; }
+  .proposal-body { color: var(--text); font-size: 0.95rem; line-height: 1.8; }
+  .proposal-body p { margin: 0 0 8px; }
+  .proposal-body ul { margin: 0; padding-left: 1.25rem; }
+  .proposal-body li { margin: 4px 0; }
+  .proposal-plan-list { display:flex; flex-direction:column; gap:7px; }
+  .proposal-plan-item { display:flex; align-items:flex-start; gap:9px; padding:8px 10px; border:1px solid var(--border); border-radius:7px; background:var(--surface2); font-size:0.92rem; line-height:1.58; }
+  .proposal-plan-item input { margin-top:4px; accent-color:#2aab6a; flex-shrink:0; }
+  .proposal-plan-item.done { color:var(--text-muted); background:rgba(42,171,106,0.035); }
+  .proposal-plan-item.done span { text-decoration:line-through; text-decoration-color:rgba(42,171,106,0.55); }
+  .proposal-working-title { margin:2px 0 14px; padding:13px 15px; border-radius:8px; background:linear-gradient(135deg,rgba(58,123,213,0.10),rgba(58,123,213,0.035)); border:1px solid rgba(58,123,213,0.24); }
+  .proposal-working-title span { display:block; color:var(--accent); font-size:0.61rem; letter-spacing:0.10em; text-transform:uppercase; margin-bottom:4px; }
+  .proposal-working-title strong { display:block; font-family:'Playfair Display',serif; color:var(--text); font-size:1.14rem; line-height:1.45; }
+  .proposal-status { display:inline-flex; align-items:center; gap:6px; padding:3px 9px; border-radius:999px; font-size:0.70rem; font-weight:600; }
+  .proposal-status.active { color:#197a4c; background:rgba(42,171,106,0.10); }
+  .proposal-status.upcoming { color:#8a6419; background:rgba(215,161,45,0.12); }
+  .proposal-status.past { color:#6b748e; background:rgba(107,116,142,0.10); }
+  .proposal-status-dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
+  .proposal-deadline { display:inline-flex; align-items:center; gap:6px; color:var(--text-muted); font-size:0.72rem; }
+  .proposal-card .tag { font-size:0.70rem; }
+  .proposal-card .card-meta { font-size:0.70rem; }
+  .proposal-timeline { position:relative; padding:8px 4px 2px; overflow:visible; min-width:0; }
+  .proposal-track { position:relative; width:auto; min-width:0; height:48px; margin:0 14px 8px; }
+  .proposal-track-base, .proposal-track-fill { position:absolute; left:0; right:0; top:15px; height:4px; border-radius:999px; }
+  .proposal-track-base { background:var(--border); }
+  .proposal-track-fill { right:auto; background:linear-gradient(90deg,#3a7bd5,#2aab6a,#3a7bd5); background-size:200% 100%; animation:proposalFlow 3.2s linear infinite; }
+  @keyframes proposalFlow { to { background-position:-200% 0; } }
+  .proposal-today { position:absolute; top:1px; transform:translateX(-50%); z-index:3; text-align:center; }
+  .proposal-today::before { content:''; display:block; width:12px; height:12px; margin:9px auto 2px; border-radius:50%; background:#fff; border:3px solid var(--accent); box-shadow:0 0 0 4px rgba(58,123,213,0.12); }
+  .proposal-today span { display:block; white-space:nowrap; font-size:0.64rem; color:var(--accent); font-weight:600; }
+  .proposal-deadline-marker { position:absolute; right:0; top:1px; z-index:3; text-align:right; }
+  .proposal-deadline-marker::before { content:''; display:block; width:2px; height:23px; margin:7px 0 1px auto; background:#d65c5c; border-radius:2px; box-shadow:0 0 0 3px rgba(214,92,92,0.10); }
+  .proposal-deadline-marker span { display:block; white-space:nowrap; font-size:0.64rem; color:#b94343; font-weight:650; }
+  .proposal-milestones { min-width:0; width:100%; display:grid; grid-template-columns:repeat(var(--milestone-count),minmax(0,1fr)); gap:8px; }
+  .proposal-milestone { min-width:0; padding:8px 9px; border:1px solid var(--border); border-radius:7px; background:var(--surface2); overflow-wrap:anywhere; }
+  .proposal-milestone.current { border-color:rgba(58,123,213,0.6); background:rgba(58,123,213,0.06); box-shadow:0 0 0 2px rgba(58,123,213,0.08); }
+  .proposal-milestone.done { opacity:0.62; }
+  .proposal-milestone-date { font-size:0.67rem; color:var(--text-muted); margin-bottom:3px; }
+  .proposal-milestone-name { font-size:0.78rem; line-height:1.4; color:var(--text); }
+  .proposal-file-list { display:flex; flex-direction:column; gap:6px; }
+  .proposal-file { display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:6px; background:var(--surface2); border:1px solid var(--border); font-size:0.88rem; }
+  .proposal-file:hover { border-color:var(--accent); }
+  .proposal-file-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .proposal-file a { color:var(--accent); font-size:0.73rem; text-decoration:underline dotted; text-underline-offset:3px; flex-shrink:0; }
+  .proposal-literature-details { border:1px solid var(--border); border-radius:8px; background:var(--surface2); overflow:hidden; }
+  .proposal-literature-details summary { display:flex; align-items:center; gap:8px; padding:10px 11px; cursor:pointer; color:var(--text); font-size:0.90rem; list-style:none; user-select:none; }
+  .proposal-literature-details summary::-webkit-details-marker { display:none; }
+  .proposal-literature-details summary::before { content:'›'; color:var(--accent); font-size:1rem; line-height:1; transition:transform 0.15s; }
+  .proposal-literature-details[open] summary::before { transform:rotate(90deg); }
+  .proposal-literature-count { margin-left:auto; color:var(--text-muted); font-size:0.72rem; }
+  .proposal-literature-details .proposal-file-list { padding:0 9px 9px; }
+  .proposal-history-list { display:flex; flex-direction:column; gap:7px; }
+  .proposal-past-plan { border-left:3px solid var(--border); padding:9px 11px; background:var(--surface2); border-radius:0 7px 7px 0; }
+  .proposal-past-date { font-size:0.70rem; color:var(--text-muted); margin-bottom:4px; }
+  .proposal-past-title { font-size:0.88rem; font-weight:600; margin-bottom:4px; }
+  .proposal-past-completed { display:grid; grid-template-columns:18px minmax(0,1fr) auto; align-items:start; gap:9px; cursor:pointer; }
+  .proposal-past-completed input { margin-top:3px; accent-color:#2aab6a; }
+  .proposal-past-completed .proposal-past-title { color:var(--text-muted); text-decoration:line-through; text-decoration-color:rgba(42,171,106,0.55); margin:0; line-height:1.55; }
+  .proposal-past-completed .proposal-past-date { white-space:nowrap; margin:2px 0 0; }
+  .proposal-empty-subsection { color:var(--text-muted); font-size:0.82rem; padding:8px 0; }
+  .proposal-form-list { display:flex; flex-direction:column; gap:7px; }
+  .proposal-form-row { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) 26px; gap:7px; align-items:center; }
+  .proposal-form-row.timeline-row { grid-template-columns:125px 125px minmax(0,1fr) 26px; }
+  .proposal-row-remove { width:26px; height:26px; border:0; border-radius:5px; background:transparent; color:var(--text-muted); cursor:pointer; }
+  .proposal-row-remove:hover { color:var(--danger); background:rgba(224,85,85,0.08); }
+
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #c5cad8; border-radius: 4px; }
@@ -411,7 +490,7 @@
     .user-badge { display: none; }
     .header-actions { gap: 6px; }
     .btn { padding: 7px 11px; font-size: 0.68rem; }
-    #btnAddPaper, #btnAddScientist, #btnAddRQ, #btnAddNote { font-size: 0.65rem; padding: 7px 10px; }
+    #btnAddPaper, #btnAddScientist, #btnAddRQ, #btnAddNote, #btnAddProposal { font-size: 0.65rem; padding: 7px 10px; }
 
     /* Hamburger button */
     #hamburgerBtn { display: flex !important; }
@@ -446,9 +525,13 @@
     .paper-list, .scientist-list { padding: 12px 12px; gap: 10px; }
 
     /* Cards */
-    .paper-card, .rq-card, .note-card, .scientist-card { padding: 12px 14px; }
+    .paper-card, .rq-card, .note-card, .proposal-card, .scientist-card { padding: 12px 14px; }
     .paper-card.marked::before { left: 5px; top: 10px; bottom: 10px; width: 4px; }
-    .paper-title, .rq-question, .note-title { font-size: 1rem; }
+    .paper-title, .rq-question, .note-title, .proposal-title { font-size: 1rem; }
+    .proposal-form-row, .proposal-form-row.timeline-row { grid-template-columns:1fr; }
+    .proposal-row-remove { justify-self:end; }
+    .proposal-milestones { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .proposal-milestone:last-child:nth-child(odd) { grid-column:1 / -1; }
     .paper-authors { font-size: 0.78rem; }
     .card-actions { gap: 4px; }
     .icon-btn { width: 34px; height: 34px; font-size: 0.8rem; }
@@ -548,6 +631,7 @@
     <button class="btn btn-primary owner-only" id="btnAddScientist" style="display:none" onclick="openSciModal()">+ Scientist</button>
     <button class="btn btn-primary owner-only" id="btnAddRQ" style="display:none" onclick="openRQModal()">+ Research Question</button>
     <button class="btn btn-primary owner-only" id="btnAddNote" style="display:none" onclick="openNoteModal()">+ Note</button>
+    <button class="btn btn-primary owner-only" id="btnAddProposal" style="display:none" onclick="openProposalModal()">+ Proposal</button>
     <button class="btn btn-primary owner-only" id="btnAddPaper" onclick="openAddModal()">+ Add Paper</button>
     <button class="btn btn-ghost owner-only" onclick="doLogout()" title="Sign out">↩ Out</button>
   </div>
@@ -619,6 +703,36 @@
     <div id="notesCatList"></div>
   </aside>
 
+  <!-- Proposals sidebar -->
+  <aside class="sidebar" id="sidebarProposals" style="display:none">
+    <div class="sidebar-label">All Proposals</div>
+    <div class="cat-item active" id="proposalStatusAll" onclick="setProposalStatus('all')">
+      <span class="cat-dot" style="background:#6b748e"></span>
+      <span class="cat-name">All Proposals</span>
+      <span class="cat-count" id="countProposalsAll">0</span>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-label">Status</div>
+    <div class="cat-item" id="proposalStatusActive" onclick="setProposalStatus('active')">
+      <span class="cat-dot" style="background:#2aab6a"></span>
+      <span class="cat-name">Active</span>
+      <span class="cat-count" id="countProposalsActive">0</span>
+    </div>
+    <div class="cat-item" id="proposalStatusUpcoming" onclick="setProposalStatus('upcoming')">
+      <span class="cat-dot" style="background:#d7a12d"></span>
+      <span class="cat-name">Upcoming</span>
+      <span class="cat-count" id="countProposalsUpcoming">0</span>
+    </div>
+    <div class="cat-item" id="proposalStatusPast" onclick="setProposalStatus('past')">
+      <span class="cat-dot" style="background:#6b748e"></span>
+      <span class="cat-name">Past</span>
+      <span class="cat-count" id="countProposalsPast">0</span>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-label">By Category</div>
+    <div id="proposalCatList"></div>
+  </aside>
+
   <main>
     <div class="global-nav">
       <button class="global-tab active" id="tabPapers" onclick="switchSection('papers')">
@@ -632,6 +746,9 @@
       </button>
       <button class="global-tab" id="tabNotes" onclick="switchSection('notes')">
         <span>📎</span> Notes <span class="tab-count" id="tabCountNotes">0</span>
+      </button>
+      <button class="global-tab" id="tabProposals" onclick="switchSection('proposals')">
+        <span>🗂</span> Proposals <span class="tab-count" id="tabCountProposals">0</span>
       </button>
     </div>
 
@@ -679,6 +796,15 @@
         <span class="view-label" id="notesCountLabel">0 notes</span>
       </div>
       <div class="paper-list" id="notesList" onclick="closeExpandedOnBlankClick(event,'notes')"></div>
+    </div>
+
+    <!-- Proposals -->
+    <div class="section" id="sectionProposals">
+      <div class="toolbar">
+        <input class="search-box" id="proposalSearchBox" placeholder="Search proposals, plans, literature…" oninput="renderProposals()">
+        <span class="view-label" id="proposalCountLabel">0 proposals</span>
+      </div>
+      <div class="paper-list" id="proposalList" onclick="closeExpandedOnBlankClick(event,'proposals')"></div>
     </div>
   </main>
 </div>
@@ -911,6 +1037,45 @@
   </div>
 </div>
 
+<!-- Proposal Modal -->
+<div class="modal-overlay" id="proposalModal">
+  <div class="modal" style="width:720px">
+    <div class="modal-header">🗂 <span id="proposalModalTitle">Add Proposal</span></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Proposal Name *</label><input class="form-input" id="pfName" placeholder="e.g. NSF-DMS-2026-11"></div>
+      <div class="form-group" style="max-width:150px"><label class="form-label">Status</label><select class="form-select" id="pfStatus"><option value="active">Active</option><option value="upcoming">Upcoming</option><option value="past">Past</option></select></div>
+      <div class="form-group" style="max-width:170px"><label class="form-label">Target Date</label><input class="form-input" id="pfDeadline" type="date"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Categories <span style="font-size:0.55rem;color:var(--text-muted)">(select multiple)</span></label>
+      <div id="pfCatPills" style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 0;min-height:28px"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Current Contents</label><textarea class="form-textarea" id="pfContents" style="min-height:130px" placeholder="Scope, central questions, current framing…"></textarea></div>
+    <div class="form-group"><label class="form-label">Current Plans</label><textarea class="form-textarea" id="pfPlans" style="min-height:130px" placeholder="One plan item per line; begin bullets with -"></textarea></div>
+    <div class="form-group">
+      <label class="form-label">Timeline</label>
+      <div class="proposal-form-list" id="pfTimelineRows"></div>
+      <button class="btn btn-ghost" type="button" style="margin-top:7px;font-size:0.62rem;padding:5px 9px" onclick="addProposalTimelineRow()">+ Phase</button>
+      <div class="form-hint">The timeline uses the current date automatically to show completed, current, and upcoming phases.</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Related Literatures</label>
+      <div class="proposal-form-list" id="pfLiteratureRows"></div>
+      <button class="btn btn-ghost" type="button" style="margin-top:7px;font-size:0.62rem;padding:5px 9px" onclick="addProposalLiteratureRow()">+ Literature</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes / Existing Results</label>
+      <input class="form-input" id="pfNoteFiles" type="file" multiple accept=".pdf,.doc,.docx,.tex,.md,.xlsx,.xls,.csv">
+      <div class="form-hint">Files upload to the private Supabase attachments bucket when Proposal sync is available.</div>
+      <div id="pfExistingNotes" class="proposal-file-list" style="margin-top:8px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('proposalModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProposal()">Save Proposal</button>
+    </div>
+  </div>
+</div>
+
 <input type="file" id="cardFileReplaceInput" style="display:none" onchange="handleCardFileReplace(event)">
 
 <!-- Share Modal -->
@@ -967,7 +1132,7 @@ const COLORS = ['#5B4AD6','#8A3FD1','#C13AAE','#B53374','#D85C8A',
                 '#9E63C7','#C07038','#A65A2E','#8B6A2B','#6F7F2A'];
 const CATEGORY_PALETTE_VERSION = 'categoryPalette20260609-v2';
 
-let state = { categories: [], papers: [], scientists: [], questions: [], notes: [], activeCat: 'all', activeType: 'all', activeSciCat: 'all', activeRQCat: 'all', activeNotesCat: 'all', activeSection: 'papers' };
+let state = { categories: [], papers: [], scientists: [], questions: [], notes: [], proposals: [], activeCat: 'all', activeType: 'all', activeSciCat: 'all', activeRQCat: 'all', activeNotesCat: 'all', activeProposalStatus: 'all', activeProposalCat: 'all', activeSection: 'papers' };
 let currentUserId = null;
 let isShareMode = false;
 let shareToken = new URLSearchParams(location.search).get('share');
@@ -979,10 +1144,12 @@ function loadPrefs() {
   state.activeSciCat  = p.activeSciCat  || 'all';
   state.activeRQCat   = p.activeRQCat   || 'all';
   state.activeNotesCat= p.activeNotesCat|| 'all';
+  state.activeProposalStatus = p.activeProposalStatus || 'all';
+  state.activeProposalCat = p.activeProposalCat || 'all';
   state.activeSection = p.activeSection || 'papers';
 }
 function savePrefs() {
-  localStorage.setItem('rrPrefs', JSON.stringify({ activeCat: state.activeCat, activeType: state.activeType, activeSciCat: state.activeSciCat, activeRQCat: state.activeRQCat, activeNotesCat: state.activeNotesCat, activeSection: state.activeSection }));
+  localStorage.setItem('rrPrefs', JSON.stringify({ activeCat: state.activeCat, activeType: state.activeType, activeSciCat: state.activeSciCat, activeRQCat: state.activeRQCat, activeNotesCat: state.activeNotesCat, activeProposalStatus: state.activeProposalStatus, activeProposalCat: state.activeProposalCat, activeSection: state.activeSection }));
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
@@ -1303,6 +1470,9 @@ function collapseExpandedItems(section) {
   }
   if (section === 'notes' || !section) {
     if (state.expandedNote) { state.expandedNote = null; renderNotes(); }
+  }
+  if (section === 'proposals' || !section) {
+    if (state.expandedProposal) { state.expandedProposal = null; renderProposals(); }
   }
 }
 
@@ -1968,6 +2138,533 @@ async function removeExistingAttachment(path, e) {
   await deleteNoteAttachmentFromCard(editingNoteId, path, e);
 }
 
+// ── Proposals ─────────────────────────────────────────────────────────────────
+// Supabase is the primary store after login. localStorage remains a safe fallback
+// for the standalone proposal preview and for the brief period before the table is
+// created in a new Supabase project.
+const PROPOSAL_PROTOTYPE_KEY = 'rrProposalPrototype:v4';
+let editingProposalId = null;
+let proposalSupabaseReady = false;
+
+function defaultProposalPrototype() {
+  return [{
+    id: 'proposal-nsf-dms-2026-11',
+    name: 'NSF-DMS-2026-11',
+    status: 'active',
+    catIds: ['proposal-demo-molecular','proposal-demo-sde'],
+    catNames: ['Molecular Dynamics','SDE Learning'],
+    deadline: '2026-11-15',
+    currentContents: [
+      'Working title: Memory-Aware Generative Coarse-Graining of Stochastic Dynamics.',
+      '',
+      'The proposal studies when a Markovian coarse-grained model is adequate and when unresolved memory must be retained. The central pipeline is memory diagnosis → model selection → generative simulation → long-time statistical validation.',
+      '',
+      '- Aim 1: characterize and diagnose coarse-grained memory.',
+      '- Aim 2: develop memory-adaptive generative coarse-grained models.',
+      '- Aim 3: establish long-time guarantees and validate on Langevin and molecular systems.'
+    ].join('\n'),
+    currentPlans: [
+      '- Complete the eight-paper comparison and sharpen the novelty gap around PFCG.',
+      '- Build harmonic and double-well underdamped Langevin benchmarks using position-only observations.',
+      '- Compare Markov MLP, GRU, and a small causal Transformer with the same Gaussian decoder.',
+      '- Measure predictive-memory gain, Chapman–Kolmogorov defect, ACF, equilibrium density, and MFPT.',
+      '- Decide whether finite history is sufficient, whether a latent state is needed, and when conditional flow becomes necessary.'
+    ].join('\n'),
+    timeline: [
+      { start:'2026-08-24', end:'2026-09-06', label:'Literature & novelty framing' },
+      { start:'2026-09-07', end:'2026-09-27', label:'Controlled benchmarks' },
+      { start:'2026-09-28', end:'2026-10-18', label:'Methods & theory' },
+      { start:'2026-10-19', end:'2026-11-01', label:'Draft & collaboration' },
+      { start:'2026-11-02', end:'2026-11-15', label:'Final revision & submission' }
+    ],
+    literatures: [
+      { title:'Probabilistic Forecasting for Coarse-Grained Molecular Dynamics (PFCG)', fileName:'01_PFCG_Probabilistic_Forecasting_for_Coarse_Grained_MD.pdf', url:'' },
+      { title:'Introducing Memory in Coarse-Grained Simulations', fileName:'02_Introducing_Memory_in_Coarse_Grained_Simulations.pdf', url:'' },
+      { title:'Model-Free Inference of Memory in Conformational Dynamics', fileName:'03_Model_Free_Inference_of_Memory_in_Conformational_Dynamics.pdf', url:'' },
+      { title:'Markov Order Estimation with Conditional Mutual Information', fileName:'04_Markov_Order_Estimation_with_Conditional_Mutual_Information.pdf', url:'' },
+      { title:'LS4: Deep Latent State-Space Models', fileName:'05_LS4_Deep_Latent_State_Space_Models.pdf', url:'' },
+      { title:'StableSSM', fileName:'06_StableSSM.pdf', url:'' },
+      { title:'Learning Stochastic Dynamics with Transformers', fileName:'07_Learning_Stochastic_Dynamics_with_Transformers.pdf', url:'' },
+      { title:'Conditioned Normalizing Flows for Probabilistic Time Series', fileName:'08_Conditioned_Normalizing_Flows_for_Probabilistic_Time_Series.pdf', url:'' }
+    ],
+    notes: [
+      { name:'main.pdf', url:'', kind:'Existing result · upload pending' }
+    ],
+    pastPlans: [{
+      archived:'2026-08-23',
+      title:'Initial generative coarse-graining framing',
+      text:'Archived draft focused primarily on generative architecture. The current plan moves the mathematical question—when memory is necessary and how much is needed—to the center.'
+    }],
+    added: '8/31/2026'
+  }];
+}
+
+function loadProposalPrototype(reset) {
+  if (!reset) {
+    try {
+      const saved = JSON.parse(localStorage.getItem(PROPOSAL_PROTOTYPE_KEY) || 'null');
+      if (Array.isArray(saved) && saved.length) { state.proposals = saved; alignProposalCategories(); return; }
+    } catch(e) {}
+  }
+  state.proposals = defaultProposalPrototype();
+  alignProposalCategories();
+  persistProposalPrototype();
+}
+
+function alignProposalCategories() {
+  (state.proposals || []).forEach(function(proposal) {
+    const valid = (proposal.catIds || []).filter(function(id) { return state.categories.some(function(cat) { return cat.id === id; }); });
+    if (valid.length || !(proposal.catNames || []).length) return;
+    proposal.catIds = state.categories.filter(function(cat) { return proposal.catNames.includes(cat.name); }).map(function(cat) { return cat.id; });
+  });
+}
+
+function persistProposalPrototype() {
+  localStorage.setItem(PROPOSAL_PROTOTYPE_KEY, JSON.stringify(state.proposals || []));
+}
+
+function dbProposalToLocal(r) {
+  return {
+    id:r.id, name:r.name, status:r.status || 'active',
+    catIds:r.cat_ids || [], catNames:r.cat_names || [], deadline:r.deadline || '',
+    currentContents:r.current_contents || '', currentPlans:r.current_plans || '',
+    timeline:r.timeline || [], literatures:r.literatures || [], notes:r.notes || [],
+    pastPlans:r.past_plans || [], completedPlans:r.completed_plans || [],
+    completedPlanDates:r.completed_plan_dates || {}, added:r.added || '',
+  };
+}
+
+function localProposalToDB(p) {
+  return {
+    id:p.id, user_id:currentUserId, name:p.name, status:p.status,
+    cat_ids:p.catIds || [], cat_names:p.catNames || [], deadline:p.deadline || null,
+    current_contents:p.currentContents || '', current_plans:p.currentPlans || '',
+    timeline:p.timeline || [], literatures:p.literatures || [], notes:p.notes || [],
+    past_plans:p.pastPlans || [], completed_plans:p.completedPlans || [],
+    completed_plan_dates:p.completedPlanDates || {}, added:p.added || '',
+    updated_at:new Date().toISOString(),
+  };
+}
+
+async function dbSaveProposal(proposal) {
+  const { error } = await sb.from('proposals').upsert(localProposalToDB(proposal));
+  if (error) {
+    console.error(error);
+    toast('Proposal save error: ' + error.message);
+    return false;
+  }
+  return true;
+}
+
+async function dbDeleteProposal(id) {
+  const { error } = await sb.from('proposals').delete().eq('id', id);
+  if (error) {
+    console.error(error);
+    toast('Proposal delete error: ' + error.message);
+    return false;
+  }
+  return true;
+}
+
+async function persistProposal(proposal) {
+  if (proposalSupabaseReady && currentUserId && currentUserId !== 'proposal-local-preview') {
+    return dbSaveProposal(proposal);
+  }
+  persistProposalPrototype();
+  return true;
+}
+
+function proposalStorageLabel() {
+  if (currentUserId === 'proposal-local-preview') return 'Local proposal preview';
+  return proposalSupabaseReady ? 'Synced with Supabase' : 'Local fallback · run the Proposal SQL setup';
+}
+
+function proposalDate(value) {
+  return value ? new Date(value + 'T12:00:00') : null;
+}
+
+function proposalDateLabel(value) {
+  const d = proposalDate(value);
+  return d ? d.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' }) : 'No target date';
+}
+
+function renderProposalText(text) {
+  const lines = String(text || '').split(/\n/);
+  let html = '', listOpen = false;
+  lines.forEach(function(line) {
+    if (/^\s*working title\s*:/i.test(line)) {
+      if (listOpen) { html += '</ul>'; listOpen = false; }
+      html += '<div class="proposal-working-title"><span>Working Title</span><strong>' + esc(line.replace(/^\s*working title\s*:\s*/i, '')) + '</strong></div>';
+    } else if (/^\s*-\s+/.test(line)) {
+      if (!listOpen) { html += '<ul>'; listOpen = true; }
+      html += '<li>' + esc(line.replace(/^\s*-\s+/, '')) + '</li>';
+    } else {
+      if (listOpen) { html += '</ul>'; listOpen = false; }
+      if (line.trim()) html += '<p>' + esc(line) + '</p>';
+    }
+  });
+  if (listOpen) html += '</ul>';
+  return html;
+}
+
+function proposalPlanItems(text) {
+  return String(text || '').split(/\n/).map(function(line) { return line.replace(/^\s*-\s+/, '').trim(); }).filter(Boolean);
+}
+
+function renderProposalPlans(proposal) {
+  const items = proposalPlanItems(proposal.currentPlans);
+  if (!items.length) return '<div class="proposal-empty-subsection">No current plan items yet.</div>';
+  const completed = new Set(proposal.completedPlans || []);
+  const current = items.map(function(item,index) { return {item:item,index:index}; }).filter(function(entry) { return !completed.has(entry.item); });
+  if (!current.length) return '<div class="proposal-empty-subsection">All current plan items are complete.</div>';
+  return '<div class="proposal-plan-list">' + current.map(function(entry) {
+    return '<label class="proposal-plan-item" onclick="event.stopPropagation()"><input type="checkbox" onchange="toggleProposalPlan(\'' + esc(proposal.id) + '\',' + entry.index + ',event)"><span>' + esc(entry.item) + '</span></label>';
+  }).join('') + '</div>';
+}
+
+function proposalTodayISO() {
+  const today = new Date();
+  return today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+}
+
+function renderProposalPastPlans(proposal) {
+  const items = proposalPlanItems(proposal.currentPlans);
+  const completed = new Set(proposal.completedPlans || []);
+  const completedDates = proposal.completedPlanDates || {};
+  const history = items.map(function(item,index) {
+    return {kind:'completed',item:item,index:index,date:completedDates[item] || proposalTodayISO()};
+  }).filter(function(entry) { return completed.has(entry.item); });
+  (proposal.pastPlans || []).forEach(function(plan,pastIndex) {
+    history.push({kind:'legacy',title:plan.title,date:plan.archived,pastIndex:pastIndex});
+  });
+  history.sort(function(a,b) { return String(b.date || '').localeCompare(String(a.date || '')); });
+  if (!history.length) return '<div class="proposal-empty-subsection">No past plan items yet.</div>';
+  return '<div class="proposal-history-list">' + history.map(function(entry) {
+    if (entry.kind === 'completed') {
+      return '<label class="proposal-past-plan proposal-past-completed" onclick="event.stopPropagation()"><input type="checkbox" checked onchange="toggleProposalPlan(\'' + esc(proposal.id) + '\',' + entry.index + ',event)"><div class="proposal-past-title">' + esc(entry.item) + '</div><div class="proposal-past-date">Completed · ' + esc(proposalDateLabel(entry.date)) + '</div></label>';
+    }
+    return '<label class="proposal-past-plan proposal-past-completed" onclick="event.stopPropagation()"><input type="checkbox" checked onchange="restoreLegacyProposalPlan(\'' + esc(proposal.id) + '\',' + entry.pastIndex + ',event)"><div class="proposal-past-title">' + esc(entry.title) + '</div><div class="proposal-past-date">Completed · ' + esc(proposalDateLabel(entry.date)) + '</div></label>';
+  }).join('') + '</div>';
+}
+
+async function toggleProposalPlan(proposalId, itemIndex, e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  const proposal = (state.proposals || []).find(function(p) { return p.id === proposalId; });
+  if (!proposal) return;
+  const item = proposalPlanItems(proposal.currentPlans)[itemIndex];
+  if (!item) return;
+  const completed = new Set(proposal.completedPlans || []);
+  const completedDates = Object.assign({}, proposal.completedPlanDates || {});
+  if (completed.has(item)) {
+    completed.delete(item);
+    delete completedDates[item];
+  } else {
+    completed.add(item);
+    completedDates[item] = proposalTodayISO();
+  }
+  proposal.completedPlans = Array.from(completed);
+  proposal.completedPlanDates = completedDates;
+  await persistProposal(proposal);
+  renderProposals();
+}
+
+async function restoreLegacyProposalPlan(proposalId, pastIndex, e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  const proposal = (state.proposals || []).find(function(p) { return p.id === proposalId; });
+  if (!proposal || !proposal.pastPlans || !proposal.pastPlans[pastIndex]) return;
+  const plan = proposal.pastPlans[pastIndex];
+  const current = proposalPlanItems(proposal.currentPlans);
+  if (!current.includes(plan.title)) {
+    proposal.currentPlans = (String(proposal.currentPlans || '').trim() + (String(proposal.currentPlans || '').trim() ? '\n' : '') + '- ' + plan.title).trim();
+  }
+  proposal.pastPlans.splice(pastIndex, 1);
+  await persistProposal(proposal);
+  renderProposals();
+}
+
+function proposalTimelineHTML(proposal) {
+  const phases = (proposal.timeline || []).slice().sort(function(a,b) { return a.start.localeCompare(b.start); });
+  if (!phases.length) return '<div class="proposal-empty-subsection">No timeline phases yet.</div>';
+  const today = new Date();
+  today.setHours(12,0,0,0);
+  const start = proposalDate(phases[0].start);
+  const end = proposalDate(proposal.deadline || phases[phases.length - 1].end);
+  const span = Math.max(1, end - start);
+  const progress = Math.max(0, Math.min(100, ((today - start) / span) * 100));
+  const current = phases.findIndex(function(phase) {
+    return today >= proposalDate(phase.start) && today <= proposalDate(phase.end);
+  });
+  let milestones = '';
+  phases.forEach(function(phase, index) {
+    const done = today > proposalDate(phase.end);
+    const cls = index === current ? ' current' : (done ? ' done' : '');
+    milestones += '<div class="proposal-milestone' + cls + '"><div class="proposal-milestone-date">' +
+      esc(proposalDateLabel(phase.start).replace(', ' + proposalDate(phase.start).getFullYear(), '')) + ' – ' +
+      esc(proposalDateLabel(phase.end).replace(', ' + proposalDate(phase.end).getFullYear(), '')) +
+      '</div><div class="proposal-milestone-name">' + esc(phase.label) + '</div></div>';
+  });
+  const ddlLabel = proposal.deadline ? proposalDateLabel(proposal.deadline) : '';
+  return '<div class="proposal-timeline"><div class="proposal-track"><div class="proposal-track-base"></div>' +
+    '<div class="proposal-track-fill" style="width:' + progress.toFixed(2) + '%"></div>' +
+    '<div class="proposal-today" style="left:clamp(48px,' + progress.toFixed(2) + '%,calc(100% - 48px))"><span>Today · ' +
+    esc(today.toLocaleDateString(undefined,{month:'short',day:'numeric'})) + '</span></div>' +
+    (ddlLabel ? '<div class="proposal-deadline-marker"><span>DDL: ' + esc(ddlLabel) + '</span></div>' : '') + '</div>' +
+    '<div class="proposal-milestones" style="--milestone-count:' + phases.length + '">' + milestones + '</div></div>';
+}
+
+function renderProposalSidebar() {
+  const proposals = state.proposals || [];
+  document.getElementById('countProposalsAll').textContent = proposals.length;
+  ['all','active','upcoming','past'].forEach(function(status) {
+    const suffix = status.charAt(0).toUpperCase() + status.slice(1);
+    const item = document.getElementById('proposalStatus' + suffix);
+    const count = document.getElementById('countProposals' + suffix);
+    if (item) item.classList.toggle('active', (state.activeProposalStatus || 'all') === status);
+    if (count && status !== 'all') count.textContent = proposals.filter(function(p) { return p.status === status; }).length;
+  });
+  const catList = document.getElementById('proposalCatList');
+  catList.innerHTML = (state.categories || []).map(function(cat) {
+    const count = proposals.filter(function(p) { return (p.catIds || []).includes(cat.id); }).length;
+    if (!count) return '';
+    return '<div class="cat-item ' + (state.activeProposalCat === cat.id ? 'active' : '') + '" onclick="setProposalCat(\'' + esc(cat.id) + '\')"><span class="cat-dot" style="background:' +
+      esc(cat.color) + '"></span><span class="cat-name">' + esc(cat.name) + '</span><span class="cat-count">' + count + '</span></div>';
+  }).join('');
+}
+
+function setProposalStatus(status) {
+  state.activeProposalStatus = status;
+  savePrefs();
+  renderProposalSidebar();
+  renderProposals();
+  closeSidebarOnMobile();
+}
+
+function setProposalCat(catId) {
+  state.activeProposalCat = state.activeProposalCat === catId ? 'all' : catId;
+  savePrefs();
+  renderProposalSidebar();
+  renderProposals();
+  closeSidebarOnMobile();
+}
+
+function proposalFileRows(files, emptyText) {
+  if (!files || !files.length) return '<div class="proposal-empty-subsection">' + esc(emptyText) + '</div>';
+  return '<div class="proposal-file-list">' + files.map(function(file) {
+    const icon = /\.pdf$/i.test(file.name || file.title || '') ? 'PDF' : 'FILE';
+    const label = file.title || file.name;
+    const link = file.url ? '<a href="' + esc(file.url) + '" target="_blank" onclick="event.stopPropagation()">open</a>' :
+      (file.path ? '<a href="#" onclick="openProposalStoredFile(\'' + esc(file.path) + '\',event);return false">open</a>' : '<span style="font-size:0.72rem;color:var(--text-muted)">ready for upload</span>');
+    return '<div class="proposal-file"><span style="font-size:0.65rem;color:var(--text-muted);width:28px">' + icon + '</span><span class="proposal-file-name">' +
+      esc(label) + '</span>' + (file.kind ? '<span style="font-size:0.72rem;color:var(--text-muted)">' + esc(file.kind) + '</span>' : '') + link + '</div>';
+  }).join('') + '</div>';
+}
+
+async function openProposalStoredFile(path, e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  const { data, error } = await sb.storage.from('attachments').createSignedUrl(path, 3600);
+  if (error) { toast('Could not open file: ' + error.message); return; }
+  window.open(data.signedUrl, '_blank', 'noopener');
+}
+
+function proposalNoteStoragePath(proposalId, fileName) {
+  const safeName = encodeURIComponent(fileName).replace(/'/g, '%27');
+  return currentUserId + '/proposals/' + proposalId + '/notes/' + uid() + '-' + safeName;
+}
+
+function renderProposals() {
+  const box = document.getElementById('proposalSearchBox');
+  const query = (box ? box.value : '').toLowerCase();
+  let proposals = (state.proposals || []).slice();
+  if ((state.activeProposalStatus || 'all') !== 'all') proposals = proposals.filter(function(p) { return p.status === state.activeProposalStatus; });
+  if ((state.activeProposalCat || 'all') !== 'all') proposals = proposals.filter(function(p) { return (p.catIds || []).includes(state.activeProposalCat); });
+  if (query) proposals = proposals.filter(function(p) {
+    return [p.name,p.currentContents,p.currentPlans].concat((p.literatures||[]).map(function(x){return x.title;})).join(' ').toLowerCase().includes(query);
+  });
+  document.getElementById('proposalCountLabel').textContent = proposals.length + ' proposal' + (proposals.length === 1 ? '' : 's');
+  const list = document.getElementById('proposalList');
+  if (!proposals.length) {
+    list.innerHTML = '<div class="empty-state"><div class="big">🗂</div>' + (query ? 'No proposals match.' : 'No proposals yet.<br>Click <b>+ Proposal</b> to create one.') + '</div>';
+    return;
+  }
+  list.innerHTML = proposals.map(function(p) {
+    const expanded = state.expandedProposal === p.id;
+    const cats = (p.catIds || []).map(function(id) { return state.categories.find(function(cat) { return cat.id === id; }); }).filter(Boolean);
+    const today = new Date(); today.setHours(12,0,0,0);
+    const deadline = proposalDate(p.deadline);
+    const days = deadline ? Math.ceil((deadline - today) / 86400000) : null;
+    const deadlineText = days === null ? 'No target date' : (days >= 0 ? days + ' days to target' : Math.abs(days) + ' days past target');
+    const literatureRows = proposalFileRows((p.literatures || []).map(function(x){ return {name:x.fileName || x.title + '.pdf',title:x.title,url:x.url,path:x.path,kind:'Literature'}; }), 'No related literature yet.');
+    const noteRows = proposalFileRows(p.notes || [], 'No notes or result files yet.');
+    const past = renderProposalPastPlans(p);
+    return '<div class="proposal-card' + (expanded ? ' expanded' : '') + '" id="proposal-' + esc(p.id) + '" onclick="toggleProposal(\'' + esc(p.id) + '\',event)">' +
+      '<div class="card-top"><div class="card-main"><div class="proposal-title">' + esc(p.name) + '</div><div class="proposal-subtitle">' +
+      esc((p.currentContents || '').split('\n').filter(Boolean)[0] || '') + '</div><div class="card-tags">' +
+      cats.map(function(cat) { return '<span class="tag" style="background:' + esc(cat.color) + '18;color:' + esc(cat.color) + '">' + esc(cat.name) + '</span>'; }).join('') +
+      '<span class="proposal-status ' + esc(p.status) + '"><span class="proposal-status-dot"></span>' + esc(p.status.charAt(0).toUpperCase()+p.status.slice(1)) + '</span>' +
+      '<span class="proposal-deadline">◷ ' + esc(proposalDateLabel(p.deadline)) + ' · ' + esc(deadlineText) + '</span>' +
+      '<span class="tag" style="background:rgba(58,123,213,0.08);color:#3a7bd5">📄 ' + (p.literatures||[]).length + ' literature</span>' +
+      '<span class="tag" style="background:rgba(107,126,163,0.1);color:#6b7ea3">📎 ' + (p.notes||[]).length + ' notes</span></div></div>' +
+      '<div class="card-actions"><button class="icon-btn" onclick="editProposal(\'' + esc(p.id) + '\',event)">&#9998;</button><button class="icon-btn delete" onclick="deleteProposal(\'' + esc(p.id) + '\',event)">&#10005;</button></div></div>' +
+      '<div class="proposal-expanded' + (expanded ? ' open' : '') + '">' +
+      '<div><div class="proposal-section-title">Current Contents</div><div class="proposal-body">' + renderProposalText(p.currentContents) + '</div></div>' +
+      '<div><div class="proposal-section-title">Timeline</div>' + proposalTimelineHTML(p) + '</div>' +
+      '<div><div class="proposal-section-title">Current Plans</div>' + renderProposalPlans(p) + '</div>' +
+      '<div><div class="proposal-section-title">Related Literature</div><details class="proposal-literature-details"><summary>View literature <span class="proposal-literature-count">' + (p.literatures || []).length + ' PDFs · click to expand</span></summary>' + literatureRows + '</details></div>' +
+      '<div><div class="proposal-section-title">Notes · Existing Results</div>' + noteRows + '</div>' +
+      '<div><div class="proposal-section-title">Past Plans</div>' + past + '</div>' +
+      '<div class="card-meta"><span>Added ' + esc(p.added || '') + '</span><span>' + esc(proposalStorageLabel()) + '</span></div></div></div>';
+  }).join('');
+}
+
+function toggleProposal(id, e) {
+  if (e.target.closest('a,button,input,label,details,summary')) return;
+  state.expandedProposal = state.expandedProposal === id ? null : id;
+  renderProposals();
+}
+
+function addProposalTimelineRow(item) {
+  item = item || {};
+  const row = document.createElement('div');
+  row.className = 'proposal-form-row timeline-row';
+  row.innerHTML = '<input class="form-input pf-phase-start" type="date" value="' + esc(item.start || '') + '"><input class="form-input pf-phase-end" type="date" value="' + esc(item.end || '') + '"><input class="form-input pf-phase-label" placeholder="Phase name" value="' + esc(item.label || '') + '"><button type="button" class="proposal-row-remove" title="Remove">✕</button>';
+  row.querySelector('button').onclick = function(){ row.remove(); };
+  document.getElementById('pfTimelineRows').appendChild(row);
+}
+
+function addProposalLiteratureRow(item) {
+  item = item || {};
+  const row = document.createElement('div');
+  row.className = 'proposal-form-row';
+  row.dataset.path = item.path || '';
+  row.dataset.fileName = item.fileName || '';
+  row.innerHTML = '<input class="form-input pf-lit-title" placeholder="Paper title" value="' + esc(item.title || '') + '"><input class="form-input pf-lit-url" placeholder="PDF URL" value="' + esc(item.url || '') + '"><button type="button" class="proposal-row-remove" title="Remove">✕</button>';
+  row.querySelector('button').onclick = function(){ row.remove(); };
+  document.getElementById('pfLiteratureRows').appendChild(row);
+}
+
+function renderProposalCatPills(selectedIds) {
+  const container = document.getElementById('pfCatPills');
+  if (!state.categories.length) {
+    container.innerHTML = '<span style="font-size:0.72rem;color:var(--text-muted)">No categories yet. Add one from the header first.</span>';
+    return;
+  }
+  container.innerHTML = state.categories.map(function(cat) {
+    const checked = selectedIds.includes(cat.id);
+    return '<label class="cat-check-pill ' + (checked ? 'checked' : '') + '" style="background:' + esc(cat.color) + '18;color:' + esc(cat.color) + ';border-color:' +
+      (checked ? esc(cat.color) : 'transparent') + '" onclick="toggleCatPill(this,\'' + esc(cat.id) + '\',\'' + esc(cat.color) + '\')"><input type="checkbox" value="' +
+      esc(cat.id) + '" ' + (checked ? 'checked' : '') + '>' + esc(cat.name) + '</label>';
+  }).join('');
+}
+
+function openProposalModal() {
+  editingProposalId = null;
+  document.getElementById('proposalModalTitle').textContent = 'Add Proposal';
+  document.getElementById('pfName').value = '';
+  document.getElementById('pfStatus').value = 'active';
+  document.getElementById('pfDeadline').value = '';
+  document.getElementById('pfContents').value = '';
+  document.getElementById('pfPlans').value = '';
+  renderProposalCatPills([]);
+  document.getElementById('pfTimelineRows').innerHTML = '';
+  document.getElementById('pfLiteratureRows').innerHTML = '';
+  document.getElementById('pfExistingNotes').innerHTML = '<div class="proposal-empty-subsection">No files selected.</div>';
+  document.getElementById('pfNoteFiles').value = '';
+  addProposalTimelineRow();
+  addProposalLiteratureRow();
+  document.getElementById('proposalModal').classList.add('open');
+  setTimeout(function(){ document.getElementById('pfName').focus(); }, 60);
+}
+
+function editProposal(id, e) {
+  e.stopPropagation();
+  const p = (state.proposals || []).find(function(x){ return x.id === id; });
+  if (!p) return;
+  editingProposalId = id;
+  document.getElementById('proposalModalTitle').textContent = 'Edit Proposal';
+  document.getElementById('pfName').value = p.name || '';
+  document.getElementById('pfStatus').value = p.status || 'active';
+  document.getElementById('pfDeadline').value = p.deadline || '';
+  document.getElementById('pfContents').value = p.currentContents || '';
+  document.getElementById('pfPlans').value = p.currentPlans || '';
+  renderProposalCatPills(p.catIds || []);
+  document.getElementById('pfTimelineRows').innerHTML = '';
+  (p.timeline || []).forEach(addProposalTimelineRow);
+  document.getElementById('pfLiteratureRows').innerHTML = '';
+  (p.literatures || []).forEach(addProposalLiteratureRow);
+  document.getElementById('pfExistingNotes').innerHTML = proposalFileRows(p.notes || [], 'No existing note files.');
+  document.getElementById('pfNoteFiles').value = '';
+  document.getElementById('proposalModal').classList.add('open');
+}
+
+function collectProposalTimeline() {
+  return Array.from(document.querySelectorAll('#pfTimelineRows .proposal-form-row')).map(function(row) {
+    return { start:row.querySelector('.pf-phase-start').value, end:row.querySelector('.pf-phase-end').value, label:row.querySelector('.pf-phase-label').value.trim() };
+  }).filter(function(x){ return x.start && x.end && x.label; });
+}
+
+function collectProposalLiteratures() {
+  return Array.from(document.querySelectorAll('#pfLiteratureRows .proposal-form-row')).map(function(row) {
+    return { title:row.querySelector('.pf-lit-title').value.trim(), url:row.querySelector('.pf-lit-url').value.trim(), path:row.dataset.path || '', fileName:row.dataset.fileName || '' };
+  }).filter(function(x){ return x.title; });
+}
+
+async function saveProposal() {
+  const name = document.getElementById('pfName').value.trim();
+  if (!name) { toast('Proposal name is required.'); return; }
+  const existing = editingProposalId ? state.proposals.find(function(x){return x.id === editingProposalId;}) : null;
+  const proposalId = editingProposalId || uid();
+  const catIds = Array.from(document.querySelectorAll('#pfCatPills input[type=checkbox]:checked')).map(function(input) { return input.value; });
+  const selectedFiles = [];
+  for (const file of Array.from(document.getElementById('pfNoteFiles').files || [])) {
+    if (proposalSupabaseReady && currentUserId && currentUserId !== 'proposal-local-preview') {
+      const path = proposalNoteStoragePath(proposalId, file.name);
+      const { error } = await sb.storage.from('attachments').upload(path, file, { upsert:false });
+      if (error) { toast('File upload error: ' + error.message); console.error(error); return; }
+      selectedFiles.push({ name:file.name, path:path, kind:'Existing result' });
+    } else {
+      selectedFiles.push({ name:file.name, url:'', kind:'Selected locally' });
+    }
+  }
+  const proposal = {
+    id: proposalId,
+    name:name,
+    status:document.getElementById('pfStatus').value,
+    catIds:catIds,
+    catNames:state.categories.filter(function(cat) { return catIds.includes(cat.id); }).map(function(cat) { return cat.name; }),
+    deadline:document.getElementById('pfDeadline').value,
+    currentContents:document.getElementById('pfContents').value.trim(),
+    currentPlans:document.getElementById('pfPlans').value.trim(),
+    timeline:collectProposalTimeline(),
+    literatures:collectProposalLiteratures(),
+    notes:(existing && existing.notes ? existing.notes : []).filter(function(note) {
+      return !(String(note.kind || '').includes('upload pending') && selectedFiles.some(function(file) { return file.name === note.name; }));
+    }).concat(selectedFiles),
+    pastPlans:existing && existing.pastPlans ? existing.pastPlans : [],
+    completedPlans:existing && existing.completedPlans ? existing.completedPlans : [],
+    completedPlanDates:existing && existing.completedPlanDates ? existing.completedPlanDates : {},
+    added:existing ? existing.added : new Date().toLocaleDateString()
+  };
+  if (existing) state.proposals[state.proposals.findIndex(function(x){return x.id === editingProposalId;})] = proposal;
+  else state.proposals.push(proposal);
+  await persistProposal(proposal);
+  closeModal('proposalModal');
+  renderProposals();
+  renderProposalSidebar();
+  updateTabCounts();
+  toast(existing ? 'Proposal updated.' : 'Proposal added.');
+}
+
+async function deleteProposal(id, e) {
+  e.stopPropagation();
+  if (!confirm('Delete this proposal?')) return;
+  state.proposals = (state.proposals || []).filter(function(x){ return x.id !== id; });
+  if (proposalSupabaseReady && currentUserId !== 'proposal-local-preview') await dbDeleteProposal(id);
+  else persistProposalPrototype();
+  renderProposals();
+  renderProposalSidebar();
+  updateTabCounts();
+}
+
 // ── Boot ──────────────────────────────────────────────────────────────────────
 async function bootApp(user) {
   currentUserId = user.id;
@@ -1983,6 +2680,32 @@ async function bootApp(user) {
   renderPapers();
   updateTabCounts();
   switchSection(state.activeSection);
+}
+
+async function bootProposalPreview() {
+  currentUserId = 'proposal-local-preview';
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appShell').style.display = 'flex';
+  document.getElementById('userBadge').textContent = 'Local proposal prototype';
+  loadPrefs();
+  state.categories = [
+    { id:'proposal-demo-molecular', name:'Molecular Dynamics', color:'#3E74C8' },
+    { id:'proposal-demo-sde', name:'SDE Learning', color:'#168E8A' },
+    { id:'proposal-demo-rare', name:'Rare Events', color:'#B53374' }
+  ];
+  state.papers = [];
+  state.scientists = [];
+  state.questions = [];
+  state.notes = [];
+  loadProposalPrototype();
+  renderSidebar();
+  renderPapers();
+  renderSciSidebar();
+  renderRQSidebar();
+  renderNotesSidebar();
+  renderProposalSidebar();
+  updateTabCounts();
+  switchSection('proposals');
 }
 
 async function bootShareApp(token) {
@@ -2004,6 +2727,7 @@ async function bootShareApp(token) {
   renderSciSidebar();
   renderRQSidebar();
   renderNotesSidebar();
+  document.getElementById('tabProposals').style.display = 'none';
   updateTabCounts();
   switchSection('papers');
 }
@@ -2014,10 +2738,12 @@ function loadSharedPayload(data) {
   state.scientists = [];
   state.questions = (data.questions || []).map(dbRQToLocal);
   state.notes = (data.notes || []).map(r => ({ ...dbNoteToLocal(r), fileSignedUrl: r.file_signed_url || r.fileSignedUrl || null, attachments: r.attachments || [] }));
+  state.proposals = [];
 }
 
 // Check if existing session
 (async () => {
+  if (new URLSearchParams(location.search).get('proposalPreview') === '1') { await bootProposalPreview(); return; }
   if (shareToken) { await bootShareApp(shareToken); return; }
   const { data: { session } } = await sb.auth.getSession();
   if (session) await bootApp(session.user);
@@ -2032,18 +2758,34 @@ function showLoading(on) {
 
 // ── Load all data from Supabase ───────────────────────────────────────────────
 async function loadAllData() {
-  const [cats, papers, scientists, questions, notes] = await Promise.all([
+  const [cats, papers, scientists, questions, notes, proposals] = await Promise.all([
     sb.from('categories').select('*').order('name'),
     sb.from('papers').select('*').order('created_at'),
     sb.from('scientists').select('*').order('created_at'),
     sb.from('questions').select('*').order('created_at'),
     sb.from('notes').select('*').order('created_at'),
+    sb.from('proposals').select('*').order('created_at'),
   ]);
   state.categories = (cats.data || []).map(dbCatToLocal);
   state.papers     = (papers.data || []).map(dbPaperToLocal);
   state.scientists = (scientists.data || []).map(dbSciToLocal);
   state.questions  = (questions.data || []).map(dbRQToLocal);
   state.notes      = (notes.data || []).map(dbNoteToLocal);
+  if (proposals.error) {
+    proposalSupabaseReady = false;
+    console.warn('Proposal table is not ready; using local fallback.', proposals.error);
+    loadProposalPrototype();
+  } else {
+    proposalSupabaseReady = true;
+    state.proposals = (proposals.data || []).map(dbProposalToLocal);
+    if (!state.proposals.length) {
+      state.proposals = defaultProposalPrototype();
+      alignProposalCategories();
+      await Promise.all(state.proposals.map(dbSaveProposal));
+    } else {
+      alignProposalCategories();
+    }
+  }
   await loadNoteAttachments();
   await migrateLocalPaperMarks();
   await applyCategoryPaletteOnce();
@@ -2540,7 +3282,7 @@ async function deleteCat(id, e) {
 // ── Mobile sidebar ────────────────────────────────────────────────────────────
 function toggleSidebar() {
   const sec = state.activeSection;
-  const sidebarId = sec==='papers'?'sidebarPapers':sec==='scientists'?'sidebarScientists':sec==='rq'?'sidebarRQ':'sidebarNotes';
+  const sidebarId = sec==='papers'?'sidebarPapers':sec==='scientists'?'sidebarScientists':sec==='rq'?'sidebarRQ':sec==='notes'?'sidebarNotes':'sidebarProposals';
   const sidebar = document.getElementById(sidebarId);
   const overlay = document.getElementById('sidebarOverlay');
   if (!sidebar) return;
@@ -2564,7 +3306,7 @@ function closeSidebarOnMobile() {
 function switchSection(sec) {
   if (isShareMode && sec === 'scientists') sec = 'papers';
   state.activeSection = sec; savePrefs();
-  ['papers','scientists','rq','notes'].forEach(s => {
+  ['papers','scientists','rq','notes','proposals'].forEach(s => {
     const id = 'section' + s.charAt(0).toUpperCase() + s.slice(1);
     const el = document.getElementById(id) || document.getElementById('sectionRQ'.replace('RQ', s==='rq'?'RQ':''));
     // handle sectionRQ specially
@@ -2573,21 +3315,26 @@ function switchSection(sec) {
   document.getElementById('sectionScientists').classList.toggle('active', sec==='scientists');
   document.getElementById('sectionRQ').classList.toggle('active', sec==='rq');
   document.getElementById('sectionNotes').classList.toggle('active', sec==='notes');
+  document.getElementById('sectionProposals').classList.toggle('active', sec==='proposals');
   document.getElementById('tabPapers').classList.toggle('active', sec==='papers');
   document.getElementById('tabScientists').classList.toggle('active', sec==='scientists');
   document.getElementById('tabRQ').classList.toggle('active', sec==='rq');
   document.getElementById('tabNotes').classList.toggle('active', sec==='notes');
+  document.getElementById('tabProposals').classList.toggle('active', sec==='proposals');
   document.getElementById('btnAddPaper').style.display     = sec==='papers'     ? '' : 'none';
   document.getElementById('btnAddScientist').style.display = sec==='scientists' ? '' : 'none';
   document.getElementById('btnAddRQ').style.display        = sec==='rq'         ? '' : 'none';
   document.getElementById('btnAddNote').style.display      = sec==='notes'      ? '' : 'none';
+  document.getElementById('btnAddProposal').style.display  = sec==='proposals'  ? '' : 'none';
   document.getElementById('sidebarPapers').style.display     = sec==='papers'     ? '' : 'none';
   document.getElementById('sidebarScientists').style.display = sec==='scientists' ? '' : 'none';
   document.getElementById('sidebarRQ').style.display         = sec==='rq'         ? '' : 'none';
   document.getElementById('sidebarNotes').style.display      = sec==='notes'      ? '' : 'none';
+  document.getElementById('sidebarProposals').style.display  = sec==='proposals'  ? '' : 'none';
   if (sec==='scientists') { renderScientists(); renderSciSidebar(); }
   if (sec==='rq')         { renderRQ(); renderRQSidebar(); }
   if (sec==='notes')      { renderNotes(); renderNotesSidebar(); }
+  if (sec==='proposals')  { renderProposals(); renderProposalSidebar(); }
   // On mobile, hide sidebars via display:none only on desktop; on mobile they're overlay
   if (window.innerWidth <= 768) {
     document.querySelectorAll('.sidebar').forEach(s => { s.style.display = ''; s.classList.remove('open'); });
@@ -2599,6 +3346,7 @@ function updateTabCounts() {
   document.getElementById('tabCountScientists').textContent = state.scientists.length;
   document.getElementById('tabCountRQ').textContent         = state.questions.length;
   document.getElementById('tabCountNotes').textContent      = state.notes.length;
+  document.getElementById('tabCountProposals').textContent  = (state.proposals || []).length;
 }
 
 const PAPER_MARK_TOKEN = '[[marked]]';
