@@ -451,6 +451,10 @@
   .proposal-file:hover { border-color:var(--accent); }
   .proposal-file-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .proposal-file a { color:var(--accent); font-size:0.73rem; text-decoration:underline dotted; text-underline-offset:3px; flex-shrink:0; }
+  .proposal-note-editor { display:grid; grid-template-columns:minmax(0,1fr) minmax(170px,0.72fr); gap:8px; align-items:center; padding:8px 10px; border:1px solid var(--border); border-radius:7px; background:var(--surface2); }
+  .proposal-note-editor + .proposal-note-editor { margin-top:7px; }
+  .proposal-note-editor-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-muted); font-size:0.78rem; }
+  .proposal-note-editor .form-input { min-width:0; }
   .proposal-literature-details { border:1px solid var(--border); border-radius:8px; background:var(--surface2); overflow:hidden; }
   .proposal-literature-details summary { display:flex; align-items:center; gap:8px; padding:10px 11px; cursor:pointer; color:var(--text); font-size:0.90rem; list-style:none; user-select:none; }
   .proposal-literature-details summary::-webkit-details-marker { display:none; }
@@ -1065,8 +1069,9 @@
     </div>
     <div class="form-group">
       <label class="form-label">Notes / Existing Results</label>
-      <input class="form-input" id="pfNoteFiles" type="file" multiple accept=".pdf,.doc,.docx,.tex,.md,.xlsx,.xls,.csv">
+      <input class="form-input" id="pfNoteFiles" type="file" multiple accept=".pdf,.doc,.docx,.tex,.md,.xlsx,.xls,.csv" onchange="renderProposalNewNoteTitles()">
       <div class="form-hint">Files upload to the private Supabase attachments bucket when Proposal sync is available.</div>
+      <div id="pfNewNoteTitles" style="margin-top:8px"></div>
       <div id="pfExistingNotes" class="proposal-file-list" style="margin-top:8px"></div>
     </div>
     <div class="modal-footer">
@@ -2188,7 +2193,7 @@ function defaultProposalPrototype() {
       { title:'Conditioned Normalizing Flows for Probabilistic Time Series', fileName:'08_Conditioned_Normalizing_Flows_for_Probabilistic_Time_Series.pdf', url:'https://arxiv.org/pdf/2002.06103' }
     ],
     notes: [
-      { name:'main.pdf', url:'', kind:'Existing result · upload pending' }
+      { name:'main.pdf', title:'Analysis for coarse graining of Linear SDE', url:'', kind:'Existing result · upload pending' }
     ],
     pastPlans: [{
       archived:'2026-08-23',
@@ -2203,7 +2208,7 @@ function loadProposalPrototype(reset) {
   if (!reset) {
     try {
       const saved = JSON.parse(localStorage.getItem(PROPOSAL_PROTOTYPE_KEY) || 'null');
-      if (Array.isArray(saved) && saved.length) { state.proposals = saved; alignProposalCategories(); return; }
+      if (Array.isArray(saved) && saved.length) { state.proposals = saved; state.proposals.forEach(normalizeProposalNoteTitles); alignProposalCategories(); persistProposalPrototype(); return; }
     } catch(e) {}
   }
   state.proposals = defaultProposalPrototype();
@@ -2221,6 +2226,20 @@ function alignProposalCategories() {
 
 function persistProposalPrototype() {
   localStorage.setItem(PROPOSAL_PROTOTYPE_KEY, JSON.stringify(state.proposals || []));
+}
+
+function proposalFileTitleDefault(name) {
+  return String(name || '').replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function normalizeProposalNoteTitles(proposal) {
+  let changed = false;
+  (proposal.notes || []).forEach(function(note) {
+    if (note.title) return;
+    note.title = note.name === 'main.pdf' ? 'Analysis for coarse graining of Linear SDE' : proposalFileTitleDefault(note.name);
+    changed = true;
+  });
+  return changed;
 }
 
 function dbProposalToLocal(r) {
@@ -2459,6 +2478,32 @@ function proposalFileRows(files, emptyText) {
   }).join('') + '</div>';
 }
 
+function renderProposalExistingNoteEditor(notes) {
+  const container = document.getElementById('pfExistingNotes');
+  if (!notes || !notes.length) {
+    container.innerHTML = '<div class="proposal-empty-subsection">No existing note files.</div>';
+    return;
+  }
+  container.innerHTML = notes.map(function(note,index) {
+    return '<div class="proposal-note-editor"><div class="proposal-note-editor-name">' + esc(note.name || 'File') + '</div><input class="form-input pf-existing-note-title" data-index="' + index + '" placeholder="Display title" value="' + esc(note.title || proposalFileTitleDefault(note.name)) + '"></div>';
+  }).join('');
+}
+
+function renderProposalNewNoteTitles() {
+  const files = Array.from(document.getElementById('pfNoteFiles').files || []);
+  const container = document.getElementById('pfNewNoteTitles');
+  container.innerHTML = files.map(function(file,index) {
+    return '<div class="proposal-note-editor"><div class="proposal-note-editor-name">' + esc(file.name) + '</div><input class="form-input pf-new-note-title" data-index="' + index + '" placeholder="Display title" value="' + esc(proposalFileTitleDefault(file.name)) + '"></div>';
+  }).join('');
+}
+
+function collectProposalExistingNotes(existing) {
+  return (existing && existing.notes ? existing.notes : []).map(function(note,index) {
+    const input = document.querySelector('.pf-existing-note-title[data-index="' + index + '"]');
+    return Object.assign({}, note, { title:(input ? input.value.trim() : note.title) || proposalFileTitleDefault(note.name) });
+  });
+}
+
 async function openProposalStoredFile(path, e) {
   if (e && e.stopPropagation) e.stopPropagation();
   const { data, error } = await sb.storage.from('attachments').createSignedUrl(path, 3600);
@@ -2569,6 +2614,7 @@ function openProposalModal() {
   document.getElementById('pfLiteratureRows').innerHTML = '';
   document.getElementById('pfExistingNotes').innerHTML = '<div class="proposal-empty-subsection">No files selected.</div>';
   document.getElementById('pfNoteFiles').value = '';
+  document.getElementById('pfNewNoteTitles').innerHTML = '';
   addProposalTimelineRow();
   addProposalLiteratureRow();
   document.getElementById('proposalModal').classList.add('open');
@@ -2591,8 +2637,9 @@ function editProposal(id, e) {
   (p.timeline || []).forEach(addProposalTimelineRow);
   document.getElementById('pfLiteratureRows').innerHTML = '';
   (p.literatures || []).forEach(addProposalLiteratureRow);
-  document.getElementById('pfExistingNotes').innerHTML = proposalFileRows(p.notes || [], 'No existing note files.');
+  renderProposalExistingNoteEditor(p.notes || []);
   document.getElementById('pfNoteFiles').value = '';
+  document.getElementById('pfNewNoteTitles').innerHTML = '';
   document.getElementById('proposalModal').classList.add('open');
 }
 
@@ -2615,16 +2662,21 @@ async function saveProposal() {
   const proposalId = editingProposalId || uid();
   const catIds = Array.from(document.querySelectorAll('#pfCatPills input[type=checkbox]:checked')).map(function(input) { return input.value; });
   const selectedFiles = [];
-  for (const file of Array.from(document.getElementById('pfNoteFiles').files || [])) {
+  const noteFiles = Array.from(document.getElementById('pfNoteFiles').files || []);
+  for (let fileIndex = 0; fileIndex < noteFiles.length; fileIndex++) {
+    const file = noteFiles[fileIndex];
+    const titleInput = document.querySelector('.pf-new-note-title[data-index="' + fileIndex + '"]');
+    const fileTitle = (titleInput ? titleInput.value.trim() : '') || proposalFileTitleDefault(file.name);
     if (proposalSupabaseReady && currentUserId && currentUserId !== 'proposal-local-preview') {
       const path = proposalNoteStoragePath(proposalId, file.name);
       const { error } = await sb.storage.from('attachments').upload(path, file, { upsert:false });
       if (error) { toast('File upload error: ' + error.message); console.error(error); return; }
-      selectedFiles.push({ name:file.name, path:path, kind:'Existing result' });
+      selectedFiles.push({ name:file.name, title:fileTitle, path:path, kind:'Existing result' });
     } else {
-      selectedFiles.push({ name:file.name, url:'', kind:'Selected locally' });
+      selectedFiles.push({ name:file.name, title:fileTitle, url:'', kind:'Selected locally' });
     }
   }
+  const existingNotes = collectProposalExistingNotes(existing);
   const proposal = {
     id: proposalId,
     name:name,
@@ -2636,7 +2688,7 @@ async function saveProposal() {
     currentPlans:document.getElementById('pfPlans').value.trim(),
     timeline:collectProposalTimeline(),
     literatures:collectProposalLiteratures(),
-    notes:(existing && existing.notes ? existing.notes : []).filter(function(note) {
+    notes:existingNotes.filter(function(note) {
       return !(String(note.kind || '').includes('upload pending') && selectedFiles.some(function(file) { return file.name === note.name; }));
     }).concat(selectedFiles),
     pastPlans:existing && existing.pastPlans ? existing.pastPlans : [],
@@ -2783,7 +2835,9 @@ async function loadAllData() {
       alignProposalCategories();
       await Promise.all(state.proposals.map(dbSaveProposal));
     } else {
+      const titleMigrations = state.proposals.filter(normalizeProposalNoteTitles);
       alignProposalCategories();
+      if (titleMigrations.length) await Promise.all(titleMigrations.map(dbSaveProposal));
     }
   }
   await loadNoteAttachments();
