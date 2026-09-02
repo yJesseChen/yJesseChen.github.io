@@ -407,6 +407,9 @@
   .proposal-subtitle { color: var(--text-muted); font-size: 0.86rem; line-height: 1.6; margin-bottom: 8px; }
   .proposal-expanded { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); display: none; flex-direction: column; gap: 18px; user-select: text; }
   .proposal-expanded.open { display: flex; }
+  .paper-card .card-top, .rq-card .card-top, .note-card .card-top, .proposal-card .card-top, .scientist-card .sci-top { cursor: default; }
+  .paper-title, .paper-authors, .rq-question, .note-title, .proposal-title, .proposal-subtitle, .sci-name, .sci-affil { user-select: text; cursor: text; }
+  .card-expanded, .rq-expanded, .note-expanded, .proposal-expanded, .sci-expanded { cursor: auto; }
   .proposal-section-title { display:flex; align-items:center; flex-wrap:wrap; gap:7px; font-size:0.73rem; letter-spacing:0.09em; text-transform:uppercase; color:var(--text-muted); margin-bottom:9px; }
   .proposal-body { color: var(--text); font-size: 0.95rem; line-height: 1.8; }
   .proposal-body p { margin: 0 0 8px; }
@@ -1576,13 +1579,38 @@ async function deleteProgressEntry(rqId, index, e) {
   renderRQ(); renderRQSidebar(); updateTabCounts();
 }
 
-function toggleRQ(id, e) {
-  if (e.target.closest('a, button')) return;
-  if (state.expandedRQ === id && !e.target.closest('.rq-question,.card-tags,.rq-ref-link,.rq-desc-display,.card-meta')) {
-    state.expandedRQ = null;
-    renderRQ();
-    return;
+function pointTouchesRenderedText(root, x, y) {
+  if (!root || typeof document.createTreeWalker !== 'function') return false;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: function(node) {
+      return node.nodeValue && node.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+    }
+  });
+  let node;
+  while ((node = walker.nextNode())) {
+    const range = document.createRange();
+    range.selectNodeContents(node);
+    const rects = range.getClientRects();
+    for (let i = 0; i < rects.length; i++) {
+      const rect = rects[i];
+      if (x >= rect.left - 2 && x <= rect.right + 2 && y >= rect.top - 2 && y <= rect.bottom + 2) return true;
+    }
   }
+  return false;
+}
+
+function blankCardHeaderClick(e, headerSelector) {
+  if (!e || !e.currentTarget) return false;
+  if (window.getSelection && window.getSelection().toString()) return false;
+  if (e.target.closest('a,button,input,label,textarea,select,[contenteditable],details,summary')) return false;
+  const header = e.target.closest(headerSelector);
+  if (!header || !e.currentTarget.contains(header)) return false;
+  if (e.target.closest('.tag,.label-pill,.source-badge,.proposal-status,.proposal-deadline,.sci-avatar,.card-actions,.star-btn')) return false;
+  return !pointTouchesRenderedText(header, e.clientX, e.clientY);
+}
+
+function toggleRQ(id, e) {
+  if (!blankCardHeaderClick(e, '.card-top')) return;
   state.expandedRQ = state.expandedRQ === id ? null : id;
   renderRQ();
 }
@@ -1889,12 +1917,7 @@ function renderNoteFiles(n) {
 }
 
 function toggleNote(id, e) {
-  if (e.target.closest('a, button')) return;
-  if (state.expandedNote === id && !e.target.closest('.note-title,.card-tags,.note-file-row,.rq-desc-display,.card-meta')) {
-    state.expandedNote = null;
-    renderNotes();
-    return;
-  }
+  if (!blankCardHeaderClick(e, '.card-top')) return;
   state.expandedNote = state.expandedNote === id ? null : id;
   renderNotes();
 }
@@ -2562,7 +2585,7 @@ function renderProposals() {
 }
 
 function toggleProposal(id, e) {
-  if (e.target.closest('a,button,input,label,details,summary')) return;
+  if (!blankCardHeaderClick(e, '.card-top')) return;
   state.expandedProposal = state.expandedProposal === id ? null : id;
   renderProposals();
 }
@@ -3522,13 +3545,7 @@ function renderPapers() {
 }
 
 function toggleCard(id, e) {
-  if (e.target.closest('a, button, textarea, [contenteditable], .rq-desc-editor')) return;
-  const card = document.getElementById(`card-${id}`);
-  if (card?.classList.contains('expanded') && !e.target.closest('.paper-title,.paper-authors,.card-tags,.abstract-text,.comment-preview,.comment-editor-wrap,.card-meta')) {
-    document.getElementById(`exp-${id}`)?.classList.remove('open');
-    card.classList.remove('expanded');
-    return;
-  }
+  if (!blankCardHeaderClick(e, '.card-top')) return;
   document.getElementById(`exp-${id}`)?.classList.toggle('open');
   document.getElementById(`card-${id}`)?.classList.toggle('expanded');
 }
@@ -3786,12 +3803,7 @@ function renderScientists() {
 }
 
 function toggleSci(id, e) {
-  if (e.target.closest('a, button')) return;
-  if (state.expandedSci === id && !e.target.closest('.sci-avatar,.sci-name,.sci-affil,.sci-tags,.sci-notes,.sci-paper-link,.sci-meta')) {
-    state.expandedSci = null;
-    renderScientists();
-    return;
-  }
+  if (!blankCardHeaderClick(e, '.sci-top')) return;
   state.expandedSci = state.expandedSci===id ? null : id;
   renderScientists();
 }
