@@ -509,7 +509,7 @@
   .jobs-table::-webkit-scrollbar-thumb:hover { background:rgba(58,123,213,0.45); }
   .job-row { border-bottom:1px solid var(--border); }
   .job-row:last-child { border-bottom:0; }
-  .job-row-main { padding:13px 14px; cursor:pointer; transition:background 0.12s; }
+  .job-row-main { padding:13px 14px; cursor:default; user-select:text; transition:background 0.12s; }
   .job-row-main:hover { background:rgba(58,123,213,0.035); }
   .job-row.attention .job-row-main { box-shadow:inset 3px 0 0 var(--danger); background:rgba(217,79,79,0.025); }
   .job-name { font-family:'Playfair Display',serif; font-size:1.10rem; font-weight:600; line-height:1.35; color:var(--text); }
@@ -527,7 +527,7 @@
   .job-status.queued { color:#86620d; background:rgba(215,161,45,0.13); }
   .job-status.stop_requested { color:#9b5031; background:rgba(192,112,56,0.11); }
   .job-status.attention, .job-status.failed { color:#b63d3d; background:rgba(217,79,79,0.10); }
-  .job-status.completed { color:#5f6983; background:rgba(107,116,142,0.11); }
+  .job-status.completed { color:#2f70bd; background:rgba(58,123,213,0.12); }
   .job-status.stopped { color:#7c5d41; background:rgba(192,112,56,0.10); }
   @keyframes jobPulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
   .job-cell-main { min-width:0; }
@@ -537,7 +537,8 @@
   .job-resource-line + .job-resource-line { margin-top:5px; }
   .job-resource-mini { width:54px; height:4px; border-radius:999px; background:var(--surface2); overflow:hidden; flex-shrink:0; }
   .job-resource-mini span { display:block; height:100%; background:var(--accent); border-radius:inherit; }
-  .job-chevron { color:var(--text-muted); font-size:0.95rem; transition:transform 0.15s; }
+  .job-chevron { width:28px; height:28px; padding:0; border:1px solid transparent; border-radius:6px; background:transparent; color:var(--text-muted); font:inherit; font-size:0.95rem; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:transform 0.15s,color 0.12s,border-color 0.12s,background 0.12s; }
+  .job-chevron:hover, .job-chevron:focus-visible { color:var(--accent); border-color:rgba(58,123,213,0.30); background:rgba(58,123,213,0.07); outline:none; }
   .job-row.expanded .job-chevron { transform:rotate(90deg); }
   .job-row-details { display:none; padding:0 14px 15px; background:linear-gradient(180deg,rgba(238,241,248,0.45),rgba(255,255,255,0)); }
   .job-row.expanded .job-row-details { display:block; }
@@ -3145,7 +3146,7 @@ function jobRowsHTML(jobs) {
         '<div><span class="job-status ' + esc(job.status) + '">' + esc(jobStatusLabel(job.status)) + '</span></div>' +
         '<div class="job-cell-main"><div class="job-cell-title">' + esc(job.host) + '</div><div class="job-cell-sub">' + esc(job.owner) + '</div></div>' +
         '<div><div class="job-resource-line"><span>CPU ' + Number(job.cpuPercent||0).toFixed(0) + '%</span><span class="job-resource-mini"><span style="width:' + Math.min(100,Number(job.cpuPercent||0)) + '%"></span></span></div><div class="job-resource-line"><span>RAM ' + mem.toFixed(1) + ' GB</span><span class="job-resource-mini"><span style="width:' + memPct + '%"></span></span></div>' + (Number(job.gpuPercent||0)>0?'<div class="job-resource-line"><span>MPS ' + Number(job.gpuPercent).toFixed(0) + '%</span><span class="job-resource-mini"><span style="width:' + Math.min(100,Number(job.gpuPercent)) + '%"></span></span></div>':'') + '</div>' +
-        '<div class="job-cell-main"><div class="job-cell-title">' + formatJobDuration(duration) + '</div><div class="job-cell-sub">' + esc(runtimeSub) + '</div></div><div class="job-chevron">›</div>' +
+        '<div class="job-cell-main"><div class="job-cell-title">' + formatJobDuration(duration) + '</div><div class="job-cell-sub">' + esc(runtimeSub) + '</div></div><button type="button" class="job-chevron" aria-label="' + (expanded?'Collapse':'Expand') + ' job details" aria-expanded="' + (expanded?'true':'false') + '">›</button>' +
       '</div>' +
       '<div class="job-row-details">' +
         (job.unregistered?'<div class="job-alert"><b>!</b><span>This process was not launched through Records. It is observe-only: you can add metadata, but Records will never stop or signal it.</span></div>':'') +
@@ -3198,8 +3199,8 @@ async function copyJobPath(button, event) {
 }
 
 function toggleJobDetails(id, e) {
-  if (window.getSelection && window.getSelection().toString()) return;
-  if (e && e.target.closest('button,a,input')) return;
+  const explicitControl = e && e.target.closest('.job-chevron');
+  if (!explicitControl && !blankCardHeaderClick(e, '.job-row-main')) return;
   state.expandedJob = state.expandedJob === id ? null : id;
   renderJobs();
 }
