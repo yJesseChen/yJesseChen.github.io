@@ -3084,13 +3084,14 @@ function renderJobsOverview() {
   const cpu = Math.min(100, Number(host?.cpu_percent ?? running.reduce(function(sum,job){ return sum + Number(job.cpuPercent || 0); }, 0)));
   const memory = Number(host?.memory_used_gb ?? running.reduce(function(sum,job){ return sum + Number(job.memoryGB || 0); }, 0));
   const memoryTotal = Number(host?.memory_total_gb || 32);
+  const memoryPct = memoryTotal > 0 ? Math.min(100, memory / memoryTotal * 100) : 0;
   const gpuAvailable = host?.gpu_percent != null;
   const gpu = gpuAvailable ? Math.max(0, Number(host.gpu_percent)) : 0;
   const attention = (state.jobs || []).filter(function(job){ return job.status === 'attention'; }).length;
   el.innerHTML = '<div class="job-overview-card host"><span class="job-host-indicator" style="background:' + (online?'#2aab6a':'#9aa2b7') + '"></span><div><div class="job-overview-label">Compute Host</div><div class="job-overview-value">' + esc(host?.display_name || 'Mac mini') + '</div><div class="job-overview-sub">' + (online ? 'Online · heartbeat ' + formatJobTime(host.last_heartbeat_at) : 'Offline · waiting for Agent') + '</div></div></div>' +
     '<div class="job-overview-card"><div class="job-overview-label">Active Jobs</div><div class="job-overview-value">' + active.length + '</div><div class="job-overview-sub">' + attention + ' needs attention</div></div>' +
     '<div class="job-overview-card"><div class="job-overview-label">CPU Load</div><div class="job-overview-value">' + cpu.toFixed(0) + '%</div><div class="job-overview-sub">Across active jobs</div><div class="job-meter' + (cpu>90?' danger':cpu>75?' warn':'') + '"><span style="width:' + cpu + '%"></span></div></div>' +
-    '<div class="job-overview-card"><div class="job-overview-label">Memory</div><div class="job-overview-value">' + memory.toFixed(1) + ' GB</div><div class="job-overview-sub">of ' + memoryTotal.toFixed(0) + ' GB</div><div class="job-meter' + (memory/memoryTotal>0.9?' danger':memory/memoryTotal>0.75?' warn':'') + '"><span style="width:' + Math.min(100,memory/memoryTotal*100) + '%"></span></div></div>' +
+    '<div class="job-overview-card"><div class="job-overview-label">Memory</div><div class="job-overview-value">' + memoryPct.toFixed(0) + '%</div><div class="job-overview-sub">' + memory.toFixed(1) + ' of ' + memoryTotal.toFixed(0) + ' GB used</div><div class="job-meter' + (memoryPct>90?' danger':memoryPct>75?' warn':'') + '"><span style="width:' + memoryPct + '%"></span></div></div>' +
     '<div class="job-overview-card"><div class="job-overview-label">GPU / MPS Load</div><div class="job-overview-value">' + (gpuAvailable ? gpu.toFixed(0) + '%' : '—') + '</div><div class="job-overview-sub">' + (gpuAvailable ? 'Apple GPU utilization' : 'No GPU metric') + ' · ' + queued + ' queued</div><div class="job-meter"><span style="width:' + (gpuAvailable ? gpu : 0) + '%"></span></div></div>';
 }
 
