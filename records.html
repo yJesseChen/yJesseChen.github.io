@@ -544,7 +544,8 @@
   .job-meta-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px 12px; margin-top:11px; }
   .job-meta-label { display:block; font-size:0.66rem; letter-spacing:0.07em; text-transform:uppercase; color:var(--text-muted); margin-bottom:3px; }
   .job-meta-value { display:block; font-size:0.81rem; color:var(--text); overflow-wrap:anywhere; }
-  .job-path { display:block; max-width:100%; font-family:var(--font-mono); font-size:0.76rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; overflow-wrap:normal; cursor:help; }
+  .job-path { display:block; width:100%; max-width:100%; border:0; background:none; padding:0; text-align:left; color:var(--text); font-family:var(--font-mono); font-size:0.76rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; overflow-wrap:normal; cursor:pointer; }
+  .job-path:hover, .job-path:focus-visible { color:var(--accent); outline:none; }
   .job-log { font-family:var(--font-mono); font-size:0.72rem; line-height:1.7; color:#47516b; background:#f6f7fb; border:1px solid var(--border); border-radius:6px; padding:9px 10px; white-space:pre-wrap; max-height:160px; overflow:auto; user-select:text; }
   .job-alert { display:flex; gap:8px; align-items:flex-start; margin-bottom:10px; padding:10px 11px; border-radius:7px; border:1px solid rgba(217,79,79,0.25); background:rgba(217,79,79,0.055); color:#a53b3b; font-size:0.79rem; line-height:1.55; }
   .job-actions { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:7px; margin-top:10px; }
@@ -3165,7 +3166,24 @@ function compactJobPath(value) {
 
 function jobPathHTML(value) {
   const full = String(value || '—');
-  return '<span class="job-meta-value job-path" title="' + esc(full) + '">' + esc(compactJobPath(full)) + '</span>';
+  return '<button type="button" class="job-meta-value job-path" data-path="' + esc(full) + '" title="Click to copy full path" aria-label="Copy full path" onclick="copyJobPath(this,event)">' + esc(compactJobPath(full)) + '</button>';
+}
+
+async function copyJobPath(button, event) {
+  if (event) event.stopPropagation();
+  const path = button?.dataset?.path || '';
+  if (!path || path === '—') return;
+  try {
+    if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(path);
+    else {
+      const input = document.createElement('textarea');
+      input.value = path; input.style.position = 'fixed'; input.style.opacity = '0';
+      document.body.appendChild(input); input.select(); document.execCommand('copy'); input.remove();
+    }
+    toast('Path copied.');
+  } catch (error) {
+    toast('Could not copy path.');
+  }
 }
 
 function toggleJobDetails(id, e) {
