@@ -3156,17 +3156,24 @@ function jobRowsHTML(jobs) {
 }
 
 function compactJobPath(value) {
-  let path = String(value || '—');
-  path = path.replace(/^\/Users\/[^/]+\/Library\/CloudStorage\/Dropbox\//, 'Dropbox/');
+  let path = portableJobPath(value);
   path = path.replace(/^\/Users\/[^/]+\//, '~/');
   const parts = path.split('/');
   if (path.length > 68 && parts.length > 5) path = parts.slice(0,2).join('/') + '/…/' + parts.slice(-3).join('/');
   return path;
 }
 
+function portableJobPath(value) {
+  let path = String(value || '—');
+  path = path.replace(/^\/Users\/[^/]+\/Library\/CloudStorage\/Dropbox\//, '~/Dropbox/');
+  path = path.replace(/^\/Users\/[^/]+\/Dropbox\//, '~/Dropbox/');
+  return path;
+}
+
 function jobPathHTML(value) {
   const full = String(value || '—');
-  return '<button type="button" class="job-meta-value job-path" data-path="' + esc(full) + '" title="Click to copy full path" aria-label="Copy full path" onclick="copyJobPath(this,event)">' + esc(compactJobPath(full)) + '</button>';
+  const portable = portableJobPath(full);
+  return '<button type="button" class="job-meta-value job-path" data-path="' + esc(portable) + '" title="Click to copy portable path" aria-label="Copy portable path" onclick="copyJobPath(this,event)">' + esc(compactJobPath(portable)) + '</button>';
 }
 
 async function copyJobPath(button, event) {
@@ -3180,7 +3187,7 @@ async function copyJobPath(button, event) {
       input.value = path; input.style.position = 'fixed'; input.style.opacity = '0';
       document.body.appendChild(input); input.select(); document.execCommand('copy'); input.remove();
     }
-    toast('Path copied.');
+    toast('Portable path copied.');
   } catch (error) {
     toast('Could not copy path.');
   }
