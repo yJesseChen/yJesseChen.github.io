@@ -481,7 +481,7 @@
   .proposal-row-remove:hover { color:var(--danger); background:rgba(224,85,85,0.08); }
 
   /* ── Job scheduler ── */
-  .jobs-shell { flex:1; min-height:0; overflow-y:auto; padding:18px 28px 28px; }
+  .jobs-shell { flex:1; min-height:0; overflow:hidden; padding:18px 28px 28px; display:flex; flex-direction:column; }
   .jobs-overview { display:grid; grid-template-columns:1.2fr repeat(4,minmax(120px,0.72fr)); gap:10px; margin-bottom:14px; }
   .job-overview-card { background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:16px 18px; min-width:0; min-height:118px; }
   .job-overview-card:not(.host) { display:flex; flex-direction:column; }
@@ -494,7 +494,8 @@
   .job-meter > span { display:block; height:100%; border-radius:inherit; background:var(--accent); }
   .job-meter.warn > span { background:#d7a12d; }
   .job-meter.danger > span { background:var(--danger); }
-  .jobs-table { background:var(--surface); border:1px solid var(--border); border-radius:10px; max-height:clamp(380px,62vh,720px); overflow:auto; scrollbar-gutter:stable; overscroll-behavior:contain; }
+  .job-section { flex:1; min-height:0; }
+  .jobs-table { height:100%; background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:auto; scrollbar-gutter:stable; overscroll-behavior:contain; }
   .jobs-view-tabs { display:flex; align-items:center; gap:22px; margin:2px 2px 10px; border-bottom:1px solid var(--border); }
   .jobs-view-tab { position:relative; border:0; background:transparent; padding:10px 2px 11px; color:var(--text-muted); font-family:'Playfair Display',serif; font-size:1.02rem; font-weight:600; cursor:pointer; }
   .jobs-view-tab::after { content:''; position:absolute; left:0; right:0; bottom:-1px; height:2px; border-radius:2px 2px 0 0; background:transparent; }
@@ -3200,7 +3201,11 @@ async function copyJobPath(button, event) {
 
 function toggleJobDetails(id, e) {
   const explicitControl = e && e.target.closest('.job-chevron');
-  if (!explicitControl && !blankCardHeaderClick(e, '.job-row-main')) return;
+  if (!explicitControl) {
+    if (!e || !e.currentTarget || !e.target.closest('.job-row-main')) return;
+    if (window.getSelection && window.getSelection().toString()) return;
+    if (e.target.closest('a,button,input,label,textarea,select,[contenteditable],details,summary')) return;
+  }
   state.expandedJob = state.expandedJob === id ? null : id;
   renderJobs();
 }
