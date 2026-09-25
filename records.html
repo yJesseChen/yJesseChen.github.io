@@ -519,7 +519,9 @@
   .job-status::before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; }
   .job-status.running { color:#197a4c; background:rgba(42,171,106,0.10); }
   .job-status.running::before { animation:jobPulse 1.6s ease-in-out infinite; }
+  .job-status.starting { color:#2870bd; background:rgba(58,123,213,0.10); }
   .job-status.queued { color:#86620d; background:rgba(215,161,45,0.13); }
+  .job-status.stop_requested { color:#9b5031; background:rgba(192,112,56,0.11); }
   .job-status.attention, .job-status.failed { color:#b63d3d; background:rgba(217,79,79,0.10); }
   .job-status.completed { color:#5f6983; background:rgba(107,116,142,0.11); }
   .job-status.stopped { color:#7c5d41; background:rgba(192,112,56,0.10); }
@@ -944,7 +946,7 @@
 <!-- Job Modal -->
 <div class="modal-overlay" id="jobModal">
   <div class="modal" style="width:660px">
-    <div class="modal-header">▦ <span id="jobModalTitle">Submit Job · Prototype</span></div>
+    <div class="modal-header">▦ <span id="jobModalTitle">Submit Job</span></div>
     <div class="form-group"><label class="form-label">Job Name *</label><input class="form-input" id="jfName" placeholder="e.g. Linear SDE benchmark"></div>
     <div class="form-group"><label class="form-label">Description *</label><textarea class="form-input" id="jfDescription" rows="3" placeholder="What this job is testing, why it is needed, and what result is expected"></textarea></div>
     <div class="form-group"><label class="form-label">Proposal</label><select class="form-input" id="jfProposal"><option value="">No proposal</option></select></div>
@@ -1285,7 +1287,7 @@ const COLORS = ['#5B4AD6','#8A3FD1','#C13AAE','#B53374','#D85C8A',
                 '#9E63C7','#C07038','#A65A2E','#8B6A2B','#6F7F2A'];
 const CATEGORY_PALETTE_VERSION = 'categoryPalette20260609-v2';
 
-let state = { categories: [], papers: [], scientists: [], questions: [], notes: [], proposals: [], jobs: [], activeCat: 'all', activeType: 'all', activeSciCat: 'all', activeRQCat: 'all', activeNotesCat: 'all', activeProposalStatus: 'all', activeProposalCat: 'all', activeJobCat: 'all', activeSection: 'papers' };
+let state = { categories: [], papers: [], scientists: [], questions: [], notes: [], proposals: [], jobs: [], jobHost: null, activeCat: 'all', activeType: 'all', activeSciCat: 'all', activeRQCat: 'all', activeNotesCat: 'all', activeProposalStatus: 'all', activeProposalCat: 'all', activeJobCat: 'all', activeSection: 'papers' };
 let currentUserId = null;
 let isShareMode = false;
 let shareToken = new URLSearchParams(location.search).get('share');
@@ -2322,6 +2324,8 @@ async function removeExistingAttachment(path, e) {
 const PROPOSAL_PROTOTYPE_KEY = 'rrProposalPrototype:v4';
 let editingProposalId = null;
 let proposalSupabaseReady = false;
+let jobsSupabaseReady = false;
+let jobsRefreshTimer = null;
 
 function defaultProposalPrototype() {
   return [{
@@ -2944,8 +2948,72 @@ function persistJobsPrototype() {
   localStorage.setItem(JOBS_PROTOTYPE_KEY, JSON.stringify(state.jobs || []));
 }
 
+function jobTimestamp(value) {
+  return value ? new Date(value).getTime() : null;
+}
+
+function dbJobToLocal(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description || '',
+    status: row.status === 'needs_attention' ? 'attention' : row.status,
+    host: row.host_id || 'macmini',
+    owner: row.owner_label || row.source || 'Records Agent',
+    proposal: row.proposal_name || '',
+    proposalId: row.proposal_id || null,
+    catIds: row.category_ids || [],
+    catNames: row.category_names || [],
+    command: row.command || '',
+    scriptFolder: row.script_folder || '',
+    resultsFolder: row.results_folder || '',
+    pid: row.pid,
+    submittedAt: jobTimestamp(row.submitted_at),
+    startedAt: jobTimestamp(row.started_at),
+    endedAt: jobTimestamp(row.ended_at),
+    archivedAt: jobTimestamp(row.archived_at),
+    cpus: row.cpu_cores || 1,
+    cpuPercent: Number(row.cpu_percent || 0),
+    memoryGB: Number(row.memory_gb || 0),
+    peakMemoryGB: Number(row.peak_memory_gb || 0),
+    memoryLimitGB: Number(row.memory_allocation_gb || 0),
+    gpuPercent: row.gpu_percent == null ? null : Number(row.gpu_percent),
+    usesMps: !!row.uses_mps,
+    source: row.source || '',
+    gitCommit: row.git_commit || '',
+    log: row.latest_log || '',
+    logPath: row.log_path || '',
+    exitCode: row.exit_code,
+    unregistered: !!row.detected_unregistered,
+  };
+}
+
+async function refreshJobsFromSupabase(render) {
+  if (!currentUserId || currentUserId === 'jobs-local-preview') return;
+  const [jobs, hosts] = await Promise.all([
+    sb.from('jobs').select('*').order('submitted_at', { ascending:false }),
+    sb.from('compute_hosts').select('*').eq('id','macmini').limit(1),
+  ]);
+  if (jobs.error || hosts.error) {
+    jobsSupabaseReady = false;
+    return;
+  }
+  jobsSupabaseReady = true;
+  state.jobs = (jobs.data || []).map(dbJobToLocal);
+  state.jobHost = (hosts.data || [])[0] || null;
+  if (render !== false) {
+    renderJobs();
+    updateTabCounts();
+  }
+}
+
+function startJobsRefresh() {
+  if (jobsRefreshTimer) clearInterval(jobsRefreshTimer);
+  jobsRefreshTimer = setInterval(function(){ refreshJobsFromSupabase(true); }, 10000);
+}
+
 function jobStatusLabel(status) {
-  return ({running:'Running',queued:'Queued',attention:'Needs attention',completed:'Completed',failed:'Failed',stopped:'Stopped'})[status] || status;
+  return ({starting:'Starting',running:'Running',queued:'Queued',stop_requested:'Stopping',attention:'Needs attention',completed:'Completed',failed:'Failed',stopped:'Stopped'})[status] || status;
 }
 
 function jobDuration(job) {
@@ -2973,7 +3041,10 @@ function isJobHistory(job) {
 function jobCategories(job) {
   const byId = (job.catIds || []).map(function(id){ return state.categories.find(function(cat){ return cat.id === id; }); }).filter(Boolean);
   if (byId.length) return byId;
-  return state.categories.filter(function(cat){ return (job.catNames || []).includes(cat.name); });
+  const names = job.catNames || [];
+  const matched = state.categories.filter(function(cat){ return names.includes(cat.name); });
+  const matchedNames = new Set(matched.map(function(cat){ return cat.name; }));
+  return matched.concat(names.filter(function(name){ return !matchedNames.has(name); }).map(function(name){ return { id:'job-category-'+name, name:name, color:'#7b849c' }; }));
 }
 
 function renderJobSidebar() {
@@ -3003,17 +3074,22 @@ function setJobView(view) {
 function renderJobsOverview() {
   const el = document.getElementById('jobsOverview');
   if (!el) return;
-  const running = (state.jobs || []).filter(function(job){ return job.status === 'running' || job.status === 'attention'; });
+  const active = (state.jobs || []).filter(function(job){ return !isJobHistory(job); });
+  const running = active.filter(function(job){ return ['starting','running','stop_requested','attention'].includes(job.status); });
   const queued = (state.jobs || []).filter(function(job){ return job.status === 'queued'; }).length;
-  const cpu = Math.min(100, running.reduce(function(sum,job){ return sum + Number(job.cpuPercent || 0); }, 0));
-  const memory = running.reduce(function(sum,job){ return sum + Number(job.memoryGB || 0); }, 0);
-  const gpu = Math.max(0, ...running.map(function(job){ return Number(job.gpuPercent || 0); }));
-  const gpuAvailable = running.some(function(job){ return Number(job.gpuPercent || 0) > 0; });
+  const host = state.jobHost;
+  const heartbeatAge = host?.last_heartbeat_at ? Date.now() - new Date(host.last_heartbeat_at).getTime() : Infinity;
+  const online = heartbeatAge < 30000;
+  const cpu = Math.min(100, Number(host?.cpu_percent ?? running.reduce(function(sum,job){ return sum + Number(job.cpuPercent || 0); }, 0)));
+  const memory = Number(host?.memory_used_gb ?? running.reduce(function(sum,job){ return sum + Number(job.memoryGB || 0); }, 0));
+  const memoryTotal = Number(host?.memory_total_gb || 32);
+  const gpuAvailable = host?.gpu_percent != null;
+  const gpu = gpuAvailable ? Math.max(0, Number(host.gpu_percent)) : 0;
   const attention = (state.jobs || []).filter(function(job){ return job.status === 'attention'; }).length;
-  el.innerHTML = '<div class="job-overview-card host"><span class="job-host-indicator"></span><div><div class="job-overview-label">Compute Host</div><div class="job-overview-value">macmini</div><div class="job-overview-sub">Online · watchdog heartbeat now</div></div></div>' +
-    '<div class="job-overview-card"><div class="job-overview-label">Active Jobs</div><div class="job-overview-value">' + running.length + '</div><div class="job-overview-sub">' + attention + ' needs attention</div></div>' +
+  el.innerHTML = '<div class="job-overview-card host"><span class="job-host-indicator" style="background:' + (online?'#2aab6a':'#9aa2b7') + '"></span><div><div class="job-overview-label">Compute Host</div><div class="job-overview-value">' + esc(host?.display_name || 'Mac mini') + '</div><div class="job-overview-sub">' + (online ? 'Online · heartbeat ' + formatJobTime(host.last_heartbeat_at) : 'Offline · waiting for Agent') + '</div></div></div>' +
+    '<div class="job-overview-card"><div class="job-overview-label">Active Jobs</div><div class="job-overview-value">' + active.length + '</div><div class="job-overview-sub">' + attention + ' needs attention</div></div>' +
     '<div class="job-overview-card"><div class="job-overview-label">CPU Load</div><div class="job-overview-value">' + cpu.toFixed(0) + '%</div><div class="job-overview-sub">Across active jobs</div><div class="job-meter' + (cpu>90?' danger':cpu>75?' warn':'') + '"><span style="width:' + cpu + '%"></span></div></div>' +
-    '<div class="job-overview-card"><div class="job-overview-label">Memory</div><div class="job-overview-value">' + memory.toFixed(1) + ' GB</div><div class="job-overview-sub">of 32 GB</div><div class="job-meter' + (memory>28?' danger':memory>24?' warn':'') + '"><span style="width:' + Math.min(100,memory/32*100) + '%"></span></div></div>' +
+    '<div class="job-overview-card"><div class="job-overview-label">Memory</div><div class="job-overview-value">' + memory.toFixed(1) + ' GB</div><div class="job-overview-sub">of ' + memoryTotal.toFixed(0) + ' GB</div><div class="job-meter' + (memory/memoryTotal>0.9?' danger':memory/memoryTotal>0.75?' warn':'') + '"><span style="width:' + Math.min(100,memory/memoryTotal*100) + '%"></span></div></div>' +
     '<div class="job-overview-card"><div class="job-overview-label">GPU / MPS Load</div><div class="job-overview-value">' + (gpuAvailable ? gpu.toFixed(0) + '%' : '—') + '</div><div class="job-overview-sub">' + (gpuAvailable ? 'Apple GPU utilization' : 'No GPU metric') + ' · ' + queued + ' queued</div><div class="job-meter"><span style="width:' + (gpuAvailable ? gpu : 0) + '%"></span></div></div>';
 }
 
@@ -3026,7 +3102,7 @@ function renderJobs() {
   let jobs = (state.jobs || []).slice();
   if ((state.activeJobCat || 'all') !== 'all') jobs = jobs.filter(function(job){ return jobCategories(job).some(function(cat){ return cat.id === state.activeJobCat; }); });
   if (query) jobs = jobs.filter(function(job){ return [job.name,job.description,job.command,job.scriptFolder,job.resultsFolder,job.proposal,job.owner,job.id].join(' ').toLowerCase().includes(query); });
-  const rank = {attention:0,running:1,queued:2,failed:3,stopped:4,completed:5};
+  const rank = {attention:0,stop_requested:1,running:2,starting:3,queued:4,failed:5,stopped:6,completed:7};
   jobs.sort(function(a,b) {
     if (sort === 'recent') return Number(b.submittedAt || b.startedAt || 0) - Number(a.submittedAt || a.startedAt || 0);
     if (sort === 'runtime') return jobDuration(b) - jobDuration(a);
@@ -3055,7 +3131,7 @@ function jobRowsHTML(jobs) {
     const duration = jobDuration(job);
     const mem = Number(job.memoryGB || job.peakMemoryGB || 0);
     const memPct = job.memoryLimitGB ? Math.min(100, mem / job.memoryLimitGB * 100) : 0;
-    const runtimeSub = job.status === 'queued' ? 'Submitted ' + formatJobTime(job.submittedAt) : (isJobHistory(job) ? 'Archived ' + formatJobTime(job.archivedAt || job.endedAt) : 'Runs until manually stopped');
+    const runtimeSub = job.status === 'queued' ? 'Submitted ' + formatJobTime(job.submittedAt) : (isJobHistory(job) ? 'Archived ' + formatJobTime(job.archivedAt || job.endedAt) : (job.status === 'stop_requested' ? 'Stop requested' : 'Runs until manually stopped'));
     return '<div class="job-row ' + esc(job.status) + (expanded?' expanded':'') + '" id="job-' + esc(job.id) + '">' +
       '<div class="job-row-main" onclick="toggleJobDetails(\'' + esc(job.id) + '\',event)">' +
         '<div class="job-cell-main"><div class="job-name">' + esc(job.name) + '</div><div class="job-description-preview">' + esc(job.description || 'No description recorded') + '</div><div class="job-idline"><span class="job-idtext">' + esc(job.id) + (job.pid?' · PID '+job.pid:'') + (job.proposal?' · '+esc(job.proposal):'') + '</span><span class="job-category-row">' + catTags + '</span></div></div>' +
@@ -3068,9 +3144,9 @@ function jobRowsHTML(jobs) {
         (job.unregistered?'<div class="job-alert"><b>!</b><span>This process was started by an AI but has no registered job record. It is flagged for review and keeps running unless you explicitly stop it.</span></div>':'') +
         '<div class="job-detail-grid"><div><div class="job-detail-box"><div class="job-detail-title">Description</div><div class="job-description">' + esc(job.description || 'No description recorded.') + '</div><div class="job-detail-title">Command</div><div class="job-command">' + esc(job.command) + '</div><div class="job-meta-grid">' +
           '<div><span class="job-meta-label">Script folder</span><span class="job-meta-value">' + esc(job.scriptFolder||'—') + '</span></div><div><span class="job-meta-label">Results folder</span><span class="job-meta-value">' + esc(job.resultsFolder||'—') + '</span></div><div><span class="job-meta-label">Source</span><span class="job-meta-value">' + esc(job.source||'—') + '</span></div>' +
-          '<div><span class="job-meta-label">Categories</span><span class="job-meta-value"><span class="job-category-row" style="margin-top:0">' + (catTags || '—') + '</span></span></div><div><span class="job-meta-label">Git commit</span><span class="job-meta-value">' + esc(job.gitCommit||'—') + '</span></div><div><span class="job-meta-label">Started</span><span class="job-meta-value">' + esc(formatJobTime(job.startedAt)) + '</span></div><div><span class="job-meta-label">Run policy</span><span class="job-meta-value">Until manually stopped</span></div><div><span class="job-meta-label">Allocation</span><span class="job-meta-value">' + Number(job.cpus||0) + ' CPU · ' + Number(job.memoryLimitGB||0) + ' GB' + (job.gpuPercent?' · MPS':'') + '</span></div><div><span class="job-meta-label">Archived</span><span class="job-meta-value">' + esc(isJobHistory(job) ? formatJobTime(job.archivedAt || job.endedAt) : 'Active record') + '</span></div></div></div></div>' +
+          '<div><span class="job-meta-label">Categories</span><span class="job-meta-value"><span class="job-category-row" style="margin-top:0">' + (catTags || '—') + '</span></span></div><div><span class="job-meta-label">Git commit</span><span class="job-meta-value">' + esc(job.gitCommit||'—') + '</span></div><div><span class="job-meta-label">Started</span><span class="job-meta-value">' + esc(formatJobTime(job.startedAt)) + '</span></div><div><span class="job-meta-label">Run policy</span><span class="job-meta-value">Until manually stopped</span></div><div><span class="job-meta-label">Allocation</span><span class="job-meta-value">' + Number(job.cpus||0) + ' CPU' + (job.memoryLimitGB?' · '+Number(job.memoryLimitGB)+' GB':'') + (job.usesMps?' · MPS':'') + '</span></div><div><span class="job-meta-label">Archived</span><span class="job-meta-value">' + esc(isJobHistory(job) ? formatJobTime(job.archivedAt || job.endedAt) : 'Active record') + '</span></div></div></div></div>' +
         '<div><div class="job-detail-box"><div class="job-detail-title">Latest log</div><div class="job-log">' + esc(job.log||'No log output yet.') + '</div></div><div class="job-actions">' +
-          (job.status==='running'?'<button class="job-action-btn danger" onclick="stopPrototypeJob(\''+esc(job.id)+'\',event)">Stop job</button>':'') +
+          (['starting','running'].includes(job.status)?'<button class="job-action-btn danger" onclick="stopPrototypeJob(\''+esc(job.id)+'\',event)">Stop job</button>':'') +
           (job.status==='attention'?'<button class="job-action-btn" onclick="openJobModal(\''+esc(job.id)+'\',event)">Complete metadata</button><button class="job-action-btn danger" onclick="stopPrototypeJob(\''+esc(job.id)+'\',event)">Stop process</button>':'') +
         '</div></div></div></div></div>';
   }).join('');
@@ -3089,7 +3165,7 @@ function openJobModal(jobId, e) {
   if (e && e.stopPropagation) e.stopPropagation();
   const job = jobId ? (state.jobs || []).find(function(x){ return x.id === jobId; }) : null;
   editingPrototypeJobId = job ? job.id : null;
-  document.getElementById('jobModalTitle').textContent = job ? 'Complete Job Metadata · Prototype' : 'Submit Job · Prototype';
+  document.getElementById('jobModalTitle').textContent = job ? 'Complete Job Metadata' : 'Submit Job';
   document.getElementById('jobModalSave').textContent = job ? 'Register Job' : 'Add to Queue';
   document.getElementById('jfName').value = job?.name || '';
   document.getElementById('jfDescription').value = job?.description || '';
@@ -3113,7 +3189,7 @@ function renderJobCatPills(selectedIds) {
   }).join('');
 }
 
-function savePrototypeJob() {
+async function savePrototypeJob() {
   const name = document.getElementById('jfName').value.trim();
   const description = document.getElementById('jfDescription').value.trim();
   const scriptFolder = document.getElementById('jfScriptFolder').value.trim();
@@ -3122,26 +3198,39 @@ function savePrototypeJob() {
   const catIds = Array.from(document.querySelectorAll('#jfCatList input[type=checkbox]:checked')).map(function(input){ return input.value; });
   const catNames = catIds.map(function(id){ return state.categories.find(function(cat){ return cat.id === id; })?.name; }).filter(Boolean);
   if (!name || !description || !scriptFolder || !resultsFolder || !command || !catIds.length) { toast('Name, description, category, script folder, results folder, and command are all required.'); return; }
-  const now = Date.now();
-  if (editingPrototypeJobId) {
+  if (!jobsSupabaseReady && currentUserId !== 'jobs-local-preview') { toast('Jobs backend is not ready yet. Run supabase-jobs.sql first.'); return; }
+  const proposalName = document.getElementById('jfProposal').value;
+  const proposal = (state.proposals || []).find(function(item){ return item.name === proposalName; });
+  if (currentUserId === 'jobs-local-preview') {
+    const now = Date.now();
+    state.jobs.unshift({id:'job-'+uid().slice(0,6),name:name,description:description,catIds:catIds,catNames:catNames,status:'queued',host:'macmini',owner:'Local preview',proposal:proposalName,command:command,scriptFolder:scriptFolder,resultsFolder:resultsFolder,pid:null,submittedAt:now,startedAt:null,cpus:Number(document.getElementById('jfCpus').value),cpuPercent:0,memoryGB:0,memoryLimitGB:Number(document.getElementById('jfMemory').value),gpuPercent:null,source:'Local preview',log:'Queued locally.'});
+    persistJobsPrototype();
+  } else if (editingPrototypeJobId) {
     const job = state.jobs.find(function(x){ return x.id === editingPrototypeJobId; });
-    Object.assign(job,{name:name,description:description,catIds:catIds,catNames:catNames,scriptFolder:scriptFolder,resultsFolder:resultsFolder,command:command,proposal:document.getElementById('jfProposal').value,cpus:Number(document.getElementById('jfCpus').value),memoryLimitGB:Number(document.getElementById('jfMemory').value),status:'running',unregistered:false,owner:'Codex · registered',source:'Adopted by Records watchdog'});
+    const { error } = await sb.from('jobs').update({name:name,description:description,category_ids:catIds,category_names:catNames,script_folder:scriptFolder,results_folder:resultsFolder,command:command,proposal_id:proposal?.id||null,proposal_name:proposalName||null,cpu_cores:Number(document.getElementById('jfCpus').value),memory_allocation_gb:Number(document.getElementById('jfMemory').value),status:'running',detected_unregistered:false,owner_label:'Registered from Records',source:'Adopted by Records Agent'}).eq('id',job.id);
+    if (error) { toast('Could not register job: ' + error.message); return; }
   } else {
-    state.jobs.unshift({id:'job-'+uid().slice(0,6),name:name,description:description,catIds:catIds,catNames:catNames,status:'queued',host:'macmini',owner:'Manual prototype',proposal:document.getElementById('jfProposal').value,command:command,scriptFolder:scriptFolder,resultsFolder:resultsFolder,pid:null,submittedAt:now,startedAt:null,cpus:Number(document.getElementById('jfCpus').value),cpuPercent:0,memoryGB:0,memoryLimitGB:Number(document.getElementById('jfMemory').value),gpuPercent:0,source:'Records frontend prototype',gitCommit:'pending',log:'Queued locally. Waiting for the future Mac mini agent.'});
+    const { error } = await sb.from('jobs').insert({user_id:currentUserId,host_id:'macmini',name:name,description:description,category_ids:catIds,category_names:catNames,script_folder:scriptFolder,results_folder:resultsFolder,command:command,command_argv:[],proposal_id:proposal?.id||null,proposal_name:proposalName||null,cpu_cores:Number(document.getElementById('jfCpus').value),memory_allocation_gb:Number(document.getElementById('jfMemory').value),status:'queued',source:'records-web',owner_label:'Yuan Chen'});
+    if (error) { toast('Could not submit job: ' + error.message); return; }
   }
-  persistJobsPrototype();
+  await refreshJobsFromSupabase(false);
   closeModal('jobModal');
   renderJobs(); updateTabCounts();
-  toast(editingPrototypeJobId ? 'Job metadata completed and registered.' : 'Prototype job added to the queue.');
+  toast(editingPrototypeJobId ? 'Job metadata completed and registered.' : 'Job added to the queue.');
   editingPrototypeJobId = null;
 }
 
-function stopPrototypeJob(id, e) {
+async function stopPrototypeJob(id, e) {
   e.stopPropagation();
   const job = (state.jobs||[]).find(function(x){ return x.id === id; });
   if (!job) return;
-  job.status = 'stopped'; job.endedAt = Date.now(); job.archivedAt = job.endedAt; job.cpuPercent = 0; job.gpuPercent = 0; job.memoryGB = 0; job.log = (job.log||'') + '\n[prototype] Stop requested from Records. Job archived in History.';
-  persistJobsPrototype(); renderJobs(); updateTabCounts(); toast('Prototype job stopped.');
+  if (currentUserId === 'jobs-local-preview') {
+    job.status = 'stopped'; job.endedAt = Date.now(); job.archivedAt = job.endedAt;
+    persistJobsPrototype(); renderJobs(); updateTabCounts(); return;
+  }
+  const { error } = await sb.from('jobs').update({status:'stop_requested',stop_requested_at:new Date().toISOString()}).eq('id',id);
+  if (error) { toast('Could not request stop: ' + error.message); return; }
+  job.status = 'stop_requested'; renderJobs(); updateTabCounts(); toast('Stop requested. The Mac mini Agent will terminate the process.');
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
@@ -3153,13 +3242,13 @@ async function bootApp(user) {
   loadPrefs();
   showLoading(true);
   await loadAllData();
-  loadJobsPrototype();
   showLoading(false);
   checkMigration();
   renderSidebar();
   renderPapers();
   updateTabCounts();
   switchSection(state.activeSection);
+  startJobsRefresh();
 }
 
 async function bootJobsPreview() {
@@ -3265,13 +3354,15 @@ function showLoading(on) {
 
 // ── Load all data from Supabase ───────────────────────────────────────────────
 async function loadAllData() {
-  const [cats, papers, scientists, questions, notes, proposals] = await Promise.all([
+  const [cats, papers, scientists, questions, notes, proposals, jobs, hosts] = await Promise.all([
     sb.from('categories').select('*').order('name'),
     sb.from('papers').select('*').order('created_at'),
     sb.from('scientists').select('*').order('created_at'),
     sb.from('questions').select('*').order('created_at'),
     sb.from('notes').select('*').order('created_at'),
     sb.from('proposals').select('*').order('created_at'),
+    sb.from('jobs').select('*').order('submitted_at', { ascending:false }),
+    sb.from('compute_hosts').select('*').eq('id','macmini').limit(1),
   ]);
   state.categories = (cats.data || []).map(dbCatToLocal);
   state.papers     = (papers.data || []).map(dbPaperToLocal);
@@ -3294,6 +3385,16 @@ async function loadAllData() {
       alignProposalCategories();
       if (titleMigrations.length) await Promise.all(titleMigrations.map(dbSaveProposal));
     }
+  }
+  if (jobs.error || hosts.error) {
+    jobsSupabaseReady = false;
+    state.jobs = [];
+    state.jobHost = null;
+    console.warn('Jobs backend is not ready.', jobs.error || hosts.error);
+  } else {
+    jobsSupabaseReady = true;
+    state.jobs = (jobs.data || []).map(dbJobToLocal);
+    state.jobHost = (hosts.data || [])[0] || null;
   }
   await loadNoteAttachments();
   await migrateLocalPaperMarks();
@@ -3861,7 +3962,7 @@ function updateTabCounts() {
   document.getElementById('tabCountRQ').textContent         = state.questions.length;
   document.getElementById('tabCountNotes').textContent      = state.notes.length;
   document.getElementById('tabCountProposals').textContent  = (state.proposals || []).length;
-  document.getElementById('tabCountJobs').textContent       = (state.jobs || []).filter(function(job){ return job.status !== 'completed' && job.status !== 'stopped'; }).length;
+  document.getElementById('tabCountJobs').textContent       = (state.jobs || []).filter(function(job){ return !isJobHistory(job); }).length;
 }
 
 const PAPER_MARK_TOKEN = '[[marked]]';
