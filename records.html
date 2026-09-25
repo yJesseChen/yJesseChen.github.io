@@ -2985,6 +2985,7 @@ function dbJobToLocal(row) {
     logPath: row.log_path || '',
     exitCode: row.exit_code,
     unregistered: !!row.detected_unregistered,
+    managed: !!row.managed_by_agent,
   };
 }
 
@@ -3141,13 +3142,13 @@ function jobRowsHTML(jobs) {
         '<div class="job-cell-main"><div class="job-cell-title">' + formatJobDuration(duration) + '</div><div class="job-cell-sub">' + esc(runtimeSub) + '</div></div><div class="job-chevron">›</div>' +
       '</div>' +
       '<div class="job-row-details">' +
-        (job.unregistered?'<div class="job-alert"><b>!</b><span>This process was started by an AI but has no registered job record. It is flagged for review and keeps running unless you explicitly stop it.</span></div>':'') +
+        (job.unregistered?'<div class="job-alert"><b>!</b><span>This process was not launched through Records. It is observe-only: you can add metadata, but Records will never stop or signal it.</span></div>':'') +
         '<div class="job-detail-grid"><div><div class="job-detail-box"><div class="job-detail-title">Description</div><div class="job-description">' + esc(job.description || 'No description recorded.') + '</div><div class="job-detail-title">Command</div><div class="job-command">' + esc(job.command) + '</div><div class="job-meta-grid">' +
           '<div><span class="job-meta-label">Script folder</span><span class="job-meta-value">' + esc(job.scriptFolder||'—') + '</span></div><div><span class="job-meta-label">Results folder</span><span class="job-meta-value">' + esc(job.resultsFolder||'—') + '</span></div><div><span class="job-meta-label">Source</span><span class="job-meta-value">' + esc(job.source||'—') + '</span></div>' +
           '<div><span class="job-meta-label">Categories</span><span class="job-meta-value"><span class="job-category-row" style="margin-top:0">' + (catTags || '—') + '</span></span></div><div><span class="job-meta-label">Git commit</span><span class="job-meta-value">' + esc(job.gitCommit||'—') + '</span></div><div><span class="job-meta-label">Started</span><span class="job-meta-value">' + esc(formatJobTime(job.startedAt)) + '</span></div><div><span class="job-meta-label">Run policy</span><span class="job-meta-value">Until manually stopped</span></div><div><span class="job-meta-label">Allocation</span><span class="job-meta-value">' + Number(job.cpus||0) + ' CPU' + (job.memoryLimitGB?' · '+Number(job.memoryLimitGB)+' GB':'') + (job.usesMps?' · MPS':'') + '</span></div><div><span class="job-meta-label">Archived</span><span class="job-meta-value">' + esc(isJobHistory(job) ? formatJobTime(job.archivedAt || job.endedAt) : 'Active record') + '</span></div></div></div></div>' +
         '<div><div class="job-detail-box"><div class="job-detail-title">Latest log</div><div class="job-log">' + esc(job.log||'No log output yet.') + '</div></div><div class="job-actions">' +
-          (['starting','running'].includes(job.status)?'<button class="job-action-btn danger" onclick="stopPrototypeJob(\''+esc(job.id)+'\',event)">Stop job</button>':'') +
-          (job.status==='attention'?'<button class="job-action-btn" onclick="openJobModal(\''+esc(job.id)+'\',event)">Complete metadata</button><button class="job-action-btn danger" onclick="stopPrototypeJob(\''+esc(job.id)+'\',event)">Stop process</button>':'') +
+          (['starting','running'].includes(job.status) && job.managed?'<button class="job-action-btn danger" onclick="stopPrototypeJob(\''+esc(job.id)+'\',event)">Stop job</button>':'') +
+          (job.status==='attention'?'<button class="job-action-btn" onclick="openJobModal(\''+esc(job.id)+'\',event)">Edit metadata</button>':'') +
         '</div></div></div></div></div>';
   }).join('');
 }
@@ -3165,8 +3166,8 @@ function openJobModal(jobId, e) {
   if (e && e.stopPropagation) e.stopPropagation();
   const job = jobId ? (state.jobs || []).find(function(x){ return x.id === jobId; }) : null;
   editingPrototypeJobId = job ? job.id : null;
-  document.getElementById('jobModalTitle').textContent = job ? 'Complete Job Metadata' : 'Submit Job';
-  document.getElementById('jobModalSave').textContent = job ? 'Register Job' : 'Add to Queue';
+  document.getElementById('jobModalTitle').textContent = job ? 'Edit Observed Process Metadata' : 'Submit Job';
+  document.getElementById('jobModalSave').textContent = job ? 'Save Metadata' : 'Add to Queue';
   document.getElementById('jfName').value = job?.name || '';
   document.getElementById('jfDescription').value = job?.description || '';
   document.getElementById('jfScriptFolder').value = job?.scriptFolder || '';
@@ -3207,8 +3208,8 @@ async function savePrototypeJob() {
     persistJobsPrototype();
   } else if (editingPrototypeJobId) {
     const job = state.jobs.find(function(x){ return x.id === editingPrototypeJobId; });
-    const { error } = await sb.from('jobs').update({name:name,description:description,category_ids:catIds,category_names:catNames,script_folder:scriptFolder,results_folder:resultsFolder,command:command,proposal_id:proposal?.id||null,proposal_name:proposalName||null,cpu_cores:Number(document.getElementById('jfCpus').value),memory_allocation_gb:Number(document.getElementById('jfMemory').value),status:'running',detected_unregistered:false,owner_label:'Registered from Records',source:'Adopted by Records Agent'}).eq('id',job.id);
-    if (error) { toast('Could not register job: ' + error.message); return; }
+    const { error } = await sb.from('jobs').update({name:name,description:description,category_ids:catIds,category_names:catNames,script_folder:scriptFolder,results_folder:resultsFolder,command:command,proposal_id:proposal?.id||null,proposal_name:proposalName||null,cpu_cores:Number(document.getElementById('jfCpus').value),memory_allocation_gb:Number(document.getElementById('jfMemory').value),owner_label:'Observed process',source:'Records Agent process scan'}).eq('id',job.id);
+    if (error) { toast('Could not save metadata: ' + error.message); return; }
   } else {
     const { error } = await sb.from('jobs').insert({user_id:currentUserId,host_id:'macmini',name:name,description:description,category_ids:catIds,category_names:catNames,script_folder:scriptFolder,results_folder:resultsFolder,command:command,command_argv:[],proposal_id:proposal?.id||null,proposal_name:proposalName||null,cpu_cores:Number(document.getElementById('jfCpus').value),memory_allocation_gb:Number(document.getElementById('jfMemory').value),status:'queued',source:'records-web',owner_label:'Yuan Chen'});
     if (error) { toast('Could not submit job: ' + error.message); return; }
@@ -3216,7 +3217,7 @@ async function savePrototypeJob() {
   await refreshJobsFromSupabase(false);
   closeModal('jobModal');
   renderJobs(); updateTabCounts();
-  toast(editingPrototypeJobId ? 'Job metadata completed and registered.' : 'Job added to the queue.');
+  toast(editingPrototypeJobId ? 'Metadata saved. This process remains observe-only.' : 'Job added to the queue.');
   editingPrototypeJobId = null;
 }
 
@@ -3224,11 +3225,12 @@ async function stopPrototypeJob(id, e) {
   e.stopPropagation();
   const job = (state.jobs||[]).find(function(x){ return x.id === id; });
   if (!job) return;
+  if (!job.managed && currentUserId !== 'jobs-local-preview') { toast('This process is observe-only and cannot be stopped by Records.'); return; }
   if (currentUserId === 'jobs-local-preview') {
     job.status = 'stopped'; job.endedAt = Date.now(); job.archivedAt = job.endedAt;
     persistJobsPrototype(); renderJobs(); updateTabCounts(); return;
   }
-  const { error } = await sb.from('jobs').update({status:'stop_requested',stop_requested_at:new Date().toISOString()}).eq('id',id);
+  const { error } = await sb.rpc('request_managed_job_stop', {p_job_id:id});
   if (error) { toast('Could not request stop: ' + error.message); return; }
   job.status = 'stop_requested'; renderJobs(); updateTabCounts(); toast('Stop requested. The Mac mini Agent will terminate the process.');
 }
