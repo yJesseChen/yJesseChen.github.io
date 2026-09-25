@@ -545,6 +545,7 @@
   .job-meta-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px 12px; margin-top:11px; }
   .job-meta-label { display:block; font-size:0.66rem; letter-spacing:0.07em; text-transform:uppercase; color:var(--text-muted); margin-bottom:3px; }
   .job-meta-value { display:block; font-size:0.81rem; color:var(--text); overflow-wrap:anywhere; }
+  .job-path { display:block; max-width:100%; font-family:var(--font-mono); font-size:0.76rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; overflow-wrap:normal; cursor:help; }
   .job-log { font-family:var(--font-mono); font-size:0.72rem; line-height:1.7; color:#47516b; background:#f6f7fb; border:1px solid var(--border); border-radius:6px; padding:9px 10px; white-space:pre-wrap; max-height:160px; overflow:auto; user-select:text; }
   .job-alert { display:flex; gap:8px; align-items:flex-start; margin-bottom:10px; padding:10px 11px; border-radius:7px; border:1px solid rgba(217,79,79,0.25); background:rgba(217,79,79,0.055); color:#a53b3b; font-size:0.79rem; line-height:1.55; }
   .job-actions { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:7px; margin-top:10px; }
@@ -3145,13 +3146,27 @@ function jobRowsHTML(jobs) {
       '<div class="job-row-details">' +
         (job.unregistered?'<div class="job-alert"><b>!</b><span>This process was not launched through Records. It is observe-only: you can add metadata, but Records will never stop or signal it.</span></div>':'') +
         '<div class="job-detail-grid"><div><div class="job-detail-box"><div class="job-detail-title">Description</div><div class="job-description">' + esc(job.description || 'No description recorded.') + '</div><div class="job-detail-title">Command</div><div class="job-command">' + esc(job.command) + '</div><div class="job-meta-grid">' +
-          '<div><span class="job-meta-label">Script folder</span><span class="job-meta-value">' + esc(job.scriptFolder||'—') + '</span></div><div><span class="job-meta-label">Results folder</span><span class="job-meta-value">' + esc(job.resultsFolder||'—') + '</span></div><div><span class="job-meta-label">Source</span><span class="job-meta-value">' + esc(job.source||'—') + '</span></div>' +
+          '<div><span class="job-meta-label">Script folder</span>' + jobPathHTML(job.scriptFolder) + '</div><div><span class="job-meta-label">Results folder</span>' + jobPathHTML(job.resultsFolder) + '</div><div><span class="job-meta-label">Source</span><span class="job-meta-value">' + esc(job.source||'—') + '</span></div>' +
           '<div><span class="job-meta-label">Categories</span><span class="job-meta-value"><span class="job-category-row" style="margin-top:0">' + (catTags || '—') + '</span></span></div><div><span class="job-meta-label">Git commit</span><span class="job-meta-value">' + esc(job.gitCommit||'—') + '</span></div><div><span class="job-meta-label">Started</span><span class="job-meta-value">' + esc(formatJobTime(job.startedAt)) + '</span></div><div><span class="job-meta-label">Run policy</span><span class="job-meta-value">Until manually stopped</span></div><div><span class="job-meta-label">Allocation</span><span class="job-meta-value">' + Number(job.cpus||0) + ' CPU' + (job.memoryLimitGB?' · '+Number(job.memoryLimitGB)+' GB':'') + (job.usesMps?' · MPS':'') + '</span></div><div><span class="job-meta-label">Archived</span><span class="job-meta-value">' + esc(isJobHistory(job) ? formatJobTime(job.archivedAt || job.endedAt) : 'Active record') + '</span></div></div></div></div>' +
         '<div><div class="job-detail-box"><div class="job-detail-title">Latest log</div><div class="job-log">' + esc(job.log||'No log output yet.') + '</div></div><div class="job-actions">' +
           (['starting','running'].includes(job.status) && job.managed?'<button class="job-action-btn danger" onclick="stopPrototypeJob(\''+esc(job.id)+'\',event)">Stop job</button>':'') +
           (job.status==='attention'?'<button class="job-action-btn" onclick="openJobModal(\''+esc(job.id)+'\',event)">Edit metadata</button>':'') +
         '</div></div></div></div></div>';
   }).join('');
+}
+
+function compactJobPath(value) {
+  let path = String(value || '—');
+  path = path.replace(/^\/Users\/[^/]+\/Library\/CloudStorage\/Dropbox\//, 'Dropbox/');
+  path = path.replace(/^\/Users\/[^/]+\//, '~/');
+  const parts = path.split('/');
+  if (path.length > 68 && parts.length > 5) path = parts.slice(0,2).join('/') + '/…/' + parts.slice(-3).join('/');
+  return path;
+}
+
+function jobPathHTML(value) {
+  const full = String(value || '—');
+  return '<span class="job-meta-value job-path" title="' + esc(full) + '">' + esc(compactJobPath(full)) + '</span>';
 }
 
 function toggleJobDetails(id, e) {
