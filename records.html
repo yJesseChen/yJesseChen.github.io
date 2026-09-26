@@ -2933,7 +2933,7 @@ function defaultJobsPrototype() {
       id:'job-64cd09', name:'Conditional-flow baseline · seed 04', status:'completed', host:'macmini', owner:'Codex', proposal:'NSF-DMS-2026-11', catNames:['SDE Learning'],
       description:'Train the conditional-flow baseline for seed 04 and archive the final validation metrics and checkpoint for cross-model comparison.',
       command:'python train_flow.py --seed 4 --history 16', scriptFolder:'~/Research/Learning_SDE/baselines', resultsFolder:'~/Research/Learning_SDE/results/flow_seed04', pid:null,
-      submittedAt:now-11*3600000, startedAt:now-10.8*3600000, endedAt:now-8.55*3600000, archivedAt:now-8.54*3600000, cpus:6, cpuPercent:0, memoryGB:0, peakMemoryGB:13.2, memoryLimitGB:16, gpuPercent:0,
+      submittedAt:now-11*3600000, startedAt:now-10.8*3600000, endedAt:now-8.55*3600000, archivedAt:now-8.54*3600000, cpus:6, cpuPercent:0, memoryGB:0, peakCpuPercent:86.4, peakMemoryGB:13.2, memoryLimitGB:16, gpuPercent:0,
       source:'Codex task · baseline comparison', gitCommit:'0d2e7ab', exitCode:0,
       log:'[completed] final validation loss 0.0214\n[completed] artifacts written to outputs/flow_seed04\nProcess exited successfully with code 0.'
     }
@@ -2982,7 +2982,8 @@ function dbJobToLocal(row) {
     cpus: row.cpu_cores || 1,
     cpuPercent: Number(row.cpu_percent || 0),
     memoryGB: Number(row.memory_gb || 0),
-    peakMemoryGB: Number(row.peak_memory_gb || 0),
+    peakCpuPercent: row.peak_cpu_percent == null ? null : Number(row.peak_cpu_percent),
+    peakMemoryGB: row.peak_memory_gb == null ? null : Number(row.peak_memory_gb),
     memoryLimitGB: Number(row.memory_allocation_gb || 0),
     gpuPercent: row.gpu_percent == null ? null : Number(row.gpu_percent),
     usesMps: !!row.uses_mps,
@@ -3138,15 +3139,20 @@ function jobRowsHTML(jobs) {
     const catTags = cats.map(function(cat){ return '<span class="tag" style="background:' + esc(cat.color) + '18;color:' + esc(cat.color) + '">' + esc(cat.name) + '</span>'; }).join('');
     const expanded = state.expandedJob === job.id;
     const duration = jobDuration(job);
-    const mem = Number(job.memoryGB || job.peakMemoryGB || 0);
-    const memPct = job.memoryLimitGB ? Math.min(100, mem / job.memoryLimitGB * 100) : 0;
+    const historical = isJobHistory(job);
+    const cpu = historical ? (job.peakCpuPercent == null ? null : Number(job.peakCpuPercent)) : Number(job.cpuPercent || 0);
+    const mem = historical ? (job.peakMemoryGB == null ? null : Number(job.peakMemoryGB)) : Number(job.memoryGB || 0);
+    const cpuText = cpu == null ? 'CPU —' : (historical ? 'Peak CPU ' : 'CPU ') + cpu.toFixed(0) + '%';
+    const memText = mem == null ? 'RAM —' : (historical ? 'Peak RAM ' : 'RAM ') + (mem > 0 && mem < 0.1 ? mem.toFixed(3) : mem.toFixed(1)) + ' GB';
+    const cpuPct = cpu == null ? 0 : Math.min(100, cpu);
+    const memPct = mem == null || !job.memoryLimitGB ? 0 : Math.min(100, mem / job.memoryLimitGB * 100);
     const runtimeSub = job.status === 'queued' ? 'Submitted ' + formatJobTime(job.submittedAt) : (isJobHistory(job) ? 'Archived ' + formatJobTime(job.archivedAt || job.endedAt) : (job.status === 'stop_requested' ? 'Stop requested' : 'Runs until manually stopped'));
     return '<div class="job-row ' + esc(job.status) + (expanded?' expanded':'') + '" id="job-' + esc(job.id) + '">' +
       '<div class="job-row-main" onclick="toggleJobDetails(\'' + esc(job.id) + '\',event)">' +
         '<div class="job-cell-main"><div class="job-name">' + esc(job.name) + '</div><div class="job-description-preview">' + esc(job.description || 'No description recorded') + '</div><div class="job-idline"><span class="job-idtext">' + esc(job.id) + (job.pid?' · PID '+job.pid:'') + (job.proposal?' · '+esc(job.proposal):'') + '</span><span class="job-category-row">' + catTags + '</span></div></div>' +
         '<div><span class="job-status ' + esc(job.status) + '">' + esc(jobStatusLabel(job.status)) + '</span></div>' +
         '<div class="job-cell-main"><div class="job-cell-title">' + esc(job.host) + '</div><div class="job-cell-sub">' + esc(job.owner) + '</div></div>' +
-        '<div><div class="job-resource-line"><span>CPU ' + Number(job.cpuPercent||0).toFixed(0) + '%</span><span class="job-resource-mini"><span style="width:' + Math.min(100,Number(job.cpuPercent||0)) + '%"></span></span></div><div class="job-resource-line"><span>RAM ' + mem.toFixed(1) + ' GB</span><span class="job-resource-mini"><span style="width:' + memPct + '%"></span></span></div>' + (Number(job.gpuPercent||0)>0?'<div class="job-resource-line"><span>MPS ' + Number(job.gpuPercent).toFixed(0) + '%</span><span class="job-resource-mini"><span style="width:' + Math.min(100,Number(job.gpuPercent)) + '%"></span></span></div>':'') + '</div>' +
+        '<div><div class="job-resource-line"><span>' + cpuText + '</span><span class="job-resource-mini"><span style="width:' + cpuPct + '%"></span></span></div><div class="job-resource-line"><span>' + memText + '</span><span class="job-resource-mini"><span style="width:' + memPct + '%"></span></span></div>' + (!historical && Number(job.gpuPercent||0)>0?'<div class="job-resource-line"><span>MPS ' + Number(job.gpuPercent).toFixed(0) + '%</span><span class="job-resource-mini"><span style="width:' + Math.min(100,Number(job.gpuPercent)) + '%"></span></span></div>':'') + '</div>' +
         '<div class="job-cell-main"><div class="job-cell-title">' + formatJobDuration(duration) + '</div><div class="job-cell-sub">' + esc(runtimeSub) + '</div></div><button type="button" class="job-chevron" aria-label="' + (expanded?'Collapse':'Expand') + ' job details" aria-expanded="' + (expanded?'true':'false') + '">›</button>' +
       '</div>' +
       '<div class="job-row-details">' +
