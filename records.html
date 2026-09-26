@@ -922,6 +922,7 @@
           <option value="recent">Most recent</option>
           <option value="runtime">Longest runtime</option>
         </select>
+        <span class="view-label" id="jobHistorySortLabel" style="display:none">Newest finished first</span>
       </div>
       <div class="jobs-shell">
         <div class="jobs-overview" id="jobsOverview"></div>
@@ -3119,8 +3120,14 @@ function renderJobs() {
   renderJobsOverview();
   renderJobSidebar();
   const activeJobs = jobs.filter(function(job){ return !isJobHistory(job); });
-  const historyJobs = jobs.filter(isJobHistory);
+  const historyJobs = jobs.filter(isJobHistory).sort(function(a,b) {
+    const timeA = Number(a.endedAt || a.archivedAt || a.startedAt || a.submittedAt || 0);
+    const timeB = Number(b.endedAt || b.archivedAt || b.startedAt || b.submittedAt || 0);
+    return timeB - timeA || Number(b.submittedAt || 0) - Number(a.submittedAt || 0);
+  });
   const jobView = state.activeJobView === 'history' ? 'history' : 'active';
+  document.getElementById('jobSortSelect').style.display = jobView === 'history' ? 'none' : '';
+  document.getElementById('jobHistorySortLabel').style.display = jobView === 'history' ? '' : 'none';
   document.getElementById('activeJobsSection').style.display = jobView === 'active' ? '' : 'none';
   document.getElementById('jobHistorySection').style.display = jobView === 'history' ? '' : 'none';
   document.getElementById('activeJobsTab').classList.toggle('active', jobView === 'active');
