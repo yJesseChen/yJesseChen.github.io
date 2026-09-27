@@ -572,9 +572,10 @@
   .project-cell-label { font-size:0.73rem; letter-spacing:0.09em; text-transform:uppercase; color:var(--text-muted); margin-bottom:8px; }
   .project-cell-value { font-size:0.95rem; line-height:1.55; color:var(--text); }
   .project-goals { display:flex; flex-direction:column; gap:3px; }
-  .project-goal { display:grid; grid-template-columns:8px minmax(0,1fr) auto auto; gap:5px; align-items:center; min-width:0; }
+  .project-goal { display:grid; grid-template-columns:8px minmax(0,1fr) auto; gap:5px; align-items:center; min-width:0; }
   .project-goal-dot { width:5px; height:5px; border-radius:50%; background:var(--text-muted); }
   .project-goal-text { min-width:0; font-size:0.92rem; line-height:1.32; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .project-goal-actions { display:flex; align-items:center; gap:5px; }
   .goal-state-btn { border:1px solid var(--border); border-radius:999px; background:var(--surface); color:var(--text-muted); padding:3px 8px; font:inherit; font-size:0.73rem; line-height:1.15; cursor:pointer; white-space:nowrap; }
   .goal-state-btn:hover { border-color:rgba(42,171,106,0.45); color:#197a4c; }
   .goal-state-btn.active { border-color:rgba(42,171,106,0.34); background:rgba(42,171,106,0.11); color:#197a4c; }
@@ -593,12 +594,17 @@
   /* ── Mobile responsive ── */
   @media (max-width: 768px) {
 
+    html, body, #appShell, .app, main, .section { max-width:100%; overflow-x:hidden; }
+
     /* Header */
-    header { padding: 12px 16px; gap: 8px; }
-    header h1 { font-size: 1.1rem; }
+    header { padding: 10px 12px; gap: 8px; min-height:57px; }
+    header h1 { font-size: 1.08rem; flex:0 0 auto; }
     .header-meta { display: none; }
     .user-badge { display: none; }
-    .header-actions { gap: 6px; }
+    .header-actions { gap: 6px; min-width:0; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+    .header-actions::-webkit-scrollbar { display:none; }
+    .header-actions .btn { flex:0 0 auto; min-height:36px; }
+    .header-actions .btn-primary { order:-1; }
     .btn { padding: 7px 11px; font-size: 0.68rem; }
     #btnAddPaper, #btnAddScientist, #btnAddRQ, #btnAddNote, #btnAddProposal, #btnAddJob, #btnAddProject { font-size: 0.65rem; padding: 7px 10px; }
 
@@ -607,8 +613,8 @@
 
     /* Sidebar becomes overlay drawer */
     .sidebar {
-      position: fixed !important; top: 0; left: -260px; height: 100vh;
-      width: 260px !important; min-width: 260px !important;
+      position: fixed !important; top: 0; left: min(-84vw,-280px); height: 100dvh;
+      width: min(84vw,320px) !important; min-width: min(84vw,320px) !important;
       z-index: 500; transition: left 0.25s ease;
       box-shadow: 4px 0 24px rgba(0,0,0,0.15);
     }
@@ -616,18 +622,18 @@
     #sidebarOverlay { display: block; }
 
     /* App layout — full width */
-    .app { height: calc(100vh - 57px); }
+    .app { height:auto; flex:1; min-height:0; }
     main { width: 100%; }
 
     /* Global nav tabs — horizontal scroll, shorter labels */
-    .global-nav { padding: 0 8px; overflow-x: auto; white-space: nowrap; border-bottom-width: 1px; }
+    .global-nav { padding: 0 8px; overflow-x: auto; white-space: nowrap; border-bottom-width: 1px; -webkit-overflow-scrolling:touch; scroll-snap-type:x proximity; }
     .global-nav::-webkit-scrollbar { display: none; }
-    .global-tab { padding: 10px 12px; font-size: 0.82rem; }
+    .global-tab { padding: 10px 12px; font-size: 0.86rem; scroll-snap-align:start; }
     .tab-count { display: none; }
 
     /* Toolbar */
     .toolbar { padding: 8px 12px; gap: 8px; }
-    .search-box { font-size: 0.72rem; padding: 7px 10px; }
+    .search-box { font-size: 16px; padding: 8px 10px; min-width:0; }
     .sort-select { font-size: 0.65rem; padding: 6px 8px; max-width: 110px; }
     .view-label { display: none; }
 
@@ -649,10 +655,28 @@
     .jobs-table-head, .job-row-main { min-width:860px; }
     .job-row-details { min-width:860px; }
     .job-detail-grid { grid-template-columns:1fr; }
-    .projects-shell { padding:12px; }
-    .project-card-main { grid-template-columns:1fr 74px; gap:12px; }
-    .project-card-main > div:nth-child(2), .project-card-main > div:nth-child(3) { grid-column:1 / -1; }
-    .project-card-main > .project-card-actions { grid-column:2; grid-row:1; }
+    .projects-shell { padding:10px 10px calc(20px + env(safe-area-inset-bottom)); scrollbar-gutter:auto; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; }
+    .project-list { gap:8px; }
+    .project-card { border-radius:9px; }
+    .project-card.is-priority::before { left:4px; top:10px; bottom:10px; width:4px; }
+    .project-list, .project-card, .project-card-main { width:100%; max-width:100%; min-width:0; }
+    .project-card-main { position:relative; display:flex; flex-direction:column; gap:12px; padding:14px 13px 15px 15px; }
+    .project-card-main > div { width:100%; min-width:0; }
+    .project-card-main > div:first-child { padding-right:76px; }
+    .project-card-main > div:nth-child(2), .project-card-main > div:nth-child(3) { border-top:1px solid var(--border); padding-top:11px; }
+    .project-card-main > .project-card-actions { position:absolute; top:13px; right:12px; width:auto; }
+    .project-title-row { align-items:flex-start; gap:4px; }
+    .project-name { font-size:1.08rem; line-height:1.35; overflow-wrap:anywhere; }
+    .project-summary { margin-top:5px; font-size:0.88rem; line-height:1.45; white-space:normal; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
+    .project-tag-row { margin-top:6px; }
+    .project-cell-label { margin-bottom:6px; font-size:0.68rem; }
+    .project-goals { gap:7px; }
+    .project-goal { grid-template-columns:7px minmax(0,1fr); gap:4px 6px; align-items:center; padding:2px 0; }
+    .project-goal-text { grid-column:2; font-size:0.91rem; line-height:1.4; white-space:normal; overflow:visible; text-overflow:clip; }
+    .project-goal-actions { grid-column:2; justify-self:end; }
+    .goal-state-btn { min-height:30px; padding:5px 9px; font-size:0.72rem; }
+    .project-meeting-time { font-size:0.95rem; line-height:1.45; }
+    .project-card-actions .icon-btn { width:34px; height:34px; }
     .paper-authors { font-size: 0.78rem; }
     .card-actions { gap: 4px; }
     .icon-btn { width: 34px; height: 34px; font-size: 0.8rem; }
@@ -662,13 +686,30 @@
     .modal-overlay { align-items: flex-end; }
     .modal {
       width: 100% !important; max-width: 100% !important;
-      max-height: 92vh; border-radius: 16px 16px 0 0;
-      padding: 20px 18px 32px;
+      max-height: 94dvh; border-radius: 16px 16px 0 0;
+      padding: 20px 16px calc(18px + env(safe-area-inset-bottom));
     }
     .form-row { flex-direction: column; gap: 0; }
+    .form-input, .form-textarea, .form-select { font-size:16px; min-height:44px; }
+    .modal-footer { position:sticky; bottom:calc(-18px - env(safe-area-inset-bottom)); z-index:2; margin-left:-16px; margin-right:-16px; padding:12px 16px calc(12px + env(safe-area-inset-bottom)); background:var(--surface); }
+    .modal-footer .btn { min-height:42px; }
+
+    .toast { left:12px; right:12px; bottom:calc(12px + env(safe-area-inset-bottom)); text-align:center; }
 
     /* Login */
     .login-box { width: calc(100vw - 32px); padding: 28px 20px; }
+  }
+
+  @media (max-width: 430px) {
+    header { padding-left:10px; padding-right:10px; }
+    header h1 { font-size:1rem; }
+    #hamburgerBtn { padding:6px 8px; }
+    .global-tab { padding:9px 11px; }
+    .project-card-main { padding-left:13px; padding-right:11px; }
+    .project-card-main > div:first-child { padding-right:73px; }
+    .project-card-main > .project-card-actions { right:10px; }
+    .project-card-actions { gap:4px; }
+    .project-card-actions .icon-btn { width:33px; height:33px; }
   }
 
   /* Hamburger button — hidden on desktop */
@@ -3596,7 +3637,7 @@ function renderProjects() {
     const category = projectCategory(project);
     const collaboratorText = (project.collaborators||[]).join(', ');
     const goals = Array.isArray(project.goals) ? project.goals : [];
-    const goalsHtml = goals.length ? goals.map(function(goal,index){ return '<div class="project-goal"><span class="project-goal-dot"></span><span class="project-goal-text" title="'+esc(goal.text)+'">'+renderLatexText(goal.text)+'</span><button class="goal-state-btn '+(goal.done?'active':'')+'" onclick="toggleProjectGoal(\''+esc(project.id)+'\','+index+',\'done\',event)">Results</button><button class="goal-state-btn '+(goal.discussable?'active':'')+'" onclick="toggleProjectGoal(\''+esc(project.id)+'\','+index+',\'discussable\',event)">Pres</button></div>'; }).join('') : '<div class="project-cell-value" style="color:var(--text-muted)">No current goals.</div>';
+    const goalsHtml = goals.length ? goals.map(function(goal,index){ return '<div class="project-goal"><span class="project-goal-dot"></span><span class="project-goal-text" title="'+esc(goal.text)+'">'+renderLatexText(goal.text)+'</span><span class="project-goal-actions"><button class="goal-state-btn '+(goal.done?'active':'')+'" onclick="toggleProjectGoal(\''+esc(project.id)+'\','+index+',\'done\',event)">Results</button><button class="goal-state-btn '+(goal.discussable?'active':'')+'" onclick="toggleProjectGoal(\''+esc(project.id)+'\','+index+',\'discussable\',event)">Pres</button></span></div>'; }).join('') : '<div class="project-cell-value" style="color:var(--text-muted)">No current goals.</div>';
     return '<article class="project-card ' + (project.priority?'is-priority':'') + '">' +
       '<div class="project-card-main"><div><div class="project-title-row"><button class="star-btn' + (project.priority?' marked':'') + '" onclick="toggleProjectPriority(\''+esc(project.id)+'\',event)" title="' + (project.priority?'Unmark priority':'Mark priority') + '">' + (project.priority?'★':'☆') + '</button><div class="project-name">' + renderLatexText(project.name) + '</div></div><div class="project-summary">' + renderLatexText(project.summary||'') + '</div><div class="project-tag-row">' + (category?'<span class="tag" style="background:'+esc(category.color)+'18;color:'+esc(category.color)+'">'+esc(category.name)+'</span>':'') + '</div></div>' +
       '<div><div class="project-cell-label">Current Goals</div><div class="project-goals">' + goalsHtml + '</div></div>' +
