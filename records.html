@@ -1490,6 +1490,21 @@ function renderKaTeX(container) {
   });
 }
 
+// Render ordinary stored text with optional LaTeX delimiters.
+// Supported: $...$, $$...$$, \(...\), and \[...\].
+function renderLatexText(raw) {
+  if (!raw) return '';
+  let html = esc(raw);
+  const mathSpan = function(math, displayMode) {
+    return '<span class="' + (displayMode ? 'rq-math-block' : 'rq-math-inline') + '" data-math="' + math.replace(/"/g,'&quot;') + '"></span>';
+  };
+  html = html.replace(/\\\[([\s\S]*?)\\\]/g, function(_, math){ return mathSpan(math, true); });
+  html = html.replace(/\$\$([\s\S]*?)\$\$/g, function(_, math){ return mathSpan(math, true); });
+  html = html.replace(/\\\(([\s\S]*?)\\\)/g, function(_, math){ return mathSpan(math, false); });
+  html = html.replace(/\$([^$\n]+)\$/g, function(_, math){ return mathSpan(math, false); });
+  return html;
+}
+
 // ── @ Mention picker ──────────────────────────────────────────────────────────
 let mentionQuery = '', mentionActive = false, mentionIndex = 0, mentionItems = [];
 let activeMentionDropId = 'rqMentionDrop';
@@ -3563,13 +3578,14 @@ function renderProjects() {
     const category = projectCategory(project);
     const collaboratorText = (project.collaborators||[]).join(', ');
     const goals = Array.isArray(project.goals) ? project.goals : [];
-    const goalsHtml = goals.length ? goals.map(function(goal,index){ return '<div class="project-goal"><span class="project-goal-dot"></span><span class="project-goal-text" title="'+esc(goal.text)+'">'+esc(goal.text)+'</span><button class="goal-state-btn '+(goal.done?'active':'')+'" onclick="toggleProjectGoal(\''+esc(project.id)+'\','+index+',\'done\',event)">Results</button><button class="goal-state-btn '+(goal.discussable?'active':'')+'" onclick="toggleProjectGoal(\''+esc(project.id)+'\','+index+',\'discussable\',event)">Pres</button></div>'; }).join('') : '<div class="project-cell-value" style="color:var(--text-muted)">No current goals.</div>';
+    const goalsHtml = goals.length ? goals.map(function(goal,index){ return '<div class="project-goal"><span class="project-goal-dot"></span><span class="project-goal-text" title="'+esc(goal.text)+'">'+renderLatexText(goal.text)+'</span><button class="goal-state-btn '+(goal.done?'active':'')+'" onclick="toggleProjectGoal(\''+esc(project.id)+'\','+index+',\'done\',event)">Results</button><button class="goal-state-btn '+(goal.discussable?'active':'')+'" onclick="toggleProjectGoal(\''+esc(project.id)+'\','+index+',\'discussable\',event)">Pres</button></div>'; }).join('') : '<div class="project-cell-value" style="color:var(--text-muted)">No current goals.</div>';
     return '<article class="project-card ' + (project.priority?'is-priority':'') + '">' +
-      '<div class="project-card-main"><div><div class="project-title-row"><button class="star-btn' + (project.priority?' marked':'') + '" onclick="toggleProjectPriority(\''+esc(project.id)+'\',event)" title="' + (project.priority?'Unmark priority':'Mark priority') + '">' + (project.priority?'★':'☆') + '</button><div class="project-name">' + esc(project.name) + '</div></div><div class="project-summary">' + esc(project.summary||'') + '</div><div class="project-tag-row">' + (category?'<span class="tag" style="background:'+esc(category.color)+'18;color:'+esc(category.color)+'">'+esc(category.name)+'</span>':'') + '</div></div>' +
+      '<div class="project-card-main"><div><div class="project-title-row"><button class="star-btn' + (project.priority?' marked':'') + '" onclick="toggleProjectPriority(\''+esc(project.id)+'\',event)" title="' + (project.priority?'Unmark priority':'Mark priority') + '">' + (project.priority?'★':'☆') + '</button><div class="project-name">' + renderLatexText(project.name) + '</div></div><div class="project-summary">' + renderLatexText(project.summary||'') + '</div><div class="project-tag-row">' + (category?'<span class="tag" style="background:'+esc(category.color)+'18;color:'+esc(category.color)+'">'+esc(category.name)+'</span>':'') + '</div></div>' +
       '<div><div class="project-cell-label">Current Goals</div><div class="project-goals">' + goalsHtml + '</div></div>' +
       '<div><div class="project-cell-label">Estimated Meeting</div><div class="project-cell-value project-meeting-time ' + (project.meetingConfirmed?'confirmed':'') + '">' + esc(projectMeetingDisplay(project)) + '</div>' + (collaboratorText?'<div class="project-meeting-person">'+esc(collaboratorText)+'</div>':'') + '</div>' +
       '<div class="project-card-actions"><button class="icon-btn project-edit-btn" onclick="openProjectModal(\'' + esc(project.id) + '\',event)" aria-label="Edit project" title="Edit project">✎</button></div></div></article>';
   }).join('');
+  renderKaTeX(list);
 }
 
 async function toggleProjectPriority(id, event) {
