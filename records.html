@@ -1018,7 +1018,7 @@
     <div class="form-group"><label class="form-label">Summary</label><input class="form-input" id="prSummary" placeholder="One-line description of the project"></div>
     <div class="form-group"><label class="form-label">Current Stage *</label><input class="form-input" id="prStage" placeholder="e.g. Numerical validation"></div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Meeting Schedule</label><select class="form-input" id="prMeetingMode" onchange="updateProjectMeetingMode()"><option value="single">One-time</option><option value="weekly">Weekly recurring</option></select></div>
+      <div class="form-group"><label class="form-label">Meeting Schedule</label><select class="form-input" id="prMeetingMode" onchange="updateProjectMeetingMode()"><option value="single">One-time</option><option value="weekly">Recurring</option></select></div>
       <div class="form-group"><label class="form-label">Meeting Status</label><select class="form-input" id="prMeetingStatus"><option value="estimated">Estimated — not scheduled</option><option value="confirmed">Confirmed</option></select></div>
     </div>
     <div class="form-group" id="prMeetingSingleGroup"><label class="form-label">Estimated Meeting</label><input class="form-input" id="prMeeting" type="date"></div>
@@ -1027,7 +1027,10 @@
         <div class="form-group"><label class="form-label">Recurrence Starts</label><input class="form-input" id="prRecurrenceStart" type="date"></div>
         <div class="form-group"><label class="form-label">Recurrence Ends</label><input class="form-input" id="prRecurrenceEnd" type="date"></div>
       </div>
-      <div class="form-group"><label class="form-label">Every</label><select class="form-input" id="prRecurrenceWeekday"><option value="0">Sunday</option><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option></select></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Repeats Every</label><select class="form-input" id="prRecurrenceInterval"><option value="1">1 week</option><option value="2">2 weeks</option><option value="3">3 weeks</option><option value="4">4 weeks</option><option value="5">5 weeks</option><option value="6">6 weeks</option><option value="7">7 weeks</option><option value="8">8 weeks</option><option value="9">9 weeks</option><option value="10">10 weeks</option><option value="11">11 weeks</option><option value="12">12 weeks</option></select></div>
+        <div class="form-group"><label class="form-label">Weekday</label><select class="form-input" id="prRecurrenceWeekday"><option value="0">Sunday</option><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option></select></div>
+      </div>
     </div>
     <div class="form-group"><label class="form-label">Current Goals * <span style="font-weight:400;text-transform:none;letter-spacing:0">(one per line)</span></label><textarea class="form-input" id="prGoals" rows="4" placeholder="Complete the consistency check&#10;Prepare the main figure&#10;Write the conclusion for the next meeting"></textarea></div>
     <div class="form-row">
@@ -3463,6 +3466,7 @@ function dbProjectToLocal(row) {
     recurrenceStart:row.recurrence_start || '',
     recurrenceEnd:row.recurrence_end || '',
     recurrenceWeekday:row.recurrence_weekday,
+    recurrenceIntervalWeeks:Math.max(1, Number(row.recurrence_interval_weeks) || 1),
     collaborators:row.collaborators || [],
     catId:row.cat_id || null,
     note:row.note || ''
@@ -3484,6 +3488,7 @@ function localProjectToDB(project) {
     recurrence_start:project.recurrenceStart || null,
     recurrence_end:project.recurrenceEnd || null,
     recurrence_weekday:Number.isInteger(project.recurrenceWeekday) ? project.recurrenceWeekday : null,
+    recurrence_interval_weeks:Math.max(1, Number(project.recurrenceIntervalWeeks) || 1),
     collaborators:project.collaborators || [],
     cat_id:project.catId || null,
     note:project.note || ''
@@ -3529,10 +3534,16 @@ function projectMeetingDate(project) {
   const start = new Date((project.recurrenceStart || '') + 'T12:00:00');
   const end = new Date((project.recurrenceEnd || '') + 'T12:00:00');
   const weekday = Number(project.recurrenceWeekday);
+  const intervalWeeks = Math.max(1, Number(project.recurrenceIntervalWeeks) || 1);
   if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || !Number.isInteger(weekday) || weekday < 0 || weekday > 6) return '';
   const today = new Date(); today.setHours(12,0,0,0);
-  const candidate = new Date(Math.max(today.getTime(), start.getTime()));
-  candidate.setDate(candidate.getDate() + ((weekday - candidate.getDay() + 7) % 7));
+  const first = new Date(start);
+  first.setDate(first.getDate() + ((weekday - first.getDay() + 7) % 7));
+  const dayNumber = function(date){ return Math.floor(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate()) / 86400000); };
+  const elapsedDays = Math.max(0, dayNumber(today) - dayNumber(first));
+  const occurrence = Math.ceil(elapsedDays / (intervalWeeks * 7));
+  const candidate = new Date(first);
+  candidate.setDate(candidate.getDate() + occurrence * intervalWeeks * 7);
   if (candidate > end) return '';
   return candidate.getFullYear() + '-' + String(candidate.getMonth()+1).padStart(2,'0') + '-' + String(candidate.getDate()).padStart(2,'0');
 }
@@ -3621,6 +3632,7 @@ function openProjectModal(id, event) {
   document.getElementById('prMeeting').value = project?.meeting ? project.meeting.slice(0,10) : '';
   document.getElementById('prRecurrenceStart').value = project?.recurrenceStart || '';
   document.getElementById('prRecurrenceEnd').value = project?.recurrenceEnd || '';
+  document.getElementById('prRecurrenceInterval').value = String(project?.recurrenceIntervalWeeks || 1);
   document.getElementById('prRecurrenceWeekday').value = String(project?.recurrenceWeekday ?? 1);
   document.getElementById('prMeetingStatus').value = project?.meetingConfirmed ? 'confirmed' : 'estimated';
   document.getElementById('prCollaborators').value = (project?.collaborators || []).join(', ');
@@ -3647,6 +3659,7 @@ async function saveProject() {
   const meetingMode = document.getElementById('prMeetingMode').value;
   const recurrenceStart = document.getElementById('prRecurrenceStart').value;
   const recurrenceEnd = document.getElementById('prRecurrenceEnd').value;
+  const recurrenceIntervalWeeks = Math.max(1, Number(document.getElementById('prRecurrenceInterval').value) || 1);
   const recurrenceWeekday = Number(document.getElementById('prRecurrenceWeekday').value);
   if (meetingMode === 'weekly' && (!recurrenceStart || !recurrenceEnd || recurrenceStart > recurrenceEnd)) { toast('A recurring meeting needs a valid start date and end date.'); return; }
   const project = {
@@ -3658,6 +3671,7 @@ async function saveProject() {
     recurrenceStart:meetingMode === 'weekly' ? recurrenceStart : '',
     recurrenceEnd:meetingMode === 'weekly' ? recurrenceEnd : '',
     recurrenceWeekday:meetingMode === 'weekly' ? recurrenceWeekday : null,
+    recurrenceIntervalWeeks:meetingMode === 'weekly' ? recurrenceIntervalWeeks : 1,
     meetingConfirmed:document.getElementById('prMeetingStatus').value === 'confirmed',
     collaborators:document.getElementById('prCollaborators').value.split(',').map(function(x){return x.trim();}).filter(Boolean),
     catId:document.getElementById('prCategory').value, note:document.getElementById('prNote').value.trim()
