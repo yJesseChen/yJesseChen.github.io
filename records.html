@@ -994,11 +994,6 @@
     <div class="section" id="sectionProjects">
       <div class="toolbar">
         <input class="search-box" id="projectSearchBox" placeholder="Search projects, goals, collaborators…" oninput="renderProjects()">
-        <select class="sort-select" id="projectSortSelect" onchange="renderProjects()">
-          <option value="priority">Priority first</option>
-          <option value="meeting">Next meeting</option>
-          <option value="name">Name A–Z</option>
-        </select>
         <span class="view-label" id="projectCountLabel">0 projects</span>
       </div>
       <div class="projects-shell">
@@ -3583,15 +3578,17 @@ function renderProjects() {
   const list = document.getElementById('projectList');
   if (!list) return;
   const query = (document.getElementById('projectSearchBox')?.value || '').toLowerCase();
-  const sort = document.getElementById('projectSortSelect')?.value || 'priority';
   let projects = (state.projects || []).slice();
   if ((state.activeProjectCat || 'all') !== 'all') projects = projects.filter(function(p){return p.catId===state.activeProjectCat;});
   if (query) projects = projects.filter(function(project){ return [project.name,project.summary,project.stage,project.note,(project.goals||[]).map(function(goal){return goal.text;}).join(' '),(project.collaborators||[]).join(' ')].join(' ').toLowerCase().includes(query); });
-  projects.sort(function(a,b){
-    if (sort === 'meeting') return (new Date(projectMeetingDate(a)||'2999-12-31').getTime()) - (new Date(projectMeetingDate(b)||'2999-12-31').getTime());
-    if (sort === 'name') return a.name.localeCompare(b.name);
-    return Number(!!b.priority)-Number(!!a.priority) || a.name.localeCompare(b.name);
-  });
+  const today = new Date(); today.setHours(12,0,0,0);
+  const meetingDistance = function(project) {
+    const value = projectMeetingDate(project);
+    if (!value) return Number.POSITIVE_INFINITY;
+    const date = new Date(value + 'T12:00:00');
+    return Number.isFinite(date.getTime()) ? Math.abs(date.getTime() - today.getTime()) : Number.POSITIVE_INFINITY;
+  };
+  projects.sort(function(a,b){ return meetingDistance(a) - meetingDistance(b) || a.name.localeCompare(b.name); });
   renderProjectSidebar();
   document.getElementById('projectCountLabel').textContent = projects.length + ' project' + (projects.length===1?'':'s');
   if (!projects.length) { list.innerHTML = '<div class="empty-state" style="padding:36px 20px">No projects match this view.</div>'; return; }
