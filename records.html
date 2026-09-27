@@ -557,6 +557,32 @@
   .job-action-btn:hover { border-color:var(--accent); color:var(--accent); }
   .job-action-btn.danger:hover { border-color:var(--danger); color:var(--danger); }
 
+  /* ── Project tracker ── */
+  .projects-shell { flex:1; min-height:0; overflow-y:auto; padding:18px 28px 28px; scrollbar-gutter:stable; }
+  .project-list { display:flex; flex-direction:column; gap:10px; }
+  .project-card { position:relative; border:1px solid var(--border); border-radius:10px; background:var(--surface); overflow:hidden; }
+  .project-card.is-priority::before { content:''; position:absolute; z-index:1; left:7px; top:12px; bottom:12px; width:5px; border-radius:999px; background:#315f9f; }
+  .project-card .star-btn:hover { background:rgba(49,95,159,0.10); color:#315f9f; }
+  .project-card .star-btn.marked { color:#315f9f; text-shadow:none; }
+  .project-card-main { display:grid; grid-template-columns:minmax(250px,1.05fr) minmax(390px,1.45fr) minmax(210px,0.9fr) 28px; gap:20px; align-items:center; padding:18px 20px; }
+  .project-name { font-family:'Playfair Display',serif; font-size:1.18rem; font-weight:600; line-height:1.4; color:var(--text); }
+  .project-title-row { display:flex; align-items:center; gap:6px; }
+  .project-summary { margin-top:4px; font-size:0.90rem; line-height:1.6; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .project-tag-row { display:flex; flex-wrap:wrap; align-items:center; gap:5px; margin-top:7px; }
+  .project-cell-label { font-size:0.73rem; letter-spacing:0.09em; text-transform:uppercase; color:var(--text-muted); margin-bottom:8px; }
+  .project-cell-value { font-size:0.95rem; line-height:1.55; color:var(--text); }
+  .project-goals { display:flex; flex-direction:column; gap:3px; }
+  .project-goal { display:grid; grid-template-columns:8px minmax(0,1fr) auto auto; gap:5px; align-items:center; min-width:0; }
+  .project-goal-dot { width:5px; height:5px; border-radius:50%; background:var(--text-muted); }
+  .project-goal-text { min-width:0; font-size:0.92rem; line-height:1.32; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .goal-state-btn { border:1px solid var(--border); border-radius:999px; background:var(--surface); color:var(--text-muted); padding:3px 8px; font:inherit; font-size:0.73rem; line-height:1.15; cursor:pointer; white-space:nowrap; }
+  .goal-state-btn:hover { border-color:rgba(42,171,106,0.45); color:#197a4c; }
+  .goal-state-btn.active { border-color:rgba(42,171,106,0.34); background:rgba(42,171,106,0.11); color:#197a4c; }
+  .project-meeting-time { font-weight:600; color:var(--text); }
+  .project-meeting-time.confirmed { color:var(--danger); }
+  .project-meeting-person { margin-top:4px; color:var(--text-muted); font-size:0.86rem; }
+  .project-edit-btn:focus-visible { outline:none; }
+  .project-card-actions { display:flex; align-self:start; justify-content:flex-end; }
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #c5cad8; border-radius: 4px; }
@@ -574,7 +600,7 @@
     .user-badge { display: none; }
     .header-actions { gap: 6px; }
     .btn { padding: 7px 11px; font-size: 0.68rem; }
-    #btnAddPaper, #btnAddScientist, #btnAddRQ, #btnAddNote, #btnAddProposal, #btnAddJob { font-size: 0.65rem; padding: 7px 10px; }
+    #btnAddPaper, #btnAddScientist, #btnAddRQ, #btnAddNote, #btnAddProposal, #btnAddJob, #btnAddProject { font-size: 0.65rem; padding: 7px 10px; }
 
     /* Hamburger button */
     #hamburgerBtn { display: flex !important; }
@@ -623,6 +649,10 @@
     .jobs-table-head, .job-row-main { min-width:860px; }
     .job-row-details { min-width:860px; }
     .job-detail-grid { grid-template-columns:1fr; }
+    .projects-shell { padding:12px; }
+    .project-card-main { grid-template-columns:1fr 34px; gap:12px; }
+    .project-card-main > div:nth-child(2), .project-card-main > div:nth-child(3) { grid-column:1 / -1; }
+    .project-card-main > .project-card-actions { grid-column:2; grid-row:1; }
     .paper-authors { font-size: 0.78rem; }
     .card-actions { gap: 4px; }
     .icon-btn { width: 34px; height: 34px; font-size: 0.8rem; }
@@ -724,6 +754,7 @@
     <button class="btn btn-primary owner-only" id="btnAddNote" style="display:none" onclick="openNoteModal()">+ Note</button>
     <button class="btn btn-primary owner-only" id="btnAddProposal" style="display:none" onclick="openProposalModal()">+ Proposal</button>
     <button class="btn btn-primary owner-only" id="btnAddJob" style="display:none" onclick="openJobModal()">+ Job</button>
+    <button class="btn btn-primary owner-only" id="btnAddProject" style="display:none" onclick="openProjectModal()">+ Project</button>
     <button class="btn btn-primary owner-only" id="btnAddPaper" onclick="openAddModal()">+ Add Paper</button>
     <button class="btn btn-ghost owner-only" onclick="doLogout()" title="Sign out">↩ Out</button>
   </div>
@@ -836,6 +867,17 @@
     <div id="jobCatList"></div>
   </aside>
 
+  <!-- Projects sidebar -->
+  <aside class="sidebar" id="sidebarProjects" style="display:none">
+    <div class="sidebar-label">All Projects</div>
+    <div class="cat-item active" id="projectStatusAll">
+      <span class="cat-dot" style="background:#6b748e"></span><span class="cat-name">All Projects</span><span class="cat-count" id="countProjectsAll">0</span>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-label">By Category</div>
+    <div id="projectCatList"></div>
+  </aside>
+
   <main>
     <div class="global-nav">
       <button class="global-tab active" id="tabPapers" onclick="switchSection('papers')">
@@ -855,6 +897,9 @@
       </button>
       <button class="global-tab" id="tabJobs" onclick="switchSection('jobs')">
         <span>▦</span> Jobs <span class="tab-count" id="tabCountJobs">0</span>
+      </button>
+      <button class="global-tab" id="tabProjects" onclick="switchSection('projects')">
+        <span>◫</span> Projects <span class="tab-count" id="tabCountProjects">0</span>
       </button>
     </div>
 
@@ -944,10 +989,55 @@
         </div>
       </div>
     </div>
+
+    <!-- Projects -->
+    <div class="section" id="sectionProjects">
+      <div class="toolbar">
+        <input class="search-box" id="projectSearchBox" placeholder="Search projects, goals, collaborators…" oninput="renderProjects()">
+        <select class="sort-select" id="projectSortSelect" onchange="renderProjects()">
+          <option value="priority">Priority first</option>
+          <option value="meeting">Next meeting</option>
+          <option value="name">Name A–Z</option>
+        </select>
+        <span class="view-label" id="projectCountLabel">0 projects</span>
+      </div>
+      <div class="projects-shell">
+        <div class="project-list" id="projectList"></div>
+      </div>
+    </div>
   </main>
 </div>
 
 </div><!-- end appShell -->
+
+<!-- Project Modal -->
+<div class="modal-overlay" id="projectModal">
+  <div class="modal" style="width:700px">
+    <div class="modal-header">◫ <span id="projectModalTitle">Add Project</span></div>
+    <div class="form-group"><label class="form-label">Project Name *</label><input class="form-input" id="prName" placeholder="e.g. DG_Biharmonic"></div>
+    <div class="form-group"><label class="form-label">Summary</label><input class="form-input" id="prSummary" placeholder="One-line description of the project"></div>
+    <div class="form-group"><label class="form-label">Current Stage *</label><input class="form-input" id="prStage" placeholder="e.g. Numerical validation"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Meeting Schedule</label><select class="form-input" id="prMeetingMode" onchange="updateProjectMeetingMode()"><option value="single">One-time</option><option value="weekly">Weekly recurring</option></select></div>
+      <div class="form-group"><label class="form-label">Meeting Status</label><select class="form-input" id="prMeetingStatus"><option value="estimated">Estimated — not scheduled</option><option value="confirmed">Confirmed</option></select></div>
+    </div>
+    <div class="form-group" id="prMeetingSingleGroup"><label class="form-label">Estimated Meeting</label><input class="form-input" id="prMeeting" type="date"></div>
+    <div id="prMeetingRecurring" style="display:none">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Recurrence Starts</label><input class="form-input" id="prRecurrenceStart" type="date"></div>
+        <div class="form-group"><label class="form-label">Recurrence Ends</label><input class="form-input" id="prRecurrenceEnd" type="date"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Every</label><select class="form-input" id="prRecurrenceWeekday"><option value="0">Sunday</option><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Current Goals * <span style="font-weight:400;text-transform:none;letter-spacing:0">(one per line)</span></label><textarea class="form-input" id="prGoals" rows="4" placeholder="Complete the consistency check&#10;Prepare the main figure&#10;Write the conclusion for the next meeting"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Collaborators</label><input class="form-input" id="prCollaborators" placeholder="Separate names with commas"></div>
+      <div class="form-group"><label class="form-label">Category</label><select class="form-input" id="prCategory"><option value="">No category</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Latest Note</label><textarea class="form-input" id="prNote" rows="3" placeholder="Current finding, blocker, or meeting preparation note"></textarea></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('projectModal')">Cancel</button><button class="btn btn-primary" onclick="saveProject()">Save Project</button></div>
+  </div>
+</div>
 
 <!-- Job Modal -->
 <div class="modal-overlay" id="jobModal">
@@ -1293,7 +1383,7 @@ const COLORS = ['#5B4AD6','#8A3FD1','#C13AAE','#B53374','#D85C8A',
                 '#9E63C7','#C07038','#A65A2E','#8B6A2B','#6F7F2A'];
 const CATEGORY_PALETTE_VERSION = 'categoryPalette20260609-v2';
 
-let state = { categories: [], papers: [], scientists: [], questions: [], notes: [], proposals: [], jobs: [], jobHost: null, activeCat: 'all', activeType: 'all', activeSciCat: 'all', activeRQCat: 'all', activeNotesCat: 'all', activeProposalStatus: 'all', activeProposalCat: 'all', activeJobCat: 'all', activeSection: 'papers' };
+let state = { categories: [], papers: [], scientists: [], questions: [], notes: [], proposals: [], jobs: [], projects: [], jobHost: null, activeCat: 'all', activeType: 'all', activeSciCat: 'all', activeRQCat: 'all', activeNotesCat: 'all', activeProposalStatus: 'all', activeProposalCat: 'all', activeJobCat: 'all', activeProjectCat: 'all', activeSection: 'papers' };
 let currentUserId = null;
 let isShareMode = false;
 let shareToken = new URLSearchParams(location.search).get('share');
@@ -1308,10 +1398,11 @@ function loadPrefs() {
   state.activeProposalStatus = p.activeProposalStatus || 'all';
   state.activeProposalCat = p.activeProposalCat || 'all';
   state.activeJobCat = p.activeJobCat || 'all';
+  state.activeProjectCat = p.activeProjectCat || 'all';
   state.activeSection = p.activeSection || 'papers';
 }
 function savePrefs() {
-  localStorage.setItem('rrPrefs', JSON.stringify({ activeCat: state.activeCat, activeType: state.activeType, activeSciCat: state.activeSciCat, activeRQCat: state.activeRQCat, activeNotesCat: state.activeNotesCat, activeProposalStatus: state.activeProposalStatus, activeProposalCat: state.activeProposalCat, activeJobCat: state.activeJobCat, activeSection: state.activeSection }));
+  localStorage.setItem('rrPrefs', JSON.stringify({ activeCat: state.activeCat, activeType: state.activeType, activeSciCat: state.activeSciCat, activeRQCat: state.activeRQCat, activeNotesCat: state.activeNotesCat, activeProposalStatus: state.activeProposalStatus, activeProposalCat: state.activeProposalCat, activeJobCat: state.activeJobCat, activeProjectCat: state.activeProjectCat, activeSection: state.activeSection }));
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
@@ -2331,6 +2422,7 @@ const PROPOSAL_PROTOTYPE_KEY = 'rrProposalPrototype:v4';
 let editingProposalId = null;
 let proposalSupabaseReady = false;
 let jobsSupabaseReady = false;
+let projectsSupabaseReady = false;
 let jobsRefreshTimer = null;
 
 function defaultProposalPrototype() {
@@ -3299,6 +3391,268 @@ async function stopPrototypeJob(id, e) {
   job.status = 'stop_requested'; renderJobs(); updateTabCounts(); toast('Stop requested. The Mac mini Agent will terminate the process.');
 }
 
+// ── Project tracker prototype ────────────────────────────────────────────────
+const PROJECTS_PROTOTYPE_KEY = 'rrProjectsPrototype:v7';
+let editingProjectId = null;
+
+function defaultProjectsPrototype() {
+  return [
+    { id:'project-dg-biharmonic', name:'DG_Biharmonic', status:'active', priority:true, stage:'Numerical validation', goals:[{text:'Complete the fixed-direction cross-check',done:false,discussable:true},{text:'Consolidate the evidence into one proof-compatible conclusion',done:false,discussable:false},{text:'Prepare the main numerical figure for discussion',done:true,discussable:true}], meeting:'2026-09-30', meetingConfirmed:true, collaborators:[], catId:'project-demo-dg', summary:'Biharmonic DG analysis and counterexample validation.', note:'The latest deterministic cross-check completed. The next step is to decide which numerical observation is strong enough to guide the analytical statement.' },
+    { id:'project-dg-third-order', name:'DG_3rdOrder', status:'active', priority:true, stage:'Analytical follow-up', goals:[{text:'Choose the flux formulation for the main line',done:false,discussable:true},{text:'Remove the remaining initialization ambiguity',done:false,discussable:false},{text:'List the supporting experiments for the next meeting',done:true,discussable:true}], meeting:'', meetingMode:'weekly', recurrenceStart:'2026-09-03', recurrenceEnd:'2026-12-17', recurrenceWeekday:4, meetingConfirmed:false, collaborators:[], catId:'project-demo-dg', summary:'Third-order DG formulation, initialization, and convergence.', note:'Keep the next meeting focused on one decision: which formulation becomes the main line and which tests remain supporting evidence.' },
+    { id:'project-analysis-ms-sde', name:'Analysis_MS_SDE', status:'active', priority:false, stage:'Problem formulation', goals:[{text:'State one precise coarse-graining question',done:false,discussable:true},{text:'Isolate the first tractable benchmark',done:false,discussable:false}], meeting:'2026-10-07', meetingConfirmed:true, collaborators:[], catId:'project-demo-sde', summary:'Analysis of multiscale stochastic dynamics and coarse graining.', note:'The working question should stay narrower than the full proposal and produce one theorem-scale problem.' },
+    { id:'project-pgm', name:'PGM', status:'on-hold', priority:false, stage:'Scoping', goals:[{text:'Clarify the next numerical question',done:false,discussable:false},{text:'Decide whether a new computational branch is justified',done:false,discussable:false}], meeting:'', collaborators:[], catId:'project-demo-pgm', summary:'Proximal Galerkin methods and related numerical questions.', note:'On hold until the next question is specific enough to justify a new computational branch.' },
+    { id:'project-dg-initialization', name:'DG-Initialization', status:'active', priority:false, stage:'Consolidation', goals:[{text:'Package the verified initialization choices',done:true,discussable:true},{text:'Document the alternatives that have been ruled out',done:false,discussable:true}], meeting:'', collaborators:[], catId:'project-demo-dg', summary:'Initialization choices and consistency checks for DG experiments.', note:'Most computational work is complete; the remaining work is organization and a compact conclusion.' }
+  ];
+}
+
+function loadProjectsPrototype(reset) {
+  if (!reset) {
+    try {
+      const saved = JSON.parse(localStorage.getItem(PROJECTS_PROTOTYPE_KEY) || 'null');
+      if (Array.isArray(saved) && saved.length) { state.projects = saved; return; }
+    } catch(e) {}
+  }
+  state.projects = defaultProjectsPrototype();
+  persistProjectsPrototype();
+}
+
+function persistProjectsPrototype() {
+  localStorage.setItem(PROJECTS_PROTOTYPE_KEY, JSON.stringify(state.projects || []));
+}
+
+function alignProjectCategories() {
+  const byPrototypeId = {
+    'project-demo-dg':'Discontinuous Galerkin',
+    'project-demo-sde':'SDE Learning',
+    'project-demo-pgm':'Proximal Galerkin'
+  };
+  (state.projects || []).forEach(function(project) {
+    if (state.categories.some(function(cat){ return cat.id === project.catId; })) return;
+    const wanted = project.catName || byPrototypeId[project.catId];
+    const match = state.categories.find(function(cat){ return cat.name === wanted; });
+    project.catId = match ? match.id : null;
+  });
+}
+
+function dbProjectToLocal(row) {
+  return {
+    id:row.id,
+    name:row.name || '',
+    priority:!!row.priority,
+    summary:row.summary || '',
+    stage:row.stage || '',
+    goals:Array.isArray(row.goals) ? row.goals : [],
+    meetingMode:row.meeting_mode || 'single',
+    meeting:row.meeting_date || '',
+    meetingConfirmed:!!row.meeting_confirmed,
+    recurrenceStart:row.recurrence_start || '',
+    recurrenceEnd:row.recurrence_end || '',
+    recurrenceWeekday:row.recurrence_weekday,
+    collaborators:row.collaborators || [],
+    catId:row.cat_id || null,
+    note:row.note || ''
+  };
+}
+
+function localProjectToDB(project) {
+  return {
+    id:project.id,
+    user_id:currentUserId,
+    name:project.name,
+    priority:!!project.priority,
+    summary:project.summary || '',
+    stage:project.stage || '',
+    goals:project.goals || [],
+    meeting_mode:project.meetingMode || 'single',
+    meeting_date:project.meeting || null,
+    meeting_confirmed:!!project.meetingConfirmed,
+    recurrence_start:project.recurrenceStart || null,
+    recurrence_end:project.recurrenceEnd || null,
+    recurrence_weekday:Number.isInteger(project.recurrenceWeekday) ? project.recurrenceWeekday : null,
+    collaborators:project.collaborators || [],
+    cat_id:project.catId || null,
+    note:project.note || ''
+  };
+}
+
+async function dbSaveProject(project) {
+  const { error } = await sb.from('projects').upsert(localProjectToDB(project));
+  if (error) {
+    console.error(error);
+    toast('Project save error: ' + error.message);
+    return false;
+  }
+  return true;
+}
+
+async function persistProject(project) {
+  if (projectsSupabaseReady && currentUserId && currentUserId !== 'projects-local-preview') return dbSaveProject(project);
+  persistProjectsPrototype();
+  return true;
+}
+
+function projectCategory(project) {
+  return state.categories.find(function(cat){ return cat.id === project.catId; }) || null;
+}
+
+function projectMeetingTime(value, compact) {
+  if (!value) return 'Not scheduled';
+  const date = new Date(value + (String(value).length === 10 ? 'T12:00:00' : ''));
+  if (!Number.isFinite(date.getTime())) return 'Not scheduled';
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const meetingDay = new Date(date); meetingDay.setHours(0,0,0,0);
+  const days = Math.round((meetingDay.getTime() - today.getTime()) / 86400000);
+  const remaining = days === 0 ? 'Today' : days > 0 ? days + ' day' + (days === 1 ? '' : 's') + ' left' : Math.abs(days) + ' day' + (days === -1 ? '' : 's') + ' ago';
+  return date.toLocaleDateString([], compact
+    ? {month:'short',day:'numeric'}
+    : {weekday:'short',month:'short',day:'numeric'}) + ' (' + remaining + ')';
+}
+
+function projectMeetingDate(project) {
+  if ((project.meetingMode || 'single') !== 'weekly') return project.meeting || '';
+  const start = new Date((project.recurrenceStart || '') + 'T12:00:00');
+  const end = new Date((project.recurrenceEnd || '') + 'T12:00:00');
+  const weekday = Number(project.recurrenceWeekday);
+  if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || !Number.isInteger(weekday) || weekday < 0 || weekday > 6) return '';
+  const today = new Date(); today.setHours(12,0,0,0);
+  const candidate = new Date(Math.max(today.getTime(), start.getTime()));
+  candidate.setDate(candidate.getDate() + ((weekday - candidate.getDay() + 7) % 7));
+  if (candidate > end) return '';
+  return candidate.getFullYear() + '-' + String(candidate.getMonth()+1).padStart(2,'0') + '-' + String(candidate.getDate()).padStart(2,'0');
+}
+
+function projectMeetingDisplay(project) {
+  const date = projectMeetingDate(project);
+  if (date) return projectMeetingTime(date,false);
+  return (project.meetingMode === 'weekly' && project.recurrenceEnd) ? 'Series ended' : 'Not scheduled';
+}
+
+function renderProjectSidebar() {
+  const projects = state.projects || [];
+  document.getElementById('countProjectsAll').textContent = projects.length;
+  document.getElementById('projectCatList').innerHTML = state.categories.map(function(cat){
+    const count = projects.filter(function(project){ return project.catId === cat.id; }).length;
+    if (!count) return '';
+    return '<div class="cat-item ' + (state.activeProjectCat === cat.id ? 'active' : '') + '" onclick="setProjectCat(\'' + esc(cat.id) + '\')"><span class="cat-dot" style="background:' + esc(cat.color) + '"></span><span class="cat-name">' + esc(cat.name) + '</span><span class="cat-count">' + count + '</span></div>';
+  }).join('');
+}
+
+function setProjectCat(catId) {
+  state.activeProjectCat = state.activeProjectCat === catId ? 'all' : catId;
+  savePrefs(); renderProjectSidebar(); renderProjects(); closeSidebarOnMobile();
+}
+
+function renderProjects() {
+  const list = document.getElementById('projectList');
+  if (!list) return;
+  const query = (document.getElementById('projectSearchBox')?.value || '').toLowerCase();
+  const sort = document.getElementById('projectSortSelect')?.value || 'priority';
+  let projects = (state.projects || []).slice();
+  if ((state.activeProjectCat || 'all') !== 'all') projects = projects.filter(function(p){return p.catId===state.activeProjectCat;});
+  if (query) projects = projects.filter(function(project){ return [project.name,project.summary,project.stage,project.note,(project.goals||[]).map(function(goal){return goal.text;}).join(' '),(project.collaborators||[]).join(' ')].join(' ').toLowerCase().includes(query); });
+  projects.sort(function(a,b){
+    if (sort === 'meeting') return (new Date(projectMeetingDate(a)||'2999-12-31').getTime()) - (new Date(projectMeetingDate(b)||'2999-12-31').getTime());
+    if (sort === 'name') return a.name.localeCompare(b.name);
+    return Number(!!b.priority)-Number(!!a.priority) || a.name.localeCompare(b.name);
+  });
+  renderProjectSidebar();
+  document.getElementById('projectCountLabel').textContent = projects.length + ' project' + (projects.length===1?'':'s');
+  if (!projects.length) { list.innerHTML = '<div class="empty-state" style="padding:36px 20px">No projects match this view.</div>'; return; }
+  list.innerHTML = projects.map(function(project){
+    const category = projectCategory(project);
+    const collaboratorText = (project.collaborators||[]).join(', ');
+    const goals = Array.isArray(project.goals) ? project.goals : [];
+    const goalsHtml = goals.length ? goals.map(function(goal,index){ return '<div class="project-goal"><span class="project-goal-dot"></span><span class="project-goal-text" title="'+esc(goal.text)+'">'+esc(goal.text)+'</span><button class="goal-state-btn '+(goal.done?'active':'')+'" onclick="toggleProjectGoal(\''+esc(project.id)+'\','+index+',\'done\',event)">Results</button><button class="goal-state-btn '+(goal.discussable?'active':'')+'" onclick="toggleProjectGoal(\''+esc(project.id)+'\','+index+',\'discussable\',event)">Pres</button></div>'; }).join('') : '<div class="project-cell-value" style="color:var(--text-muted)">No current goals.</div>';
+    return '<article class="project-card ' + (project.priority?'is-priority':'') + '">' +
+      '<div class="project-card-main"><div><div class="project-title-row"><button class="star-btn' + (project.priority?' marked':'') + '" onclick="toggleProjectPriority(\''+esc(project.id)+'\',event)" title="' + (project.priority?'Unmark priority':'Mark priority') + '">' + (project.priority?'★':'☆') + '</button><div class="project-name">' + esc(project.name) + '</div></div><div class="project-summary">' + esc(project.summary||'') + '</div><div class="project-tag-row">' + (category?'<span class="tag" style="background:'+esc(category.color)+'18;color:'+esc(category.color)+'">'+esc(category.name)+'</span>':'') + '</div></div>' +
+      '<div><div class="project-cell-label">Current Goals</div><div class="project-goals">' + goalsHtml + '</div></div>' +
+      '<div><div class="project-cell-label">Estimated Meeting</div><div class="project-cell-value project-meeting-time ' + (project.meetingConfirmed?'confirmed':'') + '">' + esc(projectMeetingDisplay(project)) + '</div>' + (collaboratorText?'<div class="project-meeting-person">'+esc(collaboratorText)+'</div>':'') + '</div>' +
+      '<div class="project-card-actions"><button class="icon-btn project-edit-btn" onclick="openProjectModal(\'' + esc(project.id) + '\',event)" aria-label="Edit project" title="Edit project">✎</button></div></div></article>';
+  }).join('');
+}
+
+async function toggleProjectPriority(id, event) {
+  if (event) event.stopPropagation();
+  const project = (state.projects||[]).find(function(item){return item.id===id;});
+  if (!project) return;
+  project.priority = !project.priority;
+  renderProjects();
+  await persistProject(project);
+}
+
+async function toggleProjectGoal(projectId, goalIndex, field, event) {
+  if (event) event.stopPropagation();
+  const project = (state.projects||[]).find(function(item){return item.id===projectId;});
+  const goal = project && Array.isArray(project.goals) ? project.goals[goalIndex] : null;
+  if (!goal || (field !== 'done' && field !== 'discussable')) return;
+  goal[field] = !goal[field];
+  renderProjects();
+  await persistProject(project);
+}
+
+function openProjectModal(id, event) {
+  if (event) event.stopPropagation();
+  const project = (state.projects||[]).find(function(item){return item.id===id;}) || null;
+  editingProjectId = project?.id || null;
+  document.getElementById('projectModalTitle').textContent = project ? 'Edit Project' : 'Add Project';
+  document.getElementById('prCategory').innerHTML = '<option value="">No category</option>' + state.categories.map(function(cat){return '<option value="'+esc(cat.id)+'">'+esc(cat.name)+'</option>';}).join('');
+  document.getElementById('prName').value = project?.name || '';
+  document.getElementById('prSummary').value = project?.summary || '';
+  document.getElementById('prStage').value = project?.stage || '';
+  document.getElementById('prGoals').value = (project?.goals || []).map(function(goal){return goal.text;}).join('\n');
+  document.getElementById('prMeetingMode').value = project?.meetingMode || 'single';
+  document.getElementById('prMeeting').value = project?.meeting ? project.meeting.slice(0,10) : '';
+  document.getElementById('prRecurrenceStart').value = project?.recurrenceStart || '';
+  document.getElementById('prRecurrenceEnd').value = project?.recurrenceEnd || '';
+  document.getElementById('prRecurrenceWeekday').value = String(project?.recurrenceWeekday ?? 1);
+  document.getElementById('prMeetingStatus').value = project?.meetingConfirmed ? 'confirmed' : 'estimated';
+  document.getElementById('prCollaborators').value = (project?.collaborators || []).join(', ');
+  document.getElementById('prCategory').value = project?.catId || '';
+  document.getElementById('prNote').value = project?.note || '';
+  updateProjectMeetingMode();
+  document.getElementById('projectModal').classList.add('open');
+}
+
+function updateProjectMeetingMode() {
+  const weekly = document.getElementById('prMeetingMode').value === 'weekly';
+  document.getElementById('prMeetingSingleGroup').style.display = weekly ? 'none' : '';
+  document.getElementById('prMeetingRecurring').style.display = weekly ? '' : 'none';
+}
+
+async function saveProject() {
+  const name = document.getElementById('prName').value.trim();
+  const stage = document.getElementById('prStage').value.trim();
+  const goalTexts = document.getElementById('prGoals').value.split('\n').map(function(x){return x.trim();}).filter(Boolean);
+  if (!name || !stage || !goalTexts.length) { toast('Project name, current stage, and at least one current goal are required.'); return; }
+  const existing = (state.projects||[]).find(function(item){return item.id===editingProjectId;});
+  const previousGoals = existing?.goals || [];
+  const goals = goalTexts.map(function(text){ const previous = previousGoals.find(function(goal){return goal.text===text;}); return {text:text,done:previous?.done||false,discussable:previous?.discussable||false}; });
+  const meetingMode = document.getElementById('prMeetingMode').value;
+  const recurrenceStart = document.getElementById('prRecurrenceStart').value;
+  const recurrenceEnd = document.getElementById('prRecurrenceEnd').value;
+  const recurrenceWeekday = Number(document.getElementById('prRecurrenceWeekday').value);
+  if (meetingMode === 'weekly' && (!recurrenceStart || !recurrenceEnd || recurrenceStart > recurrenceEnd)) { toast('A recurring meeting needs a valid start date and end date.'); return; }
+  const project = {
+    id: existing?.id || 'project-' + uid().slice(0,8), name:name,
+    priority:existing?.priority || false,
+    summary:document.getElementById('prSummary').value.trim(), stage:stage, goals:goals,
+    meetingMode:meetingMode,
+    meeting:meetingMode === 'single' ? document.getElementById('prMeeting').value : '',
+    recurrenceStart:meetingMode === 'weekly' ? recurrenceStart : '',
+    recurrenceEnd:meetingMode === 'weekly' ? recurrenceEnd : '',
+    recurrenceWeekday:meetingMode === 'weekly' ? recurrenceWeekday : null,
+    meetingConfirmed:document.getElementById('prMeetingStatus').value === 'confirmed',
+    collaborators:document.getElementById('prCollaborators').value.split(',').map(function(x){return x.trim();}).filter(Boolean),
+    catId:document.getElementById('prCategory').value, note:document.getElementById('prNote').value.trim()
+  };
+  if (existing) state.projects[state.projects.indexOf(existing)] = project; else state.projects.unshift(project);
+  const saved = await persistProject(project);
+  if (!saved) return;
+  closeModal('projectModal'); editingProjectId = null; renderProjects(); updateTabCounts();
+  toast(existing ? 'Project updated.' : 'Project added.');
+}
+
 // ── Boot ──────────────────────────────────────────────────────────────────────
 async function bootApp(user) {
   currentUserId = user.id;
@@ -3315,6 +3669,7 @@ async function bootApp(user) {
   updateTabCounts();
   switchSection(state.activeSection);
   startJobsRefresh();
+  if (!window.projectMeetingRefresh) window.projectMeetingRefresh = setInterval(renderProjects, 30 * 60 * 1000);
 }
 
 async function bootJobsPreview() {
@@ -3367,6 +3722,25 @@ async function bootProposalPreview() {
   switchSection('proposals');
 }
 
+async function bootProjectsPreview() {
+  currentUserId = 'projects-local-preview';
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appShell').style.display = 'flex';
+  document.getElementById('userBadge').textContent = 'Local projects prototype';
+  loadPrefs();
+  state.categories = [
+    { id:'project-demo-dg', name:'Discontinuous Galerkin', color:'#8A3FD1' },
+    { id:'project-demo-sde', name:'SDE Learning', color:'#168E8A' },
+    { id:'project-demo-pgm', name:'Proximal Galerkin', color:'#7FA33B' }
+  ];
+  state.papers = []; state.scientists = []; state.questions = []; state.notes = [];
+  state.proposals = []; state.jobs = [];
+  loadProjectsPrototype();
+  renderSidebar(); renderPapers(); renderProjectSidebar(); updateTabCounts();
+  switchSection('projects');
+  if (!window.projectMeetingRefresh) window.projectMeetingRefresh = setInterval(renderProjects, 30 * 60 * 1000);
+}
+
 async function bootShareApp(token) {
   isShareMode = true;
   document.body.classList.add('share-mode');
@@ -3388,6 +3762,7 @@ async function bootShareApp(token) {
   renderNotesSidebar();
   document.getElementById('tabProposals').style.display = 'none';
   document.getElementById('tabJobs').style.display = 'none';
+  document.getElementById('tabProjects').style.display = 'none';
   updateTabCounts();
   switchSection('papers');
 }
@@ -3400,10 +3775,12 @@ function loadSharedPayload(data) {
   state.notes = (data.notes || []).map(r => ({ ...dbNoteToLocal(r), fileSignedUrl: r.file_signed_url || r.fileSignedUrl || null, attachments: r.attachments || [] }));
   state.proposals = [];
   state.jobs = [];
+  state.projects = [];
 }
 
 // Check if existing session
 (async () => {
+  if (new URLSearchParams(location.search).get('projectsPreview') === '1') { await bootProjectsPreview(); return; }
   if (new URLSearchParams(location.search).get('jobsPreview') === '1') { await bootJobsPreview(); return; }
   if (new URLSearchParams(location.search).get('proposalPreview') === '1') { await bootProposalPreview(); return; }
   if (shareToken) { await bootShareApp(shareToken); return; }
@@ -3420,13 +3797,14 @@ function showLoading(on) {
 
 // ── Load all data from Supabase ───────────────────────────────────────────────
 async function loadAllData() {
-  const [cats, papers, scientists, questions, notes, proposals, jobs, hosts] = await Promise.all([
+  const [cats, papers, scientists, questions, notes, proposals, projects, jobs, hosts] = await Promise.all([
     sb.from('categories').select('*').order('name'),
     sb.from('papers').select('*').order('created_at'),
     sb.from('scientists').select('*').order('created_at'),
     sb.from('questions').select('*').order('created_at'),
     sb.from('notes').select('*').order('created_at'),
     sb.from('proposals').select('*').order('created_at'),
+    sb.from('projects').select('*').order('created_at'),
     sb.from('jobs').select('*').order('submitted_at', { ascending:false }),
     sb.from('compute_hosts').select('*').eq('id','macmini').limit(1),
   ]);
@@ -3450,6 +3828,22 @@ async function loadAllData() {
       const titleMigrations = state.proposals.filter(normalizeProposalNoteTitles);
       alignProposalCategories();
       if (titleMigrations.length) await Promise.all(titleMigrations.map(dbSaveProposal));
+    }
+  }
+  if (projects.error) {
+    projectsSupabaseReady = false;
+    console.warn('Projects table is not ready; using local fallback.', projects.error);
+    loadProjectsPrototype();
+    alignProjectCategories();
+  } else {
+    projectsSupabaseReady = true;
+    state.projects = (projects.data || []).map(dbProjectToLocal);
+    if (!state.projects.length) {
+      state.projects = defaultProjectsPrototype();
+      alignProjectCategories();
+      await Promise.all(state.projects.map(dbSaveProject));
+    } else {
+      alignProjectCategories();
     }
   }
   if (jobs.error || hosts.error) {
@@ -3958,7 +4352,7 @@ async function deleteCat(id, e) {
 // ── Mobile sidebar ────────────────────────────────────────────────────────────
 function toggleSidebar() {
   const sec = state.activeSection;
-  const sidebarId = sec==='papers'?'sidebarPapers':sec==='scientists'?'sidebarScientists':sec==='rq'?'sidebarRQ':sec==='notes'?'sidebarNotes':sec==='proposals'?'sidebarProposals':'sidebarJobs';
+  const sidebarId = sec==='papers'?'sidebarPapers':sec==='scientists'?'sidebarScientists':sec==='rq'?'sidebarRQ':sec==='notes'?'sidebarNotes':sec==='proposals'?'sidebarProposals':sec==='projects'?'sidebarProjects':'sidebarJobs';
   const sidebar = document.getElementById(sidebarId);
   const overlay = document.getElementById('sidebarOverlay');
   if (!sidebar) return;
@@ -3980,7 +4374,7 @@ function closeSidebarOnMobile() {
 
 // ── Section switching ─────────────────────────────────────────────────────────
 function switchSection(sec) {
-  if (isShareMode && (sec === 'scientists' || sec === 'jobs')) sec = 'papers';
+  if (isShareMode && (sec === 'scientists' || sec === 'jobs' || sec === 'projects')) sec = 'papers';
   state.activeSection = sec; savePrefs();
   ['papers','scientists','rq','notes','proposals'].forEach(s => {
     const id = 'section' + s.charAt(0).toUpperCase() + s.slice(1);
@@ -3993,29 +4387,34 @@ function switchSection(sec) {
   document.getElementById('sectionNotes').classList.toggle('active', sec==='notes');
   document.getElementById('sectionProposals').classList.toggle('active', sec==='proposals');
   document.getElementById('sectionJobs').classList.toggle('active', sec==='jobs');
+  document.getElementById('sectionProjects').classList.toggle('active', sec==='projects');
   document.getElementById('tabPapers').classList.toggle('active', sec==='papers');
   document.getElementById('tabScientists').classList.toggle('active', sec==='scientists');
   document.getElementById('tabRQ').classList.toggle('active', sec==='rq');
   document.getElementById('tabNotes').classList.toggle('active', sec==='notes');
   document.getElementById('tabProposals').classList.toggle('active', sec==='proposals');
   document.getElementById('tabJobs').classList.toggle('active', sec==='jobs');
+  document.getElementById('tabProjects').classList.toggle('active', sec==='projects');
   document.getElementById('btnAddPaper').style.display     = sec==='papers'     ? '' : 'none';
   document.getElementById('btnAddScientist').style.display = sec==='scientists' ? '' : 'none';
   document.getElementById('btnAddRQ').style.display        = sec==='rq'         ? '' : 'none';
   document.getElementById('btnAddNote').style.display      = sec==='notes'      ? '' : 'none';
   document.getElementById('btnAddProposal').style.display  = sec==='proposals'  ? '' : 'none';
   document.getElementById('btnAddJob').style.display       = sec==='jobs'       ? '' : 'none';
+  document.getElementById('btnAddProject').style.display   = sec==='projects'   ? '' : 'none';
   document.getElementById('sidebarPapers').style.display     = sec==='papers'     ? '' : 'none';
   document.getElementById('sidebarScientists').style.display = sec==='scientists' ? '' : 'none';
   document.getElementById('sidebarRQ').style.display         = sec==='rq'         ? '' : 'none';
   document.getElementById('sidebarNotes').style.display      = sec==='notes'      ? '' : 'none';
   document.getElementById('sidebarProposals').style.display  = sec==='proposals'  ? '' : 'none';
   document.getElementById('sidebarJobs').style.display       = sec==='jobs'       ? '' : 'none';
+  document.getElementById('sidebarProjects').style.display   = sec==='projects'   ? '' : 'none';
   if (sec==='scientists') { renderScientists(); renderSciSidebar(); }
   if (sec==='rq')         { renderRQ(); renderRQSidebar(); }
   if (sec==='notes')      { renderNotes(); renderNotesSidebar(); }
   if (sec==='proposals')  { renderProposals(); renderProposalSidebar(); }
   if (sec==='jobs')       { renderJobs(); renderJobSidebar(); }
+  if (sec==='projects')   { renderProjects(); renderProjectSidebar(); }
   // On mobile, hide sidebars via display:none only on desktop; on mobile they're overlay
   if (window.innerWidth <= 768) {
     document.querySelectorAll('.sidebar').forEach(s => { s.style.display = ''; s.classList.remove('open'); });
@@ -4029,6 +4428,7 @@ function updateTabCounts() {
   document.getElementById('tabCountNotes').textContent      = state.notes.length;
   document.getElementById('tabCountProposals').textContent  = (state.proposals || []).length;
   document.getElementById('tabCountJobs').textContent       = (state.jobs || []).filter(function(job){ return !isJobHistory(job); }).length;
+  document.getElementById('tabCountProjects').textContent   = (state.projects || []).length;
 }
 
 const PAPER_MARK_TOKEN = '[[marked]]';
