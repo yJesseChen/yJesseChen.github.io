@@ -564,7 +564,7 @@
   .project-card.is-priority::before { content:''; position:absolute; z-index:1; left:7px; top:12px; bottom:12px; width:5px; border-radius:999px; background:#315f9f; }
   .project-card .star-btn:hover { background:rgba(49,95,159,0.10); color:#315f9f; }
   .project-card .star-btn.marked { color:#315f9f; text-shadow:none; }
-  .project-card-main { display:grid; grid-template-columns:minmax(250px,1.05fr) minmax(390px,1.45fr) minmax(210px,0.9fr) 28px; gap:20px; align-items:center; padding:18px 20px; }
+  .project-card-main { display:grid; grid-template-columns:minmax(250px,1.05fr) minmax(390px,1.45fr) minmax(210px,0.9fr) 62px; gap:20px; align-items:center; padding:18px 20px; }
   .project-name { font-family:'Playfair Display',serif; font-size:1.18rem; font-weight:600; line-height:1.4; color:var(--text); }
   .project-title-row { display:flex; align-items:center; gap:6px; }
   .project-summary { margin-top:4px; font-size:0.90rem; line-height:1.6; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -582,7 +582,7 @@
   .project-meeting-time.confirmed { color:var(--danger); }
   .project-meeting-person { margin-top:4px; color:var(--text-muted); font-size:0.86rem; }
   .project-edit-btn:focus-visible { outline:none; }
-  .project-card-actions { display:flex; align-self:start; justify-content:flex-end; }
+  .project-card-actions { display:flex; gap:6px; align-self:start; justify-content:flex-end; }
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #c5cad8; border-radius: 4px; }
@@ -650,7 +650,7 @@
     .job-row-details { min-width:860px; }
     .job-detail-grid { grid-template-columns:1fr; }
     .projects-shell { padding:12px; }
-    .project-card-main { grid-template-columns:1fr 34px; gap:12px; }
+    .project-card-main { grid-template-columns:1fr 74px; gap:12px; }
     .project-card-main > div:nth-child(2), .project-card-main > div:nth-child(3) { grid-column:1 / -1; }
     .project-card-main > .project-card-actions { grid-column:2; grid-row:1; }
     .paper-authors { font-size: 0.78rem; }
@@ -3505,6 +3505,16 @@ async function dbSaveProject(project) {
   return true;
 }
 
+async function dbDeleteProject(id) {
+  const { error } = await sb.from('projects').delete().eq('id', id).eq('user_id', currentUserId);
+  if (error) {
+    console.error(error);
+    toast('Project delete error: ' + error.message);
+    return false;
+  }
+  return true;
+}
+
 async function persistProject(project) {
   if (projectsSupabaseReady && currentUserId && currentUserId !== 'projects-local-preview') return dbSaveProject(project);
   persistProjectsPrototype();
@@ -3594,7 +3604,7 @@ function renderProjects() {
       '<div class="project-card-main"><div><div class="project-title-row"><button class="star-btn' + (project.priority?' marked':'') + '" onclick="toggleProjectPriority(\''+esc(project.id)+'\',event)" title="' + (project.priority?'Unmark priority':'Mark priority') + '">' + (project.priority?'★':'☆') + '</button><div class="project-name">' + renderLatexText(project.name) + '</div></div><div class="project-summary">' + renderLatexText(project.summary||'') + '</div><div class="project-tag-row">' + (category?'<span class="tag" style="background:'+esc(category.color)+'18;color:'+esc(category.color)+'">'+esc(category.name)+'</span>':'') + '</div></div>' +
       '<div><div class="project-cell-label">Current Goals</div><div class="project-goals">' + goalsHtml + '</div></div>' +
       '<div><div class="project-cell-label">Estimated Meeting</div><div class="project-cell-value project-meeting-time ' + (project.meetingConfirmed?'confirmed':'') + '">' + esc(projectMeetingDisplay(project)) + '</div>' + (collaboratorText?'<div class="project-meeting-person">'+esc(collaboratorText)+'</div>':'') + '</div>' +
-      '<div class="project-card-actions"><button class="icon-btn project-edit-btn" onclick="openProjectModal(\'' + esc(project.id) + '\',event)" aria-label="Edit project" title="Edit project">✎</button></div></div></article>';
+      '<div class="project-card-actions"><button class="icon-btn project-edit-btn" onclick="openProjectModal(\'' + esc(project.id) + '\',event)" aria-label="Edit project" title="Edit project">✎</button><button class="icon-btn delete" onclick="deleteProject(\'' + esc(project.id) + '\',event)" aria-label="Delete project" title="Delete project">×</button></div></div></article>';
   }).join('');
   setTimeout(function(){ renderKaTeX(list); }, 50);
 }
@@ -3606,6 +3616,20 @@ async function toggleProjectPriority(id, event) {
   project.priority = !project.priority;
   renderProjects();
   await persistProject(project);
+}
+
+async function deleteProject(id, event) {
+  if (event) event.stopPropagation();
+  const project = (state.projects || []).find(function(item){ return item.id === id; });
+  if (!project || !confirm('Delete "' + project.name + '"?')) return;
+  if (projectsSupabaseReady && currentUserId && currentUserId !== 'projects-local-preview') {
+    const deleted = await dbDeleteProject(id);
+    if (!deleted) return;
+  }
+  state.projects = (state.projects || []).filter(function(item){ return item.id !== id; });
+  if (!projectsSupabaseReady || !currentUserId || currentUserId === 'projects-local-preview') persistProjectsPrototype();
+  renderProjects(); renderProjectSidebar(); updateTabCounts();
+  toast('Project removed.');
 }
 
 async function toggleProjectGoal(projectId, goalIndex, field, event) {
