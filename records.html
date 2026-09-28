@@ -3287,6 +3287,7 @@ function renderJobs() {
   document.getElementById('jobHistoryTab').setAttribute('aria-selected', jobView === 'history' ? 'true' : 'false');
   activeList.innerHTML = activeJobs.length ? jobRowsHTML(activeJobs) : '<div class="empty-state" style="padding:30px 20px">No active jobs match this view.</div>';
   historyList.innerHTML = historyJobs.length ? jobRowsHTML(historyJobs) : '<div class="empty-state" style="padding:30px 20px">No archived jobs match this view.</div>';
+  setTimeout(function(){ renderKaTeX(activeList); renderKaTeX(historyList); }, 50);
 }
 
 function jobRowsHTML(jobs) {
@@ -3303,7 +3304,7 @@ function jobRowsHTML(jobs) {
     const runtimeSub = job.status === 'queued' ? 'Submitted ' + formatJobTime(job.submittedAt) : (isJobHistory(job) ? 'Archived ' + formatJobTime(job.archivedAt || job.endedAt) : (job.status === 'stop_requested' ? 'Stop requested' : 'Runs until manually stopped'));
     return '<div class="job-row ' + esc(job.status) + (expanded?' expanded':'') + '" id="job-' + esc(job.id) + '">' +
       '<div class="job-row-main" onclick="toggleJobDetails(\'' + esc(job.id) + '\',event)">' +
-        '<div class="job-cell-main"><div class="job-name">' + esc(job.name) + '</div><div class="job-description-preview">' + esc(job.description || 'No description recorded') + '</div><div class="job-idline"><span class="job-idtext">' + esc(job.id) + (job.pid?' · PID '+job.pid:'') + (job.proposal?' · '+esc(job.proposal):'') + '</span><span class="job-category-row">' + catTags + '</span></div></div>' +
+        '<div class="job-cell-main"><div class="job-name">' + renderLatexText(job.name) + '</div><div class="job-description-preview">' + renderLatexText(job.description || 'No description recorded') + '</div><div class="job-idline"><span class="job-idtext">' + esc(job.id) + (job.pid?' · PID '+job.pid:'') + (job.proposal?' · '+esc(job.proposal):'') + '</span><span class="job-category-row">' + catTags + '</span></div></div>' +
         '<div><span class="job-status ' + esc(job.status) + '">' + esc(jobStatusLabel(job.status)) + '</span></div>' +
         '<div class="job-cell-main"><div class="job-cell-title">' + esc(job.host) + '</div><div class="job-cell-sub">' + esc(job.owner) + '</div></div>' +
         '<div><div class="job-resource-line"><span>' + cpuText + '</span></div><div class="job-resource-line"><span>' + memText + '</span></div>' + (!historical && Number(job.gpuPercent||0)>0?'<div class="job-resource-line"><span>MPS ' + Number(job.gpuPercent).toFixed(0) + '%</span></div>':'') + '</div>' +
@@ -3311,7 +3312,7 @@ function jobRowsHTML(jobs) {
       '</div>' +
       '<div class="job-row-details">' +
         (job.unregistered?'<div class="job-alert"><b>!</b><span>This process was not launched through Records. It is observe-only: you can add metadata, but Records will never stop or signal it.</span></div>':'') +
-        '<div class="job-detail-grid"><div><div class="job-detail-box"><div class="job-detail-title">Description</div><div class="job-description">' + esc(job.description || 'No description recorded.') + '</div><div class="job-meta-grid">' +
+        '<div class="job-detail-grid"><div><div class="job-detail-box"><div class="job-detail-title">Description</div><div class="job-description">' + renderLatexText(job.description || 'No description recorded.') + '</div><div class="job-meta-grid">' +
           '<div><span class="job-meta-label">Script folder</span>' + jobPathHTML(job.scriptFolder) + '</div><div><span class="job-meta-label">Results folder</span>' + jobPathHTML(job.resultsFolder) + '</div><div><span class="job-meta-label">Source</span><span class="job-meta-value">' + esc(job.source||'—') + '</span></div>' +
           '<div><span class="job-meta-label">Categories</span><span class="job-meta-value"><span class="job-category-row" style="margin-top:0">' + (catTags || '—') + '</span></span></div><div><span class="job-meta-label">Git commit</span><span class="job-meta-value">' + esc(job.gitCommit||'—') + '</span></div><div><span class="job-meta-label">Started</span><span class="job-meta-value">' + esc(formatJobTime(job.startedAt)) + '</span></div><div><span class="job-meta-label">Run policy</span><span class="job-meta-value">Until manually stopped</span></div><div><span class="job-meta-label">Allocation</span><span class="job-meta-value">' + Number(job.cpus||0) + ' CPU' + (job.memoryLimitGB?' · '+Number(job.memoryLimitGB)+' GB':'') + (job.usesMps?' · MPS':'') + '</span></div><div><span class="job-meta-label">Archived</span><span class="job-meta-value">' + esc(isJobHistory(job) ? formatJobTime(job.archivedAt || job.endedAt) : 'Active record') + '</span></div></div></div></div>' +
         '<div><div class="job-detail-box"><div class="job-detail-title">Latest log</div><div class="job-log">' + esc(job.log||'No log output yet.') + '</div></div><div class="job-actions">' +
