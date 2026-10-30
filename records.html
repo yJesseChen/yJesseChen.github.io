@@ -2478,6 +2478,73 @@ let proposalSupabaseReady = false;
 let jobsSupabaseReady = false;
 let projectsSupabaseReady = false;
 let jobsRefreshTimer = null;
+// Logs and launch internals never belong in the repeating list query.
+const JOB_ACTIVE_DB_STATUSES = ['queued','starting','running','stop_requested','needs_attention'];
+const JOB_LIST_FIELDS = 'id,name,description,status,host_id,owner_label,source,proposal_id,proposal_name,category_ids,category_names,command,script_folder,results_folder,pid,submitted_at,started_at,ended_at,archived_at,cpu_cores,cpu_percent,memory_gb,peak_cpu_percent,peak_memory_gb,memory_allocation_gb,gpu_percent,uses_mps,exit_code,detected_unregistered,managed_by_agent';
+const JOB_LIVE_FIELDS = 'id,status,pid,started_at,ended_at,archived_at,cpu_percent,memory_gb,peak_cpu_percent,peak_memory_gb,gpu_percent,exit_code,managed_by_agent,detected_unregistered';
+const JOB_HOST_FIELDS = 'id,display_name,last_heartbeat_at,cpu_percent,memory_used_gb,memory_total_gb,gpu_percent,metadata';
+let jobRowCache = new Map();
+let jobsRefreshPending = null;
+let jobsHistoryPending = null;
+let jobsHistoryLoaded = false;
+let jobsMetadataRefreshedAt = 0;
+let jobDetailsPending = new Map();
+
+function mergeJobRows(rows) {
+  (rows || []).forEach(row => {
+    const old = {...jobRowCache.get(row.id)};
+    if (row.status && JOB_ACTIVE_DB_STATUSES.includes(old.status) && !JOB_ACTIVE_DB_STATUSES.includes(row.status)) delete old.latest_log;
+    jobRowCache.set(row.id, {...old, ...row});
+  });
+  state.jobs = Array.from(jobRowCache.values()).map(dbJobToLocal);
+}
+
+function jobsViewVisible() {
+  return !!currentUserId && !String(currentUserId).includes('preview') && !isShareMode &&
+    state.activeSection === 'jobs' && !document.hidden;
+}
+
+async function loadJobDetails(id, refresh) {
+  if (!jobsViewVisible() || !id) return;
+  const cached = jobRowCache.get(id);
+  if (!refresh && cached && Object.prototype.hasOwnProperty.call(cached, 'latest_log')) return;
+  if (jobDetailsPending.has(id)) return jobDetailsPending.get(id);
+  const user = currentUserId;
+  const pending = (async function() {
+    const {data, error} = await sb.from('jobs').select('id,latest_log,log_path').eq('id',id).limit(1);
+    if (error) throw error;
+    if (user === currentUserId) mergeJobRows(data);
+  })();
+  jobDetailsPending.set(id,pending);
+  try { await pending; } finally { jobDetailsPending.delete(id); }
+}
+
+async function loadJobHistory() {
+  if (!jobsViewVisible() || jobsHistoryLoaded) return;
+  if (jobsHistoryPending) return jobsHistoryPending.catch(() => {});
+  const user = currentUserId;
+  jobsHistoryPending = (async function() {
+    // Fetch summaries once per session, in bounded pages; filtering/search stays complete.
+    const rows = [];
+    const previousHistoryIds = Array.from(jobRowCache.values()).filter(row => !JOB_ACTIVE_DB_STATUSES.includes(row.status)).map(row => row.id);
+    for (let offset = 0; ; offset += 200) {
+      const {data, error} = await sb.from('jobs').select(JOB_LIST_FIELDS)
+        .in('status',['completed','failed','stopped']).order('submitted_at',{ascending:false})
+        .order('id').range(offset,offset+199);
+      if (error) throw error;
+      rows.push(...(data || []));
+      if (!data || data.length < 200) break;
+    }
+    if (user !== currentUserId) return;
+    const returnedIds = new Set(rows.map(row => row.id));
+    previousHistoryIds.forEach(id => { if (!returnedIds.has(id)) jobRowCache.delete(id); });
+    mergeJobRows(rows); jobsHistoryLoaded = true;
+    if (jobsViewVisible()) renderJobs();
+  })();
+  try { await jobsHistoryPending; }
+  catch (error) { toast('Could not load job history. Please try again.'); }
+  finally { jobsHistoryPending = null; }
+}
 
 function defaultProposalPrototype() {
   return [{
@@ -3142,29 +3209,64 @@ function dbJobToLocal(row) {
   };
 }
 
-async function refreshJobsFromSupabase(render) {
-  if (!currentUserId || currentUserId === 'jobs-local-preview') return;
-  const [jobs, hosts] = await Promise.all([
-    sb.from('jobs').select('*').order('submitted_at', { ascending:false }),
-    sb.from('compute_hosts').select('*').eq('id','macmini').limit(1),
-  ]);
-  if (jobs.error || hosts.error) {
-    jobsSupabaseReady = false;
-    return;
-  }
-  jobsSupabaseReady = true;
-  state.jobs = (jobs.data || []).map(dbJobToLocal);
-  state.jobHost = (hosts.data || [])[0] || null;
-  if (render !== false) {
-    renderJobs();
-    updateTabCounts();
-  }
+async function refreshJobsFromSupabase(render, refreshMetadata) {
+  if (!jobsViewVisible()) return;
+  if (jobsRefreshPending) return jobsRefreshPending.catch(() => {});
+  const user = currentUserId;
+  jobsRefreshPending = (async function() {
+    const knownActive = Array.from(jobRowCache.values()).filter(row => JOB_ACTIVE_DB_STATUSES.includes(row.status)).map(row => row.id);
+    // Include previously active IDs once more so completion/stop transitions cannot disappear.
+    const requests = [sb.from('jobs').select(JOB_LIVE_FIELDS).in('status',JOB_ACTIVE_DB_STATUSES)];
+    for (let i = 0; i < knownActive.length; i += 100) {
+      requests.push(sb.from('jobs').select(JOB_LIVE_FIELDS).in('id',knownActive.slice(i,i+100))
+        .in('status',['completed','failed','stopped']));
+    }
+    const [parts, host] = await Promise.all([
+      Promise.all(requests), sb.from('compute_hosts').select(JOB_HOST_FIELDS).eq('id','macmini').limit(1)
+    ]);
+    const failed = parts.find(part => part.error);
+    if (failed || host.error) throw (failed?.error || host.error);
+    if (user !== currentUserId) return;
+    const liveRows = parts.flatMap(part => part.data || []);
+    const returnedIds = new Set(liveRows.map(row => row.id));
+    knownActive.forEach(id => { if (!returnedIds.has(id)) jobRowCache.delete(id); });
+    const now = Date.now();
+    const updateMetadata = refreshMetadata || now - jobsMetadataRefreshedAt >= 60000;
+    const metadataIds = liveRows.filter(row => !jobRowCache.has(row.id) || updateMetadata).map(row => row.id);
+    for (let i = 0; i < metadataIds.length; i += 100) {
+      const {data,error} = await sb.from('jobs').select(JOB_LIST_FIELDS).in('id',metadataIds.slice(i,i+100));
+      if (error) throw error;
+      if (user !== currentUserId) return;
+      mergeJobRows(data);
+    }
+    if (updateMetadata) jobsMetadataRefreshedAt = now;
+    mergeJobRows(liveRows);
+    state.jobHost = (host.data || [])[0] || null;
+    jobsSupabaseReady = true;
+    const expanded = jobRowCache.get(state.expandedJob);
+    if (expanded) {
+      // Refresh only the one visible log; fetch a final log on the terminal transition.
+      const transitioned = knownActive.includes(expanded.id) && !JOB_ACTIVE_DB_STATUSES.includes(expanded.status);
+      await loadJobDetails(expanded.id, JOB_ACTIVE_DB_STATUSES.includes(expanded.status) || transitioned);
+    }
+    if (render !== false && jobsViewVisible()) { renderJobs(); updateTabCounts(); }
+  })();
+  try { await jobsRefreshPending; }
+  catch (error) { console.warn('Jobs refresh failed; retaining the last good view.', error); }
+  finally { jobsRefreshPending = null; }
 }
 
 function startJobsRefresh() {
   if (jobsRefreshTimer) clearInterval(jobsRefreshTimer);
   jobsRefreshTimer = setInterval(function(){ refreshJobsFromSupabase(true); }, 10000);
 }
+
+document.addEventListener('visibilitychange', function() {
+  if (jobsViewVisible()) {
+    refreshJobsFromSupabase(true, true);
+    if (state.activeJobView === 'history') { jobsHistoryLoaded = false; loadJobHistory(); }
+  }
+});
 
 function jobStatusLabel(status) {
   return ({starting:'Starting',running:'Running',queued:'Queued',stop_requested:'Stopping',attention:'Needs attention',completed:'Completed',failed:'Failed',stopped:'Stopped'})[status] || status;
@@ -3223,6 +3325,7 @@ function setJobView(view) {
   state.activeJobView = view === 'history' ? 'history' : 'active';
   state.expandedJob = null;
   renderJobs();
+  if (state.activeJobView === 'history') { jobsHistoryLoaded = false; loadJobHistory(); }
 }
 
 function renderJobsOverview() {
@@ -3360,7 +3463,7 @@ async function copyJobPath(button, event) {
   }
 }
 
-function toggleJobDetails(id, e) {
+async function toggleJobDetails(id, e) {
   const explicitControl = e && e.target.closest('.job-chevron');
   if (!explicitControl) {
     if (!e || !e.currentTarget || !e.target.closest('.job-row-main')) return;
@@ -3369,6 +3472,12 @@ function toggleJobDetails(id, e) {
   }
   state.expandedJob = state.expandedJob === id ? null : id;
   renderJobs();
+  if (state.expandedJob === id) {
+    try {
+      await loadJobDetails(id, JOB_ACTIVE_DB_STATUSES.includes(jobRowCache.get(id)?.status));
+      if (state.expandedJob === id && jobsViewVisible()) renderJobs();
+    } catch (error) { toast('Could not load the job log. Please try again.'); }
+  }
 }
 
 let editingPrototypeJobId = null;
@@ -3425,7 +3534,7 @@ async function savePrototypeJob() {
     const { error } = await sb.from('jobs').insert({user_id:currentUserId,host_id:'macmini',name:name,description:description,category_ids:catIds,category_names:catNames,script_folder:scriptFolder,results_folder:resultsFolder,command:command,command_argv:[],proposal_id:proposal?.id||null,proposal_name:proposalName||null,cpu_cores:Number(document.getElementById('jfCpus').value),memory_allocation_gb:Number(document.getElementById('jfMemory').value),status:'queued',source:'records-web',owner_label:'Yuan Chen'});
     if (error) { toast('Could not submit job: ' + error.message); return; }
   }
-  await refreshJobsFromSupabase(false);
+  await refreshJobsFromSupabase(false, true);
   closeModal('jobModal');
   renderJobs(); updateTabCounts();
   toast(editingPrototypeJobId ? 'Metadata saved. This process remains observe-only.' : 'Job added to the queue.');
@@ -3749,6 +3858,7 @@ async function saveProject() {
 // ── Boot ──────────────────────────────────────────────────────────────────────
 async function bootApp(user) {
   currentUserId = user.id;
+  jobRowCache.clear(); jobsHistoryLoaded = false; jobsMetadataRefreshedAt = 0;
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('appShell').style.display = 'flex';
   document.getElementById('userBadge').textContent = user.email;
@@ -3898,8 +4008,8 @@ async function loadAllData() {
     sb.from('notes').select('*').order('created_at'),
     sb.from('proposals').select('*').order('created_at'),
     sb.from('projects').select('*').order('created_at'),
-    sb.from('jobs').select('*').order('submitted_at', { ascending:false }),
-    sb.from('compute_hosts').select('*').eq('id','macmini').limit(1),
+    sb.from('jobs').select(JOB_LIST_FIELDS).in('status',JOB_ACTIVE_DB_STATUSES).order('submitted_at', { ascending:false }),
+    sb.from('compute_hosts').select(JOB_HOST_FIELDS).eq('id','macmini').limit(1),
   ]);
   state.categories = (cats.data || []).map(dbCatToLocal);
   state.papers     = (papers.data || []).map(dbPaperToLocal);
@@ -3946,7 +4056,8 @@ async function loadAllData() {
     console.warn('Jobs backend is not ready.', jobs.error || hosts.error);
   } else {
     jobsSupabaseReady = true;
-    state.jobs = (jobs.data || []).map(dbJobToLocal);
+    mergeJobRows(jobs.data);
+    jobsMetadataRefreshedAt = Date.now();
     state.jobHost = (hosts.data || [])[0] || null;
   }
   await loadNoteAttachments();
@@ -4506,7 +4617,11 @@ function switchSection(sec) {
   if (sec==='rq')         { renderRQ(); renderRQSidebar(); }
   if (sec==='notes')      { renderNotes(); renderNotesSidebar(); }
   if (sec==='proposals')  { renderProposals(); renderProposalSidebar(); }
-  if (sec==='jobs')       { renderJobs(); renderJobSidebar(); }
+  if (sec==='jobs')       {
+    renderJobs(); renderJobSidebar();
+    refreshJobsFromSupabase(true, true);
+    if (state.activeJobView === 'history') { jobsHistoryLoaded = false; loadJobHistory(); }
+  }
   if (sec==='projects')   { renderProjects(); renderProjectSidebar(); }
   // On mobile, hide sidebars via display:none only on desktop; on mobile they're overlay
   if (window.innerWidth <= 768) {
